@@ -1,0 +1,17 @@
+# Example CLIProxyAPI configuration for the Harness Usage plugin.
+#
+# Copy the library to <plugins.dir>/<goos>/<goarch>/harness-usage.<ext>,
+# then merge this block into the CPA configuration file.
+plugins:
+  enabled: true
+  dir: plugins
+  configs:
+    harness-usage:
+      enabled: true
+      priority: 0
+      # ccusage executable used to read local harness history. Use an absolute
+      # path when the CPA process's PATH does not include this project's
+      # node_modules/.bin directory.
+      binary: /absolute/path/to/cpa-harness-usage/node_modules/.bin/ccusage
+      # Any subset of claude, codex, opencode. Omit for all three.
+      sources: [claude, codex, opencode]

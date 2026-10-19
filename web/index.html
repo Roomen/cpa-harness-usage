@@ -1,0 +1,1056 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Harness Usage</title>
+<style>
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-alt: #eef1f4;
+  --fg: #17202a;
+  --muted: #5b6774;
+  --border: #dce2e8;
+  --accent: #2c6bed;
+  --accent-soft: #e6eefc;
+  --success: #157347;
+  --warning: #9a6700;
+  --error: #b42318;
+  --error-soft: #fdecea;
+  --c1: #2c6bed;
+  --c2: #0f9d76;
+  --c3: #d97706;
+  --c4: #8b5cf6;
+  --c5: #64748b;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 8px 24px rgba(16, 24, 40, .04);
+  --radius: 14px;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+[data-theme="dark"] {
+  --bg: #10151b;
+  --surface: #171e26;
+  --surface-alt: #1e2731;
+  --fg: #e7edf3;
+  --muted: #9aa8b6;
+  --border: #2b3743;
+  --accent: #79a7ff;
+  --accent-soft: #1c2b44;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --error: #f87b70;
+  --error-soft: #3a1d1b;
+  --c1: #79a7ff;
+  --c2: #34d399;
+  --c3: #fbbf24;
+  --c4: #c4b5fd;
+  --c5: #94a3b8;
+  --shadow: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="white"]) {
+    --bg: #10151b;
+    --surface: #171e26;
+    --surface-alt: #1e2731;
+    --fg: #e7edf3;
+    --muted: #9aa8b6;
+    --border: #2b3743;
+    --accent: #79a7ff;
+    --accent-soft: #1c2b44;
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --error: #f87b70;
+    --error-soft: #3a1d1b;
+    --c1: #79a7ff;
+    --c2: #34d399;
+    --c3: #fbbf24;
+    --c4: #c4b5fd;
+    --c5: #94a3b8;
+    --shadow: none;
+  }
+}
+* { box-sizing: border-box; }
+html, body { max-width: 100%; overflow-x: hidden; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans", sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+button, input, select { font: inherit; color: inherit; }
+.shell { width: 100%; max-width: 1180px; margin: 0 auto; padding: 24px 20px 48px; }
+header.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.brand { min-width: 0; }
+h1 { margin: 0; font-size: clamp(20px, 3vw, 26px); letter-spacing: -.01em; }
+.subtitle { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+.top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 40px; padding: 8px 14px; border-radius: 9px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--fg);
+  cursor: pointer; white-space: nowrap;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { filter: brightness(1.06); }
+[data-theme="dark"] .btn.primary { color: #0b1220; }
+.btn:disabled { opacity: .55; cursor: progress; }
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.auth { max-width: 460px; margin: 48px auto; padding: 28px; }
+.auth h2 { margin: 0 0 8px; font-size: 19px; }
+.auth p { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field label { font-size: 12px; font-weight: 600; color: var(--muted); }
+.field input {
+  width: 100%; min-width: 0; min-height: 42px; padding: 8px 11px;
+  border: 1px solid var(--border); border-radius: 9px; background: var(--surface);
+}
+.field input:focus-visible, .btn:focus-visible, .chip input:focus-visible + span {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+.auth-row { display: flex; gap: 10px; margin-top: 14px; }
+.auth-row .btn { flex: 1; }
+.auth-error { margin-top: 12px; color: var(--error); font-size: 13px; }
+.notice {
+  display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap;
+  padding: 12px 14px; margin-bottom: 16px; border-radius: 11px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.notice[data-kind="error"] { border-color: var(--error); background: var(--error-soft); }
+.notice[data-kind="warning"] { border-color: var(--warning); }
+.notice .message { flex: 1 1 240px; min-width: 0; }
+.notice .detail { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.summary-grid {
+  display: grid; gap: 12px; margin-bottom: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.stat { padding: 14px 16px; }
+.stat .label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.stat .value { margin-top: 6px; font-size: clamp(18px, 2.4vw, 24px); font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.stat .sub { margin-top: 2px; font-size: 12px; color: var(--muted); }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.toolbar { display: flex; gap: 14px; flex-wrap: wrap; padding: 14px 16px; margin-bottom: 16px; }
+.toolbar .group { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.toolbar .group.grow { flex: 1 1 260px; }
+.group-label { font-size: 12px; font-weight: 600; color: var(--muted); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { position: relative; }
+.chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.chip span {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 36px;
+  padding: 6px 11px; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--surface); cursor: pointer; font-size: 13px; white-space: nowrap;
+}
+.chip input:checked + span { border-color: var(--accent); background: var(--accent-soft); }
+.range { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.range input[type="date"] {
+  min-height: 36px; padding: 4px 8px; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--surface); min-width: 0; max-width: 100%;
+}
+.range .sep { color: var(--muted); font-size: 12px; }
+.panel { padding: 16px; margin-bottom: 16px; }
+.panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.panel-head h2 { margin: 0; font-size: 16px; }
+.panel-head .meta { color: var(--muted); font-size: 12px; }
+.chart-scroll { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+#chart { display: block; }
+.notice[data-kind="info"] .message { color: var(--muted); }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; }
+table { width: 100%; border-collapse: collapse; min-width: 640px; font-variant-numeric: tabular-nums; }
+caption { text-align: left; padding-bottom: 8px; color: var(--muted); font-size: 12px; }
+th, td { padding: 9px 10px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+th { position: sticky; top: 0; background: var(--surface-alt); font-size: 12px; color: var(--muted); font-weight: 600; z-index: 1; }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover td { background: var(--surface-alt); }
+tfoot td { font-weight: 650; border-bottom: 0; }
+.badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+.badge .name { color: var(--fg); }
+.mono { font-family: var(--mono); font-size: 12px; }
+.empty { padding: 40px 20px; text-align: center; color: var(--muted); }
+.empty strong { display: block; color: var(--fg); margin-bottom: 6px; font-size: 15px; }
+.spinner {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  animation: spin .8s linear infinite; flex: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+.skeleton { display: grid; gap: 12px; }
+.skeleton .bar { height: 74px; border-radius: 12px; background: var(--surface-alt); animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .55; } }
+.footnote { color: var(--muted); font-size: 12px; margin-top: 16px; text-align: center; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+[hidden] { display: none !important; }
+@media (max-width: 560px) {
+  .shell { padding: 16px 12px 36px; }
+  .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .stat { padding: 12px; }
+  .toolbar { padding: 12px; gap: 12px; }
+  .panel { padding: 12px; }
+  .auth { margin: 20px auto; padding: 20px; }
+  .range { gap: 6px; }
+  .range input[type="date"] { flex: 1 1 130px; }
+  .top-actions { width: 100%; }
+  .top-actions .btn { flex: 1; }
+}
+@media (max-width: 900px) {
+  th, td { padding: 8px; }
+  table { font-size: 13px; }
+}
+@media (min-width: 900px) {
+  .summary-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="top">
+    <div class="brand">
+      <h1 data-i18n="appTitle">Harness 用量</h1>
+      <p class="subtitle" data-i18n="subtitle"></p>
+    </div>
+    <div class="top-actions" id="top-actions" hidden>
+      <button class="btn" id="refresh" type="button" data-i18n="refresh">刷新</button>
+    </div>
+  </header>
+
+  <section class="card auth" id="auth-form">
+    <h2 data-i18n="authTitle"></h2>
+    <p data-i18n="authHint"></p>
+    <form id="auth-controls" novalidate>
+      <div class="field">
+        <label for="management-key" data-i18n="authPlaceholder"></label>
+        <input id="management-key" name="management-key" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" required>
+      </div>
+      <div class="auth-row">
+        <button class="btn primary" id="connect" type="submit" data-i18n="connect"></button>
+      </div>
+    </form>
+    <div class="auth-error" id="auth-error" role="alert" hidden></div>
+  </section>
+
+  <section id="dashboard" hidden aria-live="polite">
+    <div id="status-notice" class="notice" hidden></div>
+
+    <div id="loading" class="skeleton" hidden aria-label="loading">
+      <div class="bar"></div><div class="bar"></div>
+    </div>
+
+    <div id="content" hidden>
+      <div class="summary-grid" id="summary"></div>
+
+      <div class="card toolbar">
+        <div class="group grow">
+          <span class="group-label" data-i18n="filterSources"></span>
+          <div class="chips" id="source-filter"></div>
+        </div>
+        <div class="group grow">
+          <span class="group-label" data-i18n="filterRange"></span>
+          <div class="chips" id="range-presets"></div>
+          <div class="range">
+            <label class="sr-only" for="date-from" data-i18n="from"></label>
+            <input id="date-from" type="date">
+            <span class="sep" aria-hidden="true">–</span>
+            <label class="sr-only" for="date-to" data-i18n="to"></label>
+            <input id="date-to" type="date">
+          </div>
+        </div>
+      </div>
+
+      <div class="card panel">
+        <div class="panel-head">
+          <h2 data-i18n="trendTitle"></h2>
+          <span class="meta" id="generated"></span>
+        </div>
+        <div class="chart-scroll" id="chart-scroll">
+          <svg id="chart" role="img" aria-labelledby="chart-title" width="100%" height="260"></svg>
+          <span class="sr-only" id="chart-title"></span>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <div class="card panel">
+        <div class="panel-head">
+          <h2 data-i18n="tableTitle"></h2>
+        </div>
+        <div class="table-scroll" tabindex="0" aria-label="Details">
+          <table>
+            <caption class="sr-only" data-i18n="tableTitle"></caption>
+            <thead>
+              <tr>
+                <th scope="col" data-i18n="date"></th>
+                <th scope="col" data-i18n="source"></th>
+                <th scope="col" data-i18n="summaryInput"></th>
+                <th scope="col" data-i18n="summaryOutput"></th>
+                <th scope="col" data-i18n="summaryCacheRead"></th>
+                <th scope="col" data-i18n="summaryCacheWrite"></th>
+                <th scope="col" data-i18n="summaryTokens"></th>
+                <th scope="col" data-i18n="summaryCost"></th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+            <tfoot id="rows-total"></tfoot>
+          </table>
+        </div>
+        <div class="footnote" data-i18n="costNote"></div>
+      </div>
+    </div>
+
+    <div class="card empty" id="empty-state" hidden>
+      <strong data-i18n="emptyTitle"></strong>
+      <span data-i18n="emptyHint"></span>
+    </div>
+  </section>
+</div>
+
+<script>
+"use strict";
+(function () {
+  const DATA_PATH = "/v0/management/harness-usage/daily";
+  const PAGE_PATH = "/v0/resource/plugins/harness-usage/usage";
+  const SOURCES = ["claude", "codex", "opencode"];
+  const SOURCE_LABELS = { claude: "Claude Code", codex: "Codex", opencode: "OpenCode" };
+  const SOURCE_COLORS = { claude: "var(--c1)", codex: "var(--c2)", opencode: "var(--c3)" };
+  const STORAGE_LANGUAGE = "cli-proxy-language";
+  const STORAGE_THEME = "cli-proxy-theme";
+  const STORAGE_AUTH = "cli-proxy-auth";
+  const OBFUSCATION_PREFIX = "enc::v1::";
+  const OBFUSCATION_SALT = "cli-proxy-api-webui::secure-storage";
+
+  const STRINGS = {
+    "zh-CN": {
+      appTitle: "Harness 用量", subtitle: "本机 Claude Code、Codex 与 OpenCode 的历史用量",
+      authTitle: "需要管理密钥", authHint: "输入 CPA 管理密钥以读取统计。密钥只保存在当前页面内存中，不会写入地址栏或浏览器存储。",
+      authPlaceholder: "CPA 管理密钥", connect: "读取用量",
+      authFailed: "管理密钥无效或已过期，请重试。",
+      loading: "正在读取本机用量…", loadError: "暂时无法读取用量，请稍后重试。",
+      retry: "重试", refresh: "刷新", partialTitle: "部分来源不可用",
+      sourceEmpty: "无数据", sourceFailed: "失败",
+      summaryTokens: "总 Token", summaryInput: "输入", summaryOutput: "输出",
+      summaryCacheRead: "缓存读取", summaryCacheWrite: "缓存写入", summaryCost: "估算费用", summaryOther: "其他 token",
+      costNote: "费用按公开价格估算，不代表订阅账单；缓存与 reasoning token 已按来源口径计入总量，不再重复相加。",
+      trendTitle: "按日趋势", tableTitle: "明细",
+      filterSources: "来源筛选", filterRange: "日期范围",
+      range7: "近 7 天", range30: "近 30 天", range90: "近 90 天", rangeAll: "全部",
+      from: "开始日期", to: "结束日期", date: "日期", source: "来源",
+      emptyTitle: "所选范围内没有用量数据", emptyHint: "调整来源或日期范围后再看。",
+      generated: "更新于",
+      errorTimeout: "采集超时", errorCommandFailed: "采集器执行失败", errorUnknownSchema: "数据格式不兼容",
+      errorOutputTooLarge: "数据量超出上限", errorCanceled: "采集已取消",
+      errorUnsupported: "来源不受支持", errorGeneric: "未知错误",
+      total: "合计"
+    },
+    "zh-TW": {
+      appTitle: "Harness 用量", subtitle: "本機 Claude Code、Codex 與 OpenCode 的歷史用量",
+      authTitle: "需要管理金鑰", authHint: "輸入 CPA 管理金鑰以讀取統計。金鑰只保存在目前頁面記憶體中，不會寫入網址或瀏覽器儲存。",
+      authPlaceholder: "CPA 管理金鑰", connect: "讀取用量",
+      authFailed: "管理金鑰無效或已過期，請重試。",
+      loading: "正在讀取本機用量…", loadError: "暫時無法讀取用量，請稍後再試。",
+      retry: "重試", refresh: "重新整理", partialTitle: "部分來源無法使用",
+      sourceEmpty: "無資料", sourceFailed: "失敗",
+      summaryTokens: "總 Token", summaryInput: "輸入", summaryOutput: "輸出",
+      summaryCacheRead: "快取讀取", summaryCacheWrite: "快取寫入", summaryCost: "預估費用", summaryOther: "其他 token",
+      costNote: "費用依公開價格估算，不代表訂閱帳單；快取與 reasoning token 已依來源定義計入總量，不會重複相加。",
+      trendTitle: "每日趨勢", tableTitle: "明細",
+      filterSources: "來源篩選", filterRange: "日期範圍",
+      range7: "近 7 天", range30: "近 30 天", range90: "近 90 天", rangeAll: "全部",
+      from: "開始日期", to: "結束日期", date: "日期", source: "來源",
+      emptyTitle: "所選範圍內沒有用量資料", emptyHint: "調整來源或日期範圍後再查看。",
+      generated: "更新於",
+      errorTimeout: "擷取逾時", errorCommandFailed: "擷取器執行失敗", errorUnknownSchema: "資料格式不相容",
+      errorOutputTooLarge: "資料量超出上限", errorCanceled: "擷取已取消",
+      errorUnsupported: "來源不受支援", errorGeneric: "未知錯誤",
+      total: "合計"
+    },
+    en: {
+      appTitle: "Harness Usage", subtitle: "Local history from Claude Code, Codex, and OpenCode",
+      authTitle: "Management key required", authHint: "Enter your CPA management key to load statistics. The key stays in this page's memory and is never written to the address bar or browser storage.",
+      authPlaceholder: "CPA management key", connect: "Load usage",
+      authFailed: "The management key is invalid or has expired. Try again.",
+      loading: "Reading local usage…", loadError: "Usage is temporarily unavailable. Try again shortly.",
+      retry: "Retry", refresh: "Refresh", partialTitle: "Some sources are unavailable",
+      sourceEmpty: "No data", sourceFailed: "Failed",
+      summaryTokens: "Total tokens", summaryInput: "Input", summaryOutput: "Output",
+      summaryCacheRead: "Cache read", summaryCacheWrite: "Cache write", summaryCost: "Estimated cost", summaryOther: "Other tokens",
+      costNote: "Cost is estimated from public prices and is not a subscription invoice. Cache and reasoning tokens follow each source's own total and are not added twice.",
+      trendTitle: "Daily trend", tableTitle: "Details",
+      filterSources: "Sources", filterRange: "Date range",
+      range7: "Last 7 days", range30: "Last 30 days", range90: "Last 90 days", rangeAll: "All",
+      from: "Start date", to: "End date", date: "Date", source: "Source",
+      emptyTitle: "No usage in the selected range", emptyHint: "Change the sources or date range and try again.",
+      generated: "Updated",
+      errorTimeout: "Collection timed out", errorCommandFailed: "Collector failed", errorUnknownSchema: "Incompatible data format",
+      errorOutputTooLarge: "Data exceeds the limit", errorCanceled: "Collection canceled",
+      errorUnsupported: "Unsupported source", errorGeneric: "Unknown error",
+      total: "Total"
+    },
+    ru: {
+      appTitle: "Использование Harness", subtitle: "История Claude Code, Codex и OpenCode на этом компьютере",
+      authTitle: "Требуется ключ управления", authHint: "Введите ключ управления CPA, чтобы загрузить статистику. Ключ хранится только в памяти этой страницы и не записывается в адресную строку или хранилище браузера.",
+      authPlaceholder: "Ключ управления CPA", connect: "Загрузить",
+      authFailed: "Ключ управления недействителен или истёк. Повторите попытку.",
+      loading: "Загрузка данных…", loadError: "Данные временно недоступны. Повторите попытку позже.",
+      retry: "Повторить", refresh: "Обновить", partialTitle: "Некоторые источники недоступны",
+      sourceEmpty: "Нет данных", sourceFailed: "Ошибка",
+      summaryTokens: "Всего токенов", summaryInput: "Вход", summaryOutput: "Выход",
+      summaryCacheRead: "Чтение кэша", summaryCacheWrite: "Запись кэша", summaryCost: "Оценка стоимости", summaryOther: "Прочие токены",
+      costNote: "Стоимость рассчитана по публичным ценам и не является счётом подписки. Токены кэша и reasoning учитываются по правилам источника и не суммируются повторно.",
+      trendTitle: "Динамика по дням", tableTitle: "Детали",
+      filterSources: "Источники", filterRange: "Период",
+      range7: "7 дней", range30: "30 дней", range90: "90 дней", rangeAll: "Всё",
+      from: "Начало", to: "Конец", date: "Дата", source: "Источник",
+      emptyTitle: "За выбранный период данных нет", emptyHint: "Измените источники или период.",
+      generated: "Обновлено",
+      errorTimeout: "Истекло время сбора", errorCommandFailed: "Ошибка сборщика", errorUnknownSchema: "Несовместимый формат данных",
+      errorOutputTooLarge: "Превышен объём данных", errorCanceled: "Сбор отменён",
+      errorUnsupported: "Источник не поддерживается", errorGeneric: "Неизвестная ошибка",
+      total: "Итого"
+    },
+    vi: {
+      appTitle: "Mức sử dụng Harness", subtitle: "Lịch sử Claude Code, Codex và OpenCode trên máy này",
+      authTitle: "Cần khóa quản trị", authHint: "Nhập khóa quản trị CPA để tải số liệu. Khóa chỉ được giữ trong bộ nhớ của trang này và không ghi vào thanh địa chỉ hay bộ nhớ trình duyệt.",
+      authPlaceholder: "Khóa quản trị CPA", connect: "Tải dữ liệu",
+      authFailed: "Khóa quản trị không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.",
+      loading: "Đang tải dữ liệu…", loadError: "Tạm thời không thể tải dữ liệu. Vui lòng thử lại sau.",
+      retry: "Thử lại", refresh: "Làm mới", partialTitle: "Một số nguồn không khả dụng",
+      sourceEmpty: "Không có dữ liệu", sourceFailed: "Lỗi",
+      summaryTokens: "Tổng token", summaryInput: "Đầu vào", summaryOutput: "Đầu ra",
+      summaryCacheRead: "Đọc bộ nhớ đệm", summaryCacheWrite: "Ghi bộ nhớ đệm", summaryCost: "Chi phí ước tính", summaryOther: "Token khác",
+      costNote: "Chi phí ước tính theo giá công khai, không phải hóa đơn đăng ký. Token bộ nhớ đệm và reasoning được tính theo quy ước của từng nguồn, không cộng trùng.",
+      trendTitle: "Xu hướng theo ngày", tableTitle: "Chi tiết",
+      filterSources: "Nguồn", filterRange: "Khoảng ngày",
+      range7: "7 ngày", range30: "30 ngày", range90: "90 ngày", rangeAll: "Tất cả",
+      from: "Từ ngày", to: "Đến ngày", date: "Ngày", source: "Nguồn",
+      emptyTitle: "Không có dữ liệu trong khoảng đã chọn", emptyHint: "Hãy đổi nguồn hoặc khoảng ngày.",
+      generated: "Cập nhật",
+      errorTimeout: "Hết thời gian thu thập", errorCommandFailed: "Bộ thu thập gặp lỗi", errorUnknownSchema: "Định dạng dữ liệu không tương thích",
+      errorOutputTooLarge: "Dữ liệu vượt quá giới hạn", errorCanceled: "Đã hủy thu thập",
+      errorUnsupported: "Nguồn không được hỗ trợ", errorGeneric: "Lỗi không xác định",
+      total: "Tổng"
+    },
+    ko: {
+      appTitle: "Harness 사용량", subtitle: "이 컴퓨터의 Claude Code, Codex, OpenCode 사용 기록",
+      authTitle: "관리 키 필요", authHint: "CPA 관리 키를 입력하면 통계를 불러옵니다. 키는 이 페이지 메모리에만 유지되며 주소 표시줄이나 브라우저 저장소에 기록되지 않습니다.",
+      authPlaceholder: "CPA 관리 키", connect: "불러오기",
+      authFailed: "관리 키가 유효하지 않거나 만료되었습니다. 다시 시도하세요.",
+      loading: "사용량을 불러오는 중…", loadError: "일시적으로 사용량을 불러올 수 없습니다. 잠시 후 다시 시도하세요.",
+      retry: "다시 시도", refresh: "새로고침", partialTitle: "일부 소스를 사용할 수 없음",
+      sourceEmpty: "데이터 없음", sourceFailed: "실패",
+      summaryTokens: "총 토큰", summaryInput: "입력", summaryOutput: "출력",
+      summaryCacheRead: "캐시 읽기", summaryCacheWrite: "캐시 쓰기", summaryCost: "예상 비용", summaryOther: "기타 토큰",
+      costNote: "예상 비용은 공개 가격 기준이며 구독 청구서가 아닙니다. 캐시 및 reasoning 토큰은 소스별 기준으로 총량에 포함되며 중복 합산하지 않습니다.",
+      trendTitle: "일별 추세", tableTitle: "상세",
+      filterSources: "소스", filterRange: "날짜 범위",
+      range7: "7일", range30: "30일", range90: "90일", rangeAll: "전체",
+      from: "시작일", to: "종료일", date: "날짜", source: "소스",
+      emptyTitle: "선택한 범위에 사용량이 없습니다", emptyHint: "소스나 날짜 범위를 바꿔 보세요.",
+      generated: "업데이트",
+      errorTimeout: "수집 시간 초과", errorCommandFailed: "수집기 실행 실패", errorUnknownSchema: "호환되지 않는 데이터 형식",
+      errorOutputTooLarge: "데이터 한도 초과", errorCanceled: "수집 취소됨",
+      errorUnsupported: "지원하지 않는 소스", errorGeneric: "알 수 없는 오류",
+      total: "합계"
+    }
+  };
+
+  const state = {
+    key: "",
+    report: null,
+    loading: false,
+    sources: new Set(SOURCES),
+    from: "",
+    to: "",
+    range: "30",
+    language: "zh-CN"
+  };
+
+  const el = (id) => document.getElementById(id);
+  const i18nNodes = () => document.querySelectorAll("[data-i18n]");
+
+  function detectLanguage() {
+    const candidates = [];
+    try {
+      const raw = localStorage.getItem(STORAGE_LANGUAGE);
+      if (raw) {
+        let parsed = null;
+        try { parsed = JSON.parse(raw); } catch (e) { parsed = raw; }
+        const value = parsed && typeof parsed === "object"
+          ? (parsed.state && parsed.state.language) || parsed.language
+          : parsed;
+        if (typeof value === "string") candidates.push(value);
+      }
+    } catch (e) { /* storage unavailable */ }
+    if (navigator.languages) candidates.push.apply(candidates, navigator.languages);
+    candidates.push(navigator.language || "");
+    for (const candidate of candidates) {
+      const lower = String(candidate).toLowerCase();
+      if (lower.startsWith("zh-tw") || lower.startsWith("zh-hk") || lower.startsWith("zh-mo") || lower.startsWith("zh-hant")) return "zh-TW";
+      if (lower.startsWith("zh")) return "zh-CN";
+      if (lower.startsWith("ru")) return "ru";
+      if (lower.startsWith("vi")) return "vi";
+      if (lower.startsWith("ko")) return "ko";
+      if (lower.startsWith("en")) return "en";
+    }
+    return "en";
+  }
+
+  function t(key) {
+    const pack = STRINGS[state.language] || STRINGS.en;
+    return pack[key] || STRINGS.en[key] || key;
+  }
+
+  function applyLanguage() {
+    state.language = detectLanguage();
+    document.documentElement.lang = state.language;
+    i18nNodes().forEach((node) => { node.textContent = t(node.dataset.i18n); });
+    el("management-key").placeholder = t("authPlaceholder");
+    document.title = t("appTitle");
+    renderSourceFilter();
+    renderRangePresets();
+    if (state.report) render();
+  }
+
+  // Read the management center's saved key when this page runs on the same
+  // origin. The value is only kept in memory here; this page never writes it.
+  function readSavedKey() {
+    try {
+      let raw = localStorage.getItem(STORAGE_AUTH);
+      if (!raw) return "";
+      if (raw.indexOf(OBFUSCATION_PREFIX) === 0) {
+        const keyBytes = new TextEncoder().encode(OBFUSCATION_SALT + "|" + location.host + "|" + navigator.userAgent);
+        const binary = atob(raw.slice(OBFUSCATION_PREFIX.length));
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) {
+          bytes[i] = binary.charCodeAt(i) ^ keyBytes[i % keyBytes.length];
+        }
+        raw = new TextDecoder().decode(bytes);
+      }
+      const parsed = JSON.parse(raw);
+      const value = parsed && parsed.state ? parsed.state.managementKey : parsed && parsed.managementKey;
+      return typeof value === "string" ? value : "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function applyTheme() {
+    let theme = "auto";
+    try {
+      const raw = localStorage.getItem(STORAGE_THEME);
+      if (raw) {
+        let parsed = null;
+        try { parsed = JSON.parse(raw); } catch (e) { parsed = raw; }
+        const value = parsed && typeof parsed === "object"
+          ? (parsed.state && parsed.state.theme) || parsed.theme
+          : parsed;
+        if (typeof value === "string") theme = value;
+      }
+    } catch (e) { /* storage unavailable */ }
+    const root = document.documentElement;
+    if (theme === "dark") root.setAttribute("data-theme", "dark");
+    else if (theme === "light" || theme === "white") root.setAttribute("data-theme", "light");
+    else root.removeAttribute("data-theme");
+  }
+
+  function esc(value) {
+    return String(value).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+  }
+
+  function formatTokens(value) {
+    const n = Number(value) || 0;
+    if (n < 1000) return String(n);
+    const units = [[1e9, "B"], [1e6, "M"], [1e3, "K"]];
+    for (const [size, suffix] of units) {
+      if (n >= size) {
+        const scaled = n / size;
+        return (scaled >= 100 ? scaled.toFixed(0) : scaled >= 10 ? scaled.toFixed(1) : scaled.toFixed(2)) + suffix;
+      }
+    }
+    return String(n);
+  }
+
+  function formatCost(value) {
+    const n = Number(value) || 0;
+    if (n === 0) return "$0.00";
+    if (n < 0.01) return "<$0.01";
+    if (n < 100) return "$" + n.toFixed(2);
+    return "$" + n.toFixed(0);
+  }
+
+  function todayIso() {
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 10);
+  }
+
+  function isoDaysAgo(days) {
+    const now = new Date();
+    now.setDate(now.getDate() - (days - 1));
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 10);
+  }
+
+  function setPreset(range) {
+    state.range = range;
+    if (range === "all") {
+      state.from = "";
+      state.to = "";
+    } else {
+      state.from = isoDaysAgo(Number(range));
+      state.to = todayIso();
+    }
+    el("date-from").value = state.from;
+    el("date-to").value = state.to;
+    renderRangePresets();
+    render();
+  }
+
+  function sourceLabel(source) { return SOURCE_LABELS[source] || source; }
+
+  function errorLabel(code) {
+    const map = {
+      timeout: "errorTimeout",
+      command_failed: "errorCommandFailed",
+      unknown_schema: "errorUnknownSchema",
+      output_too_large: "errorOutputTooLarge",
+      canceled: "errorCanceled",
+      unsupported_source: "errorUnsupported"
+    };
+    return t(map[code] || "errorGeneric");
+  }
+
+  function sourceStatus() {
+    const bySource = {};
+    if (state.report && Array.isArray(state.report.sources)) {
+      state.report.sources.forEach((item) => {
+        if (item && typeof item.source === "string") bySource[item.source] = item;
+      });
+    }
+    return bySource;
+  }
+
+  function filteredRows() {
+    if (!state.report || !Array.isArray(state.report.sources)) return [];
+    const rows = [];
+    state.report.sources.forEach((source) => {
+      if (!source || !state.sources.has(source.source) || source.status === "error") return;
+      (Array.isArray(source.daily) ? source.daily : []).forEach((row) => {
+        if (!row || typeof row.date !== "string") return;
+        if (state.from && row.date < state.from) return;
+        if (state.to && row.date > state.to) return;
+        rows.push({
+          date: row.date,
+          source: source.source,
+          inputTokens: Number(row.inputTokens) || 0,
+          outputTokens: Number(row.outputTokens) || 0,
+          cacheCreationTokens: Number(row.cacheCreationTokens) || 0,
+          cacheReadTokens: Number(row.cacheReadTokens) || 0,
+          totalTokens: Number(row.totalTokens) || 0,
+          costUSD: Number(row.costUSD) || 0
+        });
+      });
+    });
+    rows.sort((a, b) => b.date.localeCompare(a.date) || a.source.localeCompare(b.source));
+    return rows;
+  }
+
+  function totalsFor(rows) {
+    return rows.reduce((acc, row) => {
+      acc.input += row.inputTokens;
+      acc.output += row.outputTokens;
+      acc.cacheRead += row.cacheReadTokens;
+      acc.cacheWrite += row.cacheCreationTokens;
+      acc.total += row.totalTokens;
+      acc.cost += row.costUSD;
+      return acc;
+    }, { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0, cost: 0 });
+  }
+
+  function renderSummary(rows) {
+    const totals = totalsFor(rows);
+    const cards = [
+      ["summaryTokens", formatTokens(totals.total), "var(--accent)"],
+      ["summaryInput", formatTokens(totals.input), "var(--c1)"],
+      ["summaryOutput", formatTokens(totals.output), "var(--c2)"],
+      ["summaryCacheRead", formatTokens(totals.cacheRead), "var(--c3)"],
+      ["summaryCacheWrite", formatTokens(totals.cacheWrite), "var(--c4)"],
+      ["summaryCost", formatCost(totals.cost), "var(--c5)"]
+    ];
+    el("summary").innerHTML = cards.map(([key, value, color]) =>
+      '<div class="card stat"><div class="label"><span class="dot" style="background:' + color + '"></span>' +
+      esc(t(key)) + '</div><div class="value">' + esc(value) + "</div></div>"
+    ).join("");
+  }
+
+  function renderSourceFilter() {
+    const host = el("source-filter");
+    host.innerHTML = "";
+    SOURCES.forEach((source) => {
+      const status = sourceStatus()[source];
+      const label = document.createElement("label");
+      label.className = "chip";
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = state.sources.has(source);
+      input.value = source;
+      input.addEventListener("change", () => {
+        if (input.checked) state.sources.add(source); else state.sources.delete(source);
+        render();
+      });
+      const span = document.createElement("span");
+      const dot = document.createElement("i");
+      dot.className = "dot";
+      dot.style.background = SOURCE_COLORS[source];
+      span.appendChild(dot);
+      span.appendChild(document.createTextNode(sourceLabel(source)));
+      if (status && status.status === "error") {
+        const flag = document.createElement("em");
+        flag.className = "mono";
+        flag.style.color = "var(--error)";
+        flag.style.fontStyle = "normal";
+        flag.textContent = " · " + t("sourceFailed");
+        span.appendChild(flag);
+      } else if (status && status.status === "empty") {
+        const flag = document.createElement("em");
+        flag.className = "mono";
+        flag.style.color = "var(--muted)";
+        flag.style.fontStyle = "normal";
+        flag.textContent = " · " + t("sourceEmpty");
+        span.appendChild(flag);
+      }
+      label.appendChild(input);
+      label.appendChild(span);
+      host.appendChild(label);
+    });
+  }
+
+  function renderRangePresets() {
+    const host = el("range-presets");
+    host.innerHTML = "";
+    [["7", "range7"], ["30", "range30"], ["90", "range90"], ["all", "rangeAll"]].forEach(([value, key]) => {
+      const label = document.createElement("label");
+      label.className = "chip";
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.name = "range";
+      input.value = value;
+      input.checked = state.range === value;
+      input.addEventListener("change", () => setPreset(value));
+      const span = document.createElement("span");
+      span.textContent = t(key);
+      label.appendChild(input);
+      label.appendChild(span);
+      host.appendChild(label);
+    });
+  }
+
+  function renderStatus() {
+    const notice = el("status-notice");
+    if (!state.report) { notice.hidden = true; return; }
+    const statuses = sourceStatus();
+    const failures = Object.keys(statuses).filter((key) => statuses[key].status === "error");
+    if (!failures.length) {
+      notice.hidden = true;
+      notice.innerHTML = "";
+      return;
+    }
+    notice.hidden = false;
+    notice.dataset.kind = "warning";
+    notice.innerHTML = '<div class="message"><strong>' + esc(t("partialTitle")) + "</strong>" +
+      failures.map((key) => '<div class="detail">' + esc(sourceLabel(key)) + " · " + esc(errorLabel(statuses[key].error)) + "</div>").join("") +
+      '</div><button class="btn" type="button" id="retry">' + esc(t("retry")) + "</button>";
+    const retry = el("retry");
+    if (retry) retry.addEventListener("click", () => load(true));
+  }
+
+  function renderChart(rows) {
+    const svg = el("chart");
+    const scroll = el("chart-scroll");
+    const byDate = new Map();
+    rows.forEach((row) => {
+      const entry = byDate.get(row.date) || { date: row.date, input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 };
+      entry.input += row.inputTokens;
+      entry.output += row.outputTokens;
+      entry.cacheRead += row.cacheReadTokens;
+      entry.cacheWrite += row.cacheCreationTokens;
+      entry.total += row.totalTokens;
+      byDate.set(row.date, entry);
+    });
+    const days = Array.from(byDate.values()).sort((a, b) => a.date.localeCompare(b.date));
+    const legend = el("legend");
+    const legendKeys = ["summaryInput", "summaryOutput", "summaryCacheRead", "summaryCacheWrite"];
+    const hasOther = days.some((day) => day.total > day.input + day.output + day.cacheRead + day.cacheWrite);
+    legend.innerHTML = legendKeys.map((key, index) =>
+      '<span><i class="dot" style="background:var(--c' + (index + 1) + ')"></i>' + esc(t(key)) + "</span>"
+    ).join("") + (hasOther ? '<span><i class="dot" style="background:var(--c5)"></i>' + esc(t("summaryOther")) + "</span>" : "");
+    el("chart-title").textContent = t("trendTitle");
+    svg.setAttribute("aria-label", t("trendTitle"));
+
+    if (!days.length) {
+      svg.innerHTML = "";
+      svg.setAttribute("height", "120");
+      return;
+    }
+    const barSlot = 26;
+    const width = Math.max(scroll.clientWidth || 320, days.length * barSlot + 48);
+    const height = 260;
+    const padTop = 14, padBottom = 30, padLeft = 48, padRight = 12;
+    const plotW = width - padLeft - padRight;
+    const plotH = height - padTop - padBottom;
+    const maxTotal = Math.max.apply(null, days.map((day) => Math.max(day.total, 1)));
+    const niceMax = nicestMax(maxTotal);
+    let out = "";
+    for (let step = 0; step <= 4; step += 1) {
+      const value = (niceMax / 4) * step;
+      const y = padTop + plotH - (plotH * step) / 4;
+      out += '<line x1="' + padLeft + '" x2="' + (width - padRight) + '" y1="' + y + '" y2="' + y + '" style="stroke:var(--border);stroke-width:1"/>';
+      out += '<text x="' + (padLeft - 8) + '" y="' + (y + 4) + '" text-anchor="end" style="fill:var(--muted);font-size:11px">' + esc(formatTokens(value)) + "</text>";
+    }
+    const labelStep = Math.max(1, Math.ceil(days.length / Math.max(1, Math.floor(plotW / 64))));
+    days.forEach((day, index) => {
+      const slot = plotW / days.length;
+      const barW = Math.max(6, Math.min(20, slot * 0.62));
+      const x = padLeft + slot * index + (slot - barW) / 2;
+      const segments = [
+        ["input", "var(--c1)"],
+        ["output", "var(--c2)"],
+        ["cacheRead", "var(--c3)"],
+        ["cacheWrite", "var(--c4)"]
+      ];
+      const known = day.input + day.output + day.cacheRead + day.cacheWrite;
+      const other = Math.max(0, day.total - known);
+      let y = padTop + plotH;
+      const tooltip = day.date + " · " + t("summaryTokens") + " " + formatTokens(day.total);
+      out += '<g><title>' + esc(tooltip) + "</title>";
+      segments.forEach(([key, color]) => {
+        const value = day[key];
+        if (!value) return;
+        const h = (value / niceMax) * plotH;
+        y -= h;
+        out += '<rect x="' + x + '" y="' + y + '" width="' + barW + '" height="' + h + '" rx="1" style="fill:' + color + '"/>';
+      });
+      if (other > 0) {
+        const h = (other / niceMax) * plotH;
+        y -= h;
+        out += '<rect x="' + x + '" y="' + y + '" width="' + barW + '" height="' + h + '" rx="1" style="fill:var(--c5)"/>';
+      }
+      out += "</g>";
+      if (index % labelStep === 0) {
+        out += '<text x="' + (x + barW / 2) + '" y="' + (height - 10) + '" text-anchor="middle" style="fill:var(--muted);font-size:11px">' + esc(day.date.slice(5)) + "</text>";
+      }
+    });
+    svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+    svg.setAttribute("height", height);
+    svg.setAttribute("width", width);
+    svg.style.minWidth = width + "px";
+    svg.innerHTML = out;
+  }
+
+  function nicestMax(value) {
+    const exponent = Math.pow(10, Math.floor(Math.log10(value || 1)));
+    const fraction = value / exponent;
+    const steps = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
+    return (steps.find((step) => fraction <= step) || 10) * exponent;
+  }
+
+  function renderTable(rows) {
+    const body = el("rows");
+    const totalRow = el("rows-total");
+    body.innerHTML = "";
+    rows.forEach((row) => {
+      const tr = document.createElement("tr");
+      const cells = [
+        row.date,
+        row.source,
+        formatTokens(row.inputTokens),
+        formatTokens(row.outputTokens),
+        formatTokens(row.cacheReadTokens),
+        formatTokens(row.cacheCreationTokens),
+        formatTokens(row.totalTokens),
+        formatCost(row.costUSD)
+      ];
+      cells.forEach((value, index) => {
+        const td = document.createElement("td");
+        if (index === 1) {
+          td.innerHTML = '<span class="badge"><i class="dot" style="background:' + SOURCE_COLORS[row.source] + '"></i><span class="name">' + esc(sourceLabel(row.source)) + "</span></span>";
+        } else if (index === 0) {
+          td.textContent = value;
+          td.className = "mono";
+        } else {
+          td.textContent = value;
+        }
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+    if (!rows.length) {
+      totalRow.innerHTML = "";
+      return;
+    }
+    const totals = totalsFor(rows);
+    totalRow.innerHTML = "<tr><td>" + esc(t("total")) + "</td><td></td><td>" + esc(formatTokens(totals.input)) + "</td><td>" +
+      esc(formatTokens(totals.output)) + "</td><td>" + esc(formatTokens(totals.cacheRead)) + "</td><td>" +
+      esc(formatTokens(totals.cacheWrite)) + "</td><td>" + esc(formatTokens(totals.total)) + "</td><td>" +
+      esc(formatCost(totals.cost)) + "</td></tr>";
+  }
+
+  function render() {
+    if (!state.report) return;
+    const rows = filteredRows();
+    const totals = totalsFor(rows);
+    const failed = Object.keys(sourceStatus()).filter((key) => sourceStatus()[key].status === "error");
+    el("loading").hidden = true;
+    el("content").hidden = false;
+    // With failures and no usable rows the status notice already explains the
+    // situation; an "empty range" message would mislead.
+    el("empty-state").hidden = rows.length > 0 || failed.length > 0;
+    el("content").querySelectorAll(".summary-grid, .panel").forEach((node) => {
+      node.style.display = rows.length ? "" : "none";
+    });
+    renderStatus();
+    renderSourceFilter();
+    renderSummary(rows);
+    renderChart(rows);
+    renderTable(rows);
+    const generated = state.report.generatedAt ? new Date(state.report.generatedAt) : null;
+    el("generated").textContent = generated && !isNaN(generated)
+      ? t("generated") + " " + generated.toLocaleString(state.language)
+      : "";
+    el("top-actions").hidden = false;
+    el("refresh").disabled = state.loading;
+  }
+
+  function showLoading() {
+    state.loading = true;
+    el("loading").hidden = false;
+    el("content").hidden = true;
+    el("empty-state").hidden = true;
+    el("status-notice").hidden = true;
+    el("refresh").disabled = true;
+    const status = el("status-notice");
+    status.hidden = false;
+    status.dataset.kind = "info";
+    status.innerHTML = '<span class="spinner" aria-hidden="true"></span><div class="message">' + esc(t("loading")) + "</div>";
+  }
+
+  function showLoadError() {
+    state.loading = false;
+    el("loading").hidden = true;
+    const notice = el("status-notice");
+    notice.hidden = false;
+    notice.dataset.kind = "error";
+    notice.innerHTML = '<div class="message">' + esc(t("loadError")) + '</div><button class="btn" type="button" id="retry">' + esc(t("retry")) + "</button>";
+    const retry = el("retry");
+    if (retry) retry.addEventListener("click", () => load(true));
+    el("refresh").disabled = false;
+  }
+
+  async function load(force) {
+    if (!state.key || state.loading) return;
+    el("auth-error").hidden = true;
+    el("auth-form").hidden = true;
+    el("dashboard").hidden = false;
+    showLoading();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 90000);
+    try {
+      const url = DATA_PATH + (force ? "?refresh=1" : "");
+      const response = await fetch(url, {
+        method: "GET",
+        headers: { Authorization: "Bearer " + state.key },
+        cache: "no-store",
+        credentials: "omit",
+        signal: controller.signal
+      });
+      if (response.status === 401 || response.status === 403) {
+        state.key = "";
+        el("dashboard").hidden = true;
+        el("top-actions").hidden = true;
+        el("auth-form").hidden = false;
+        el("auth-error").hidden = false;
+        el("auth-error").textContent = t("authFailed");
+        return;
+      }
+      if (!response.ok) throw new Error("request failed");
+      const data = await response.json();
+      if (!data || !Array.isArray(data.sources)) throw new Error("invalid payload");
+      state.report = data;
+      state.loading = false;
+      render();
+    } catch (error) {
+      state.loading = false;
+      if (state.report) {
+        render();
+      }
+      showLoadError();
+    } finally {
+      clearTimeout(timer);
+      state.loading = false;
+      el("refresh").disabled = false;
+    }
+  }
+
+  function wire() {
+    el("auth-controls").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const input = el("management-key");
+      const value = input.value.trim();
+      input.value = "";
+      if (!value) return;
+      state.key = value;
+      load(false);
+    });
+    el("refresh").addEventListener("click", () => load(true));
+    el("date-from").addEventListener("change", (event) => {
+      state.from = event.target.value;
+      state.range = "custom";
+      renderRangePresets();
+      render();
+    });
+    el("date-to").addEventListener("change", (event) => {
+      state.to = event.target.value;
+      state.range = "custom";
+      renderRangePresets();
+      render();
+    });
+    const media = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+    if (media && media.addEventListener) {
+      media.addEventListener("change", () => { if (!document.documentElement.hasAttribute("data-theme")) applyTheme(); });
+    }
+    let resizeTimer = 0;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { if (state.report) renderChart(filteredRows()); }, 120);
+    });
+    window.addEventListener("storage", (event) => {
+      if (event.key === STORAGE_LANGUAGE || event.key === STORAGE_THEME) {
+        applyTheme();
+        applyLanguage();
+        if (state.report) render();
+      }
+    });
+  }
+
+  applyTheme();
+  applyLanguage();
+  wire();
+  setPreset("30");
+
+  const saved = readSavedKey();
+  if (saved) {
+    state.key = saved;
+    load(false);
+  } else {
+    el("management-key").focus();
+  }
+})();
+</script>
+</body>
+</html>

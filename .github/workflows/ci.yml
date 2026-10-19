@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: vet and race tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go test
+        run: go test -race ./...
+
+  build:
+    name: build ${{ matrix.goos }}/${{ matrix.goarch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { goos: darwin, goarch: arm64, runner: macos-14, ext: dylib }
+          - { goos: linux, goarch: amd64, runner: ubuntu-latest, ext: so }
+          - { goos: windows, goarch: amd64, runner: windows-latest, ext: dll }
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build plugin library
+        env:
+          CGO_ENABLED: "1"
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CC: ${{ matrix.goos == 'windows' && 'gcc' || '' }}
+        run: |
+          mkdir -p out
+          go build -trimpath -buildmode=c-shared -o "out/harness-usage.${{ matrix.ext }}" ./cmd/plugin
+          rm -f out/*.h
+          test -s "out/harness-usage.${{ matrix.ext }}"
+          ls -l out
+
+      - name: Build CLI
+        env:
+          CGO_ENABLED: "0"
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: go build -trimpath -o out/harness-usage ./cmd/harness-usage

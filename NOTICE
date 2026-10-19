@@ -1,0 +1,6 @@
+The native C ABI declarations and bridge structure are adapted from CLIProxyAPI.
+See LICENSE-CLIProxyAPI for its MIT license.
+
+ccusage is invoked as a separately installed tool, pinned at 20.0.36.
+Upstream: https://github.com/ccusage/ccusage (MIT).
+No OpenUsage source is copied into this project.
