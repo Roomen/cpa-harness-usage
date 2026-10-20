@@ -9,9 +9,14 @@ on:
       version:
         description: "Version without leading v (builds artifacts only; push a vX.Y.Z tag to publish)"
         required: false
+      rebuild:
+        description: "Ignore CI artifacts and rebuild every target"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
+  actions: read
 
 env:
   PLUGIN_ID: harness-usage
@@ -19,8 +24,74 @@ env:
   MACOS_MIN: "12.0"
 
 jobs:
+  prepare:
+    name: prepare
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      run_id: ${{ steps.reuse.outputs.run_id }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Resolve version
+        id: ver
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            v="${GITHUB_REF_NAME#v}"
+          elif [ -n "${{ inputs.version }}" ]; then
+            v="${{ inputs.version }}"
+          else
+            v="0.0.0-dev"
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
+      - name: Require the declared version to match
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          # The library embeds internal/plugin.Version from source, so a
+          # promoted CI artifact is only correct when source and tag agree.
+          if [ "$VERSION" = "0.0.0-dev" ]; then
+            exit 0
+          fi
+          if ! grep -q "Version = \"$VERSION\"" internal/plugin/plugin.go; then
+            echo "internal/plugin/plugin.go does not declare Version = \"$VERSION\"." >&2
+            echo "Bump it (and package.json) before tagging." >&2
+            exit 1
+          fi
+
+      - name: Find reusable CI artifacts
+        id: reuse
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REBUILD: ${{ inputs.rebuild }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          echo "run_id=" >> "$GITHUB_OUTPUT"
+          if [ "$REBUILD" = "true" ] || [ "$VERSION" = "0.0.0-dev" ]; then
+            echo "rebuild requested; compiling every target." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          run_id=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?head_sha=${GITHUB_SHA}&status=success&per_page=1" \
+            --jq '.workflow_runs[0].id // empty')
+          if [ -z "$run_id" ]; then
+            echo "no successful CI run for ${GITHUB_SHA}; compiling every target." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          count=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100" \
+            --jq '[.artifacts[] | select(.name | startswith("build-"))] | length')
+          if [ "$count" -ne 5 ]; then
+            echo "CI run ${run_id} has ${count} build artifacts; compiling every target." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "reusing build artifacts from CI run ${run_id}; no compilation." >> "$GITHUB_STEP_SUMMARY"
+
   verify:
     name: verify
+    needs: prepare
+    if: needs.prepare.outputs.run_id == ''
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
@@ -39,10 +110,12 @@ jobs:
           path: ${{ steps.go-cache.outputs.build-cache-path }}
           key: ${{ steps.go-cache.outputs.build-cache-key }}
 
+  # Fallback only: a commit without reusable CI artifacts. The normal tag path
+  # skips this job entirely.
   build:
-    name: build ${{ matrix.goos }}/${{ matrix.goarch }}
-    needs: verify
-    runs-on: ${{ matrix.runner }}
+    name: build
+    needs: [prepare, verify]
+    if: needs.prepare.outputs.run_id == ''
     strategy:
       fail-fast: false
       matrix:
@@ -52,162 +125,81 @@ jobs:
           - { goos: linux, goarch: arm64, runner: ubuntu-24.04-arm, ext: so }
           - { goos: windows, goarch: amd64, runner: windows-2025, ext: dll }
           - { goos: windows, goarch: arm64, runner: windows-11-arm, ext: dll }
-    defaults:
-      run:
-        shell: bash
+    uses: ./.github/workflows/build-target.yml
+    with:
+      goos: ${{ matrix.goos }}
+      goarch: ${{ matrix.goarch }}
+      runner: ${{ matrix.runner }}
+      ext: ${{ matrix.ext }}
+
+  package:
+    name: package
+    needs: [prepare, build]
+    if: always() && needs.prepare.result == 'success' && (needs.build.result == 'success' || needs.build.result == 'skipped')
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          architecture: ${{ matrix.goarch == 'amd64' && 'x64' || 'arm64' }}
-          cache: npm
-
-      - uses: ./.github/actions/setup-go-cache
-        id: go-cache
-        with:
-          profile: build
-          compiler-key: ${{ hashFiles('.github/scripts/setup-*-toolchain.*', '.github/workflows/ci.yml', '.github/workflows/release.yml') }}
-
-      - uses: actions/cache@v5
-        if: matrix.goos == 'windows'
-        with:
-          path: .tools
-          key: llvm-mingw-20261006-${{ matrix.goos }}-${{ matrix.goarch }}-${{ hashFiles('.github/scripts/setup-windows-toolchain.ps1') }}
-
-      - uses: actions/cache@v5
-        if: matrix.goos == 'linux'
-        with:
-          path: .tools
-          key: zig-0.15.2-${{ matrix.goos }}-${{ matrix.goarch }}-${{ hashFiles('.github/scripts/setup-linux-toolchain.sh') }}
-
-      - uses: actions/cache/restore@v5
-        if: matrix.goos == 'linux'
-        id: zig-cache
-        with:
-          path: .cache/zig-build-${{ matrix.goarch }}
-          key: zig-build-v1-0.15.2-${{ runner.os }}-${{ runner.arch }}-${{ matrix.goarch }}-${{ hashFiles('.github/scripts/setup-linux-toolchain.sh') }}-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: zig-build-v1-0.15.2-${{ runner.os }}-${{ runner.arch }}-${{ matrix.goarch }}-${{ hashFiles('.github/scripts/setup-linux-toolchain.sh') }}-
-
-      - name: Set up pinned Linux C compiler
-        if: matrix.goos == 'linux'
+      - name: Download CI artifacts
+        if: needs.prepare.outputs.run_id != ''
         env:
-          GOARCH: ${{ matrix.goarch }}
-        run: bash .github/scripts/setup-linux-toolchain.sh
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ needs.prepare.outputs.run_id }}
+        run: gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --pattern 'build-*' --dir artifacts
 
-      - name: Set up pinned Windows C compiler
-        if: matrix.goos == 'windows'
-        shell: pwsh
+      - uses: actions/download-artifact@v7
+        if: needs.prepare.outputs.run_id == ''
+        with:
+          pattern: build-*
+          path: artifacts
+
+      - name: Package libraries
         env:
-          GOARCH: ${{ matrix.goarch }}
-        run: .github/scripts/setup-windows-toolchain.ps1
-
-      - name: Prepare pinned collector
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
+          VERSION: ${{ needs.prepare.outputs.version }}
         run: |
-          npm ci --ignore-scripts --no-audit --no-fund
-          node scripts/prepare-collector.mjs
-
-      - name: Verify real collector with synthetic fixtures
-        run: go test -tags 'bundledcollector collectorintegration' ./internal/usage
-
-      - name: Resolve version
-        id: ver
-        run: |
-          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            v="${GITHUB_REF_NAME#v}"
-          elif [ -n "${{ github.event.inputs.version }}" ]; then
-            v="${{ github.event.inputs.version }}"
-          else
-            v="0.0.0-dev"
-          fi
-          echo "version=$v" >> "$GITHUB_OUTPUT"
-
-      - name: Build plugin library
-        env:
-          CGO_ENABLED: "1"
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          VERSION: ${{ steps.ver.outputs.version }}
-        run: |
-          mkdir -p out
-          if [ -n "${PLUGIN_CC:-}" ]; then
-            export CC="$PLUGIN_CC" ZIG_GLOBAL_CACHE_DIR="$PLUGIN_ZIG_GLOBAL_CACHE_DIR"
-          fi
-          if [ "$GOOS" = darwin ]; then
-            export MACOSX_DEPLOYMENT_TARGET="$MACOS_MIN"
-            export CGO_CFLAGS="-O2 -g -mmacosx-version-min=$MACOS_MIN"
-            export CGO_LDFLAGS="-mmacosx-version-min=$MACOS_MIN"
-          fi
-          go build -tags bundledcollector -trimpath \
-            -ldflags "-s -w \
-              -X cpa-harness-usage/internal/plugin.Version=${VERSION} \
-              -X cpa-harness-usage/internal/plugin.Repository=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
-            -buildmode=c-shared -o "out/${PLUGIN_ID}.${{ matrix.ext }}" ./cmd/plugin
-          rm -f out/*.h
-          test -s "out/${PLUGIN_ID}.${{ matrix.ext }}"
-          ls -l out
-
-      - name: Check Linux GLIBC baseline
-        if: matrix.goos == 'linux'
-        run: bash .github/scripts/check-glibc.sh out/${PLUGIN_ID}.so
-
-      - name: Load plugin from Go host
-        run: |
-          go build -o out/fakeccusage${{ matrix.goos == 'windows' && '.exe' || '' }} ./internal/usage/testdata/fakeccusage
-          go run ./cmd/plugin-smoke -library out/${PLUGIN_ID}.${{ matrix.ext }} -binary out/fakeccusage${{ matrix.goos == 'windows' && '.exe' || '' }}
-          go run ./cmd/plugin-smoke -library out/${PLUGIN_ID}.${{ matrix.ext }} -binary bundled
-
-      - name: Package
-        run: |
-          version="${{ steps.ver.outputs.version }}"
-          zipname="${PLUGIN_ID}_${version}_${{ matrix.goos }}_${{ matrix.goarch }}.zip"
+          set -euo pipefail
           mkdir -p dist
-          if [ "${{ matrix.goos }}" = "windows" ]; then
-            pwsh -NoProfile -Command "Compress-Archive -Path 'out/${PLUGIN_ID}.${{ matrix.ext }}' -DestinationPath 'dist/${zipname}' -Force"
-          else
-            (cd out && zip -q "../dist/${zipname}" "${PLUGIN_ID}.${{ matrix.ext }}")
+          shopt -s nullglob
+          for dir in artifacts/build-*/; do
+            dir="${dir%/}"
+            name=$(basename "$dir")
+            goos=${name#build-}
+            goos=${goos%%-*}
+            goarch=${name##*-}
+            library=""
+            for ext in so dylib dll; do
+              if [ -f "$dir/${PLUGIN_ID}.${ext}" ]; then
+                library="${PLUGIN_ID}.${ext}"
+                break
+              fi
+            done
+            if [ -z "$library" ]; then
+              echo "no plugin library in ${dir}" >&2
+              exit 1
+            fi
+            (cd "$dir" && zip -q -X "$GITHUB_WORKSPACE/dist/${PLUGIN_ID}_${VERSION}_${goos}_${goarch}.zip" "$library")
+          done
+          count=$(find dist -name '*.zip' | wc -l | tr -d ' ')
+          if [ "$count" -ne 5 ]; then
+            echo "packaged ${count} libraries, expected 5" >&2
+            exit 1
           fi
-          ls -l dist
+          (cd dist && sha256sum *.zip > checksums.txt && cat checksums.txt)
 
       - uses: actions/upload-artifact@v6
         with:
-          name: dist-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: dist/*.zip
+          name: dist
+          path: dist/*
           if-no-files-found: error
-
-      - uses: actions/cache/save@v5
-        if: always() && steps.go-cache.outputs.build-cache-path != '' && steps.go-cache.outputs.build-cache-hit != 'true'
-        with:
-          path: ${{ steps.go-cache.outputs.build-cache-path }}
-          key: ${{ steps.go-cache.outputs.build-cache-key }}
-
-      - uses: actions/cache/save@v5
-        if: always() && matrix.goos == 'linux' && steps.zig-cache.outputs.cache-primary-key != '' && steps.zig-cache.outputs.cache-hit != 'true'
-        with:
-          path: .cache/zig-build-${{ matrix.goarch }}
-          key: ${{ steps.zig-cache.outputs.cache-primary-key }}
 
   release:
     name: publish release
-    needs: build
+    needs: package
     runs-on: ubuntu-24.04
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/download-artifact@v7
         with:
-          pattern: dist-*
+          name: dist
           path: dist
-          merge-multiple: true
-
-      - name: Write checksums
-        working-directory: dist
-        run: |
-          sha256sum *.zip > checksums.txt
-          cat checksums.txt
 
       - name: Create GitHub release
         env:
