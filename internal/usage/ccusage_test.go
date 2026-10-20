@@ -284,7 +284,9 @@ func TestOMPReportsMissingStoreSafely(t *testing.T) {
 
 func TestOMPDefaultSessionsPath(t *testing.T) {
 	home := t.TempDir()
+	// os.UserHomeDir reads USERPROFILE on Windows and HOME elsewhere.
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	t.Setenv("PI_CODING_AGENT_DIR", "")
 	if got, want := defaultOMPSessionsPath(), filepath.Join(home, ".omp", "agent", "sessions"); got != want {
 		t.Fatalf("default path = %q, want %q", got, want)
