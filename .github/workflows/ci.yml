@@ -27,7 +27,7 @@ jobs:
       - name: go test
         run: go test -race ./...
 
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@v5
         if: always() && steps.go-cache.outputs.build-cache-path != '' && steps.go-cache.outputs.build-cache-hit != 'true'
         with:
           path: ${{ steps.go-cache.outputs.build-cache-path }}
@@ -51,9 +51,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: "22"
+          node-version: "24"
           architecture: ${{ matrix.goarch == 'amd64' && 'x64' || 'arm64' }}
           cache: npm
 
@@ -63,19 +63,19 @@ jobs:
           profile: build
           compiler-key: ${{ hashFiles('.github/scripts/setup-*-toolchain.*', '.github/workflows/ci.yml', '.github/workflows/release.yml') }}
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         if: matrix.goos == 'windows'
         with:
           path: .tools
           key: llvm-mingw-20261006-${{ matrix.goos }}-${{ matrix.goarch }}-${{ hashFiles('.github/scripts/setup-windows-toolchain.ps1') }}
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         if: matrix.goos == 'linux'
         with:
           path: .tools
           key: zig-0.15.2-${{ matrix.goos }}-${{ matrix.goarch }}-${{ hashFiles('.github/scripts/setup-linux-toolchain.sh') }}
 
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@v5
         if: matrix.goos == 'linux'
         id: zig-cache
         with:
@@ -147,13 +147,13 @@ jobs:
             out/harness-usage${{ matrix.goos == 'windows' && '.exe' || '' }}
           if-no-files-found: error
 
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@v5
         if: always() && steps.go-cache.outputs.build-cache-path != '' && steps.go-cache.outputs.build-cache-hit != 'true'
         with:
           path: ${{ steps.go-cache.outputs.build-cache-path }}
           key: ${{ steps.go-cache.outputs.build-cache-key }}
 
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@v5
         if: always() && matrix.goos == 'linux' && steps.zig-cache.outputs.cache-primary-key != '' && steps.zig-cache.outputs.cache-hit != 'true'
         with:
           path: .cache/zig-build-${{ matrix.goarch }}

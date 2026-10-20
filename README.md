@@ -275,6 +275,9 @@ Verified in this repository:
   collector override and the real embedded collector in a fully isolated process.
 - Linux amd64/arm64 shared libraries cross-built with Go 1.26.0 and Zig 0.15.2;
   ELF checks passed the GLIBC 2.17 ceiling.
+- [GitHub CI](https://github.com/Roomen/cpa-harness-usage/actions/runs/39352631238)
+  passed on all five native target runners, including both Windows architectures,
+  real collector fixtures, stock Go host loading, artifact upload, and cache saving.
 - The built library exports a working C ABI: a local `dlopen` smoke test called
   `cliproxy_plugin_init`, `plugin.register`, `management.register`, and
   `management.handle` successfully.
@@ -295,8 +298,7 @@ Not verified:
   rendering, hot reload against a real process, and the actual management-key
   middleware remain integration checks for a disposable instance.
 - Real browser rendering inside the official management center shell.
-- Linux and Windows builds and loading on their target hosts; the manual macOS
-  Intel experiment. These still need CI runs.
+- The manual macOS Intel experiment.
 
 ## Releases and plugin store
 

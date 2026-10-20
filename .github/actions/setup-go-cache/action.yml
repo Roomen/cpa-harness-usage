@@ -47,12 +47,12 @@ runs:
         echo "dependencies=$CACHE_BASE-$DEPENDENCIES-" >> "$GITHUB_OUTPUT"
         echo "build=$CACHE_BASE-$DEPENDENCIES-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
 
-    - uses: actions/cache@v4
+    - uses: actions/cache@v5
       with:
         path: ${{ steps.paths.outputs.modules }}
         key: go-mod-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.go.outputs.go-version }}-${{ hashFiles('go.mod', 'go.sum') }}
 
-    - uses: actions/cache/restore@v4
+    - uses: actions/cache/restore@v5
       id: build
       with:
         path: ${{ steps.paths.outputs.build }}
