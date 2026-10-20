@@ -379,10 +379,20 @@ go build -tags bundledcollector -buildmode=c-shared -ldflags \
   -o bin/harness-usage.dylib ./cmd/plugin
 ```
 
-Pushing a `vX.Y.Z` tag runs `.github/workflows/release.yml`, which tests the
-code, builds the five supported targets below, verifies native collector output and Go-host
-library loading, and publishes
-`<pluginID>_<version>_<goos>_<goarch>.zip` plus `checksums.txt`.
+Pushing a `vX.Y.Z` tag runs `.github/workflows/release.yml`. A library is
+compiled once per commit: the CI matrix is the only place a target build runs
+(`.github/workflows/build-target.yml`), and a release on the same commit
+**reuses those CI artifacts** instead of rebuilding them. The release packages
+`<pluginID>_<version>_<goos>_<goarch>.zip` plus `checksums.txt` from the
+downloaded libraries and publishes them.
+
+Reuse requires a successful CI run for the tagged commit with all five build
+artifacts. Otherwise, including `make`-local runs, manual `workflow_dispatch`
+with `rebuild`, and commits pushed before CI existed, the release falls back to
+building the five targets once and logs that decision in the job summary. The
+release also checks that `internal/plugin/plugin.go` declares the tagged
+version, because the library embeds it from source rather than from
+`-ldflags`; a mismatch fails before anything is published.
 
 | Platform | Architectures | Build requirements |
 | --- | --- | --- |
@@ -398,15 +408,17 @@ Preinstalled runtime libraries on CI runners do not remove this host requirement
 Pushing to `main` or opening a pull request automatically builds all five targets
 on GitHub Actions. The CI workflow can also be started manually. Its successful
 builds upload the plugin library and standalone CLI as per-platform artifacts;
-creating a release is only triggered by a version tag.
+creating a release is only triggered by a version tag. Commits that only touch
+documentation, screenshots, or license files skip CI, since they cannot change
+a binary; a release on such a commit rebuilds on demand.
 Runner images use explicit versions. A newer CI run cancels an older run on the
 same branch; release workflows are not automatically canceled.
 
 GitHub Actions caches npm downloads, Go modules, Go compilation results, and C
 toolchains. Module caches follow the dependency lock; compilation caches are
 saved per run and restore the latest matching platform, Go version, and build
-profile. Test and plugin-build profiles are separate, while CI and Release can
-reuse matching caches. Zig compilation results have a separate rolling cache
+profile. Test and plugin-build profiles are separate, and CI and the release
+fallback share the same build cache keys. Zig compilation results have a separate rolling cache
 from the fixed-version compiler installation. Build matrices run on native
 target runners. The separate
 manual `Darwin Intel experiment` workflow also caches its patched Go toolchain
