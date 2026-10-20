@@ -373,6 +373,18 @@ func TestFileCredentialsSources(t *testing.T) {
 		t.Fatalf("env cred=%+v err=%v", cred, err)
 	}
 	delete(env, "CLAUDE_CODE_OAUTH_TOKEN")
+	env["CLAUDE_DISABLE_KEYCHAIN"] = "1"
+	asked = ""
+	if cred, err := base(keychain).Claude(); err != nil || cred.token != "file-token" || asked != "" {
+		t.Fatalf("disabled keychain cred=%+v err=%v asked=%q", cred, err, asked)
+	}
+	delete(env, "CLAUDE_DISABLE_KEYCHAIN")
+	env["CPA_DISABLE_KEYCHAIN"] = "true"
+	asked = ""
+	if cred, err := base(keychain).Claude(); err != nil || cred.token != "file-token" || asked != "" {
+		t.Fatalf("disabled cpa keychain cred=%+v err=%v asked=%q", cred, err, asked)
+	}
+	delete(env, "CPA_DISABLE_KEYCHAIN")
 	delete(env, "CLAUDE_CONFIG_DIR")
 	if _, err := base(nil).Claude(); !errors.Is(err, errNotConfigured) {
 		t.Fatalf("missing err = %v", err)

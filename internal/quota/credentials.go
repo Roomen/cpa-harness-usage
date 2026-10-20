@@ -74,7 +74,7 @@ func (f *fileCredentials) Claude() (credential, error) {
 	if token := strings.TrimSpace(f.getenv("CLAUDE_CODE_OAUTH_TOKEN")); token != "" {
 		return credential{token: token}, nil
 	}
-	if f.keychain != nil {
+	if f.keychain != nil && !f.keychainDisabled() {
 		raw, err := f.keychain(claudeKeychainService)
 		switch {
 		case err == nil:
@@ -98,6 +98,14 @@ func (f *fileCredentials) Claude() (credential, error) {
 	}
 	return parseClaudeCredentials(raw)
 }
+func (f *fileCredentials) keychainDisabled() bool {
+	v := strings.ToLower(strings.TrimSpace(f.getenv("CLAUDE_DISABLE_KEYCHAIN")))
+	if v == "" {
+		v = strings.ToLower(strings.TrimSpace(f.getenv("CPA_DISABLE_KEYCHAIN")))
+	}
+	return v == "1" || v == "true" || v == "yes" || v == "on"
+}
+
 
 func (f *fileCredentials) Codex() (credential, error) {
 	raw, err := f.readFile(filepath.Join(f.codexHome(), "auth.json"))
