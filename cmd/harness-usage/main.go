@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	binary := flag.String("binary", "ccusage", "path to the ccusage executable (default: ccusage on PATH)")
+	binary := flag.String("binary", usage.DefaultBinary, "bundled (default), or path to a local collector executable")
 	sources := flag.String("sources", "claude,codex,opencode", "comma-separated sources: claude,codex,opencode")
 	timeout := flag.Duration("timeout", usage.DefaultCommandTimeout, "per-source scan timeout")
 	flag.Parse()

@@ -9,9 +9,8 @@ plugins:
     harness-usage:
       enabled: true
       priority: 0
-      # ccusage executable used to read local harness history. Use an absolute
-      # path when the CPA process's PATH does not include this project's
-      # node_modules/.bin directory.
-      binary: /absolute/path/to/cpa-harness-usage/node_modules/.bin/ccusage
+      # Embedded native collector; no Node.js/npm required on the CPA host.
+      # Override with an absolute native executable path if needed.
+      binary: bundled
       # Any subset of claude, codex, opencode. Omit for all three.
       sources: [claude, codex, opencode]

@@ -1,5 +1,8 @@
 /bin/
 /node_modules/
+/.cache/
+/.tools/
+/internal/usage/collectorassets/
 .DS_Store
 *.log
 config.local.yaml

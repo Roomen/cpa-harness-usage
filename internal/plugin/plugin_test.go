@@ -471,7 +471,7 @@ func TestParseConfigDefaultsAndValidation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.Binary != "ccusage" || len(cfg.Sources) != 3 {
+	if cfg.Binary != usage.DefaultBinary || len(cfg.Sources) != 3 {
 		t.Fatalf("defaults = %+v", cfg)
 	}
 
@@ -487,7 +487,7 @@ func TestParseConfigDefaultsAndValidation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.Binary != "ccusage" || len(cfg.Sources) != 3 {
+	if cfg.Binary != usage.DefaultBinary || len(cfg.Sources) != 3 {
 		t.Fatalf("unknown field changed defaults: %+v", cfg)
 	}
 }

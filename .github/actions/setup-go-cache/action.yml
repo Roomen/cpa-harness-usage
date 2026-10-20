@@ -1,0 +1,62 @@
+name: Set up Go with reusable build caches
+description: Cache modules by dependency version and refresh compilation caches on each run
+inputs:
+  profile:
+    description: Compilation profile used to isolate tests and plugin builds
+    required: true
+  compiler-key:
+    description: Fingerprint of the native compiler configuration
+    default: stock
+outputs:
+  go-version:
+    description: Resolved Go version
+    value: ${{ steps.go.outputs.go-version }}
+  build-cache-path:
+    description: Go compilation cache directory
+    value: ${{ steps.paths.outputs.build }}
+  build-cache-key:
+    description: Cache key to save after compilation
+    value: ${{ steps.keys.outputs.build }}
+  build-cache-hit:
+    description: Whether this exact run already has a compilation cache
+    value: ${{ steps.build.outputs.cache-hit }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-go@v6
+      id: go
+      with:
+        go-version-file: go.mod
+        cache: false
+
+    - name: Resolve Go cache directories
+      id: paths
+      shell: bash
+      run: |
+        echo "modules=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+        echo "build=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
+
+    - name: Resolve cache keys
+      id: keys
+      shell: bash
+      env:
+        CACHE_BASE: go-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.go.outputs.go-version }}-${{ inputs.profile }}-${{ inputs.compiler-key }}
+        DEPENDENCIES: ${{ hashFiles('go.mod', 'go.sum') }}
+      run: |
+        echo "prefix=$CACHE_BASE-" >> "$GITHUB_OUTPUT"
+        echo "dependencies=$CACHE_BASE-$DEPENDENCIES-" >> "$GITHUB_OUTPUT"
+        echo "build=$CACHE_BASE-$DEPENDENCIES-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+
+    - uses: actions/cache@v4
+      with:
+        path: ${{ steps.paths.outputs.modules }}
+        key: go-mod-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.go.outputs.go-version }}-${{ hashFiles('go.mod', 'go.sum') }}
+
+    - uses: actions/cache/restore@v4
+      id: build
+      with:
+        path: ${{ steps.paths.outputs.build }}
+        key: ${{ steps.keys.outputs.build }}
+        restore-keys: |
+          ${{ steps.keys.outputs.dependencies }}
+          ${{ steps.keys.outputs.prefix }}

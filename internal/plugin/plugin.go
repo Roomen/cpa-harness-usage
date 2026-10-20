@@ -68,7 +68,7 @@ type Plugin struct {
 func New() *Plugin {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Plugin{
-		collector:  usage.New(usage.Config{Binary: "ccusage", Sources: append([]string(nil), defaultSources...)}),
+		collector:  usage.New(usage.Config{Sources: append([]string(nil), defaultSources...)}),
 		baseCtx:    ctx,
 		cancelBase: cancel,
 		now:        time.Now,
@@ -212,7 +212,7 @@ func parseConfig(raw []byte) (usage.Config, error) {
 		}
 	}
 
-	binary := "ccusage"
+	binary := usage.DefaultBinary
 	if parsed.Binary != nil {
 		binary = strings.TrimSpace(*parsed.Binary)
 		if binary == "" || strings.ContainsAny(binary, "\x00\r\n") {
@@ -261,8 +261,8 @@ func registrationResult() map[string]any {
 				{
 					"Name":        "binary",
 					"Type":        "string",
-					"Default":     "ccusage",
-					"Description": "Path to the local collector executable. Defaults to ccusage on PATH.",
+					"Default":     usage.DefaultBinary,
+					"Description": "Use bundled (default), or an explicit local collector executable.",
 				},
 				{
 					"Name":        "sources",

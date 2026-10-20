@@ -92,11 +92,11 @@ type DailyUsage struct {
 	CostUSD             float64 `json:"costUSD"`
 }
 
-// New creates a collector. An empty binary uses "ccusage" on PATH.
+// New creates a collector. An empty binary uses the bundled collector.
 func New(cfg Config) *Collector {
 	binary := strings.TrimSpace(cfg.Binary)
 	if binary == "" {
-		binary = "ccusage"
+		binary = DefaultBinary
 	}
 	timeout := cfg.Timeout
 	if timeout <= 0 {
@@ -175,7 +175,15 @@ func (c *Collector) collectOne(ctx context.Context, source string) ([]DailyUsage
 	commandCtx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(commandCtx, c.binary, source, "daily", "--json", "--offline")
+	binary := c.binary
+	if binary == DefaultBinary {
+		var err error
+		binary, err = bundledBinary()
+		if err != nil {
+			return nil, ErrorCommandFailed
+		}
+	}
+	cmd := exec.CommandContext(commandCtx, binary, source, "daily", "--json", "--offline")
 	var stdout cappedBuffer
 	stdout.limit = c.maxOutput
 	cmd.Stdout = &stdout

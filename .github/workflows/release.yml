@@ -25,13 +25,19 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-go@v6
+      - uses: ./.github/actions/setup-go-cache
+        id: go-cache
         with:
-          go-version-file: go.mod
-          cache: true
+          profile: test
 
       - run: go vet ./...
       - run: go test -race ./...
+
+      - uses: actions/cache/save@v4
+        if: always() && steps.go-cache.outputs.build-cache-path != '' && steps.go-cache.outputs.build-cache-hit != 'true'
+        with:
+          path: ${{ steps.go-cache.outputs.build-cache-path }}
+          key: ${{ steps.go-cache.outputs.build-cache-key }}
 
   build:
     name: build ${{ matrix.goos }}/${{ matrix.goarch }}
@@ -45,18 +51,68 @@ jobs:
           - { goos: linux, goarch: amd64, runner: ubuntu-latest, ext: so }
           - { goos: linux, goarch: arm64, runner: ubuntu-24.04-arm, ext: so }
           - { goos: windows, goarch: amd64, runner: windows-latest, ext: dll }
-        # darwin/amd64 is intentionally absent: stock Go shared libraries hit
-        # the known TLS collision inside a Go host. See README.
+          - { goos: windows, goarch: arm64, runner: windows-11-arm, ext: dll }
     defaults:
       run:
         shell: bash
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-node@v4
         with:
-          go-version-file: go.mod
-          cache: true
+          node-version: "22"
+          architecture: ${{ matrix.goarch == 'amd64' && 'x64' || 'arm64' }}
+          cache: npm
+
+      - uses: ./.github/actions/setup-go-cache
+        id: go-cache
+        with:
+          profile: build
+          compiler-key: ${{ hashFiles('.github/scripts/setup-*-toolchain.*', '.github/workflows/ci.yml', '.github/workflows/release.yml') }}
+
+      - uses: actions/cache@v4
+        if: matrix.goos == 'windows'
+        with:
+          path: .tools
+          key: llvm-mingw-20261006-${{ matrix.goos }}-${{ matrix.goarch }}-${{ hashFiles('.github/scripts/setup-windows-toolchain.ps1') }}
+
+      - uses: actions/cache@v4
+        if: matrix.goos == 'linux'
+        with:
+          path: .tools
+          key: zig-0.15.2-${{ matrix.goos }}-${{ matrix.goarch }}-${{ hashFiles('.github/scripts/setup-linux-toolchain.sh') }}
+
+      - uses: actions/cache/restore@v4
+        if: matrix.goos == 'linux'
+        id: zig-cache
+        with:
+          path: .cache/zig-build-${{ matrix.goarch }}
+          key: zig-build-v1-0.15.2-${{ runner.os }}-${{ runner.arch }}-${{ matrix.goarch }}-${{ hashFiles('.github/scripts/setup-linux-toolchain.sh') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: zig-build-v1-0.15.2-${{ runner.os }}-${{ runner.arch }}-${{ matrix.goarch }}-${{ hashFiles('.github/scripts/setup-linux-toolchain.sh') }}-
+
+      - name: Set up pinned Linux C compiler
+        if: matrix.goos == 'linux'
+        env:
+          GOARCH: ${{ matrix.goarch }}
+        run: bash .github/scripts/setup-linux-toolchain.sh
+
+      - name: Set up pinned Windows C compiler
+        if: matrix.goos == 'windows'
+        shell: pwsh
+        env:
+          GOARCH: ${{ matrix.goarch }}
+        run: .github/scripts/setup-windows-toolchain.ps1
+
+      - name: Prepare pinned collector
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          node scripts/prepare-collector.mjs
+
+      - name: Verify real collector with synthetic fixtures
+        run: go test -tags 'bundledcollector collectorintegration' ./internal/usage
 
       - name: Resolve version
         id: ver
@@ -75,16 +131,18 @@ jobs:
           CGO_ENABLED: "1"
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-          CC: ${{ matrix.goos == 'windows' && 'gcc' || '' }}
           VERSION: ${{ steps.ver.outputs.version }}
         run: |
           mkdir -p out
+          if [ -n "${PLUGIN_CC:-}" ]; then
+            export CC="$PLUGIN_CC" ZIG_GLOBAL_CACHE_DIR="$PLUGIN_ZIG_GLOBAL_CACHE_DIR"
+          fi
           if [ "$GOOS" = darwin ]; then
             export MACOSX_DEPLOYMENT_TARGET="$MACOS_MIN"
             export CGO_CFLAGS="-O2 -g -mmacosx-version-min=$MACOS_MIN"
             export CGO_LDFLAGS="-mmacosx-version-min=$MACOS_MIN"
           fi
-          go build -trimpath \
+          go build -tags bundledcollector -trimpath \
             -ldflags "-s -w \
               -X cpa-harness-usage/internal/plugin.Version=${VERSION} \
               -X cpa-harness-usage/internal/plugin.Repository=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
@@ -93,13 +151,23 @@ jobs:
           test -s "out/${PLUGIN_ID}.${{ matrix.ext }}"
           ls -l out
 
+      - name: Check Linux GLIBC baseline
+        if: matrix.goos == 'linux'
+        run: bash .github/scripts/check-glibc.sh out/${PLUGIN_ID}.so
+
+      - name: Load plugin from Go host
+        run: |
+          go build -o out/fakeccusage${{ matrix.goos == 'windows' && '.exe' || '' }} ./internal/usage/testdata/fakeccusage
+          go run ./cmd/plugin-smoke -library out/${PLUGIN_ID}.${{ matrix.ext }} -binary out/fakeccusage${{ matrix.goos == 'windows' && '.exe' || '' }}
+          go run ./cmd/plugin-smoke -library out/${PLUGIN_ID}.${{ matrix.ext }} -binary bundled
+
       - name: Package
         run: |
           version="${{ steps.ver.outputs.version }}"
           zipname="${PLUGIN_ID}_${version}_${{ matrix.goos }}_${{ matrix.goarch }}.zip"
           mkdir -p dist
           if [ "${{ matrix.goos }}" = "windows" ]; then
-            powershell -NoProfile -Command "Compress-Archive -Path 'out/${PLUGIN_ID}.${{ matrix.ext }}' -DestinationPath 'dist/${zipname}' -Force"
+            pwsh -NoProfile -Command "Compress-Archive -Path 'out/${PLUGIN_ID}.${{ matrix.ext }}' -DestinationPath 'dist/${zipname}' -Force"
           else
             (cd out && zip -q "../dist/${zipname}" "${PLUGIN_ID}.${{ matrix.ext }}")
           fi
@@ -110,6 +178,18 @@ jobs:
           name: dist-${{ matrix.goos }}-${{ matrix.goarch }}
           path: dist/*.zip
           if-no-files-found: error
+
+      - uses: actions/cache/save@v4
+        if: always() && steps.go-cache.outputs.build-cache-path != '' && steps.go-cache.outputs.build-cache-hit != 'true'
+        with:
+          path: ${{ steps.go-cache.outputs.build-cache-path }}
+          key: ${{ steps.go-cache.outputs.build-cache-key }}
+
+      - uses: actions/cache/save@v4
+        if: always() && matrix.goos == 'linux' && steps.zig-cache.outputs.cache-primary-key != '' && steps.zig-cache.outputs.cache-hit != 'true'
+        with:
+          path: .cache/zig-build-${{ matrix.goarch }}
+          key: ${{ steps.zig-cache.outputs.cache-primary-key }}
 
   release:
     name: publish release
