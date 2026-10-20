@@ -14,6 +14,8 @@ import (
 
 const testPrices = `{"_cloudprice":{"updated_at":"2026-10-19"},"sample_spec":{"input_cost_per_token":"description"},"gpt-5":{"input_cost_per_token":0.00000125,"output_cost_per_token":0.00001,"cache_read_input_token_cost":0.000000125},"free":{"input_cost_per_token":0,"output_cost_per_token":0,"cache_read_input_token_cost":0,"cache_creation_input_token_cost":0},"deepseek-v4.1-flash":{"input_cost_per_token":0.00000031,"output_cost_per_token":0.00000123},"deepseek/deepseek-v4.1-flash":{"input_cost_per_token":0.0000003,"output_cost_per_token":0.0000012}}`
 
+const flexibleTestPrices = `{"_cloudprice":{"updated_at":"2026-10-19"},"gpt-5":{"input_cost_per_token":0.00000125,"output_cost_per_token":0.00001},"gemini-3.8-flash":{"input_cost_per_token":0.000000375,"output_cost_per_token":0.0000015},"gemini/gemini-2.5-flash":{"input_cost_per_token":0.00000015,"output_cost_per_token":0.0000006}}`
+
 func testPricingStore(t *testing.T) *PricingStore {
 	t.Helper()
 	s := NewPricingStore("")
@@ -291,5 +293,93 @@ func TestStoredOnlyModelCostAndDailyReconciliation(t *testing.T) {
 				t.Fatal(rows)
 			}
 		})
+	}
+}
+
+func TestFlexibleModelPricingMatching(t *testing.T) {
+	s := NewPricingStore("")
+	if err := s.Update([]byte(flexibleTestPrices)); err != nil {
+		t.Fatal(err)
+	}
+	cases := []struct {
+		name    string
+		missing bool
+	}{
+		{"gemini-3.8-flash", false},
+		{"gemini-3.8-flash-high", false},
+		{"gemini-3.8-flash-low", false},
+		{"gemini-3.8-flash-thinking", false},
+		{"[omp] gemini-3.8-flash-high", false},
+		{"gemini-2.5-flash", false},
+		{"gemini-2.5-flash-high", false},
+		{"GPT-5", false},
+		{"GPT-5-HIGH", false},
+		{"GEMINI-3.8-FLASH-HIGH", false},
+		{"gemini-3.8-flash-unknownsuffix", true},
+		{"completely-unknown-model", true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			rows := []DailyUsage{{
+				TotalTokens: 200,
+				Models: []ModelUsage{{
+					Model:        tc.name,
+					InputTokens:  100,
+					OutputTokens: 100,
+					TotalTokens:  200,
+				}},
+			}}
+			s.Apply(rows, "codex")
+			if rows[0].MissingPricing != tc.missing || rows[0].Models[0].MissingPricing != tc.missing {
+				t.Fatalf("%s: missing pricing got row=%v model=%v, want %v", tc.name, rows[0].MissingPricing, rows[0].Models[0].MissingPricing, tc.missing)
+			}
+			if !tc.missing && (rows[0].CostUSD <= 0 || rows[0].Models[0].CostUSD == nil || *rows[0].Models[0].CostUSD <= 0) {
+				t.Fatalf("%s: expected positive cost, got row.CostUSD=%v model.CostUSD=%v", tc.name, rows[0].CostUSD, rows[0].Models[0].CostUSD)
+			}
+		})
+	}
+}
+
+func TestPartialPricingCalculation(t *testing.T) {
+	s := NewPricingStore("")
+	if err := s.Update([]byte(flexibleTestPrices)); err != nil {
+		t.Fatal(err)
+	}
+	// Row with one priced model (gemini-3.8-flash-high) and one unpriced model
+	rows := []DailyUsage{{
+		TotalTokens: 400,
+		Models: []ModelUsage{
+			{
+				Model:        "gemini-3.8-flash-high",
+				InputTokens:  100,
+				OutputTokens: 100,
+				TotalTokens:  200,
+			},
+			{
+				Model:        "totally-unpriced-model",
+				InputTokens:  100,
+				OutputTokens: 100,
+				TotalTokens:  200,
+			},
+		},
+	}}
+	s.Apply(rows, "omp")
+
+	// Row should have MissingPricing = true because one model is unpriced
+	if !rows[0].MissingPricing {
+		t.Errorf("expected row MissingPricing=true")
+	}
+	// Model 0 (gemini-3.8-flash-high) should be priced
+	if rows[0].Models[0].MissingPricing || rows[0].Models[0].CostUSD == nil || *rows[0].Models[0].CostUSD <= 0 {
+		t.Errorf("expected model 0 to be priced, got %+v", rows[0].Models[0])
+	}
+	// Model 1 (unpriced) should have MissingPricing=true and CostUSD=nil
+	if !rows[0].Models[1].MissingPricing || rows[0].Models[1].CostUSD != nil {
+		t.Errorf("expected model 1 to be unpriced, got %+v", rows[0].Models[1])
+	}
+	// Row CostUSD should equal the sum of the priced models (not zero, not missing)
+	expectedCost := *rows[0].Models[0].CostUSD
+	if math.Abs(rows[0].CostUSD-expectedCost) > 1e-12 {
+		t.Errorf("expected row CostUSD=%v, got %v", expectedCost, rows[0].CostUSD)
 	}
 }

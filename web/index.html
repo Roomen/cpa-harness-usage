@@ -211,6 +211,7 @@ tr.day td { background: var(--surface-2); font-weight: 600; cursor: pointer; }
 tr.day td:first-child { border-radius: 8px 0 0 8px; } tr.day td:last-child { border-radius: 0 8px 8px 0; }
 td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
 .dash { color: var(--faint); }
+.cost-partial { cursor: help; border-bottom: 1px dotted var(--muted); }
 .cards { display: none; }
 .more { display: flex; justify-content: center; margin-top: 12px; }
 
@@ -413,7 +414,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       loading: "正在读取本机用量…", loadError: "暂时无法读取用量，请稍后重试。", retry: "重试", refreshTitle: "刷新（含联网查询额度）",
       partialTitle: "部分来源不可用", sourceEmpty: "无数据", sourceFailed: "采集失败",
       summaryTokens: "总 Token", summaryInput: "输入", summaryOutput: "输出", summaryCacheRead: "缓存读", summaryCacheWrite: "缓存写", summaryCost: "估算费用", summaryOther: "其他 Token",
-      costHint: "按 API 公开价折算，非订阅账单",
+      costHint: "按 API 公开价折算，非订阅账单", costHintPartial: "部分已知费用（含未定价模型，至少）",
       costNote: "费用按公开价格估算，不代表订阅账单；缓存与 reasoning token 已按来源口径计入总量，不再重复相加。",
       tableTitle: "明细", detailsHint: "按日期分组，点击日期行折叠", dateSource: "日期 / 来源", showMore: "显示更早 7 天", inProgress: "进行中", rowsN: "{n} 行",
       filterRange: "日期范围", filters: "筛选", from: "开始日期", to: "结束日期", source: "来源", model: "模型",
@@ -456,8 +457,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       loading: "正在讀取本機用量…", loadError: "暫時無法讀取用量，請稍後再試。", retry: "重試", refreshTitle: "重新整理（含連網查詢額度）",
       partialTitle: "部分來源無法使用", sourceEmpty: "無資料", sourceFailed: "擷取失敗",
       summaryTokens: "總 Token", summaryInput: "輸入", summaryOutput: "輸出", summaryCacheRead: "快取讀取", summaryCacheWrite: "快取寫入", summaryCost: "預估費用", summaryOther: "其他 Token",
-      costHint: "依 API 公開價格換算，非訂閱帳單",
-      costNote: "費用依公開價格估算，不代表訂閱帳單；快取與 reasoning token 已依來源定義計入總量，不會重複相加。",
+      costHint: "依 API 公開價格換算，非訂閱帳單", costHintPartial: "部分已知費用（含未定價模型，至少）",
       tableTitle: "明細", detailsHint: "依日期分組，點擊日期列收合", dateSource: "日期 / 來源", showMore: "顯示更早 7 天", inProgress: "進行中", rowsN: "{n} 列",
       filterRange: "日期範圍", filters: "篩選", from: "開始日期", to: "結束日期", source: "來源", model: "模型",
       rangeToday: "今天", range7: "7 天", range30: "30 天", range90: "90 天", rangeAll: "全部", rangeCustom: "自訂",
@@ -499,8 +499,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       loading: "Reading local usage…", loadError: "Usage is temporarily unavailable. Try again shortly.", retry: "Retry", refreshTitle: "Refresh (also queries account quota online)",
       partialTitle: "Some sources are unavailable", sourceEmpty: "No data", sourceFailed: "Failed",
       summaryTokens: "Total tokens", summaryInput: "Input", summaryOutput: "Output", summaryCacheRead: "Cache read", summaryCacheWrite: "Cache write", summaryCost: "Estimated cost", summaryOther: "Other tokens",
-      costHint: "API list-price equivalent, not a subscription bill",
-      costNote: "Cost is estimated from public prices and is not a subscription invoice. Cache and reasoning tokens follow each source's own total and are not added twice.",
+      costHint: "API list-price equivalent, not a subscription bill", costHintPartial: "Partially known cost (includes unpriced models, at least)",
       tableTitle: "Details", detailsHint: "Grouped by date; click a date row to collapse", dateSource: "Date / source", showMore: "Show 7 earlier days", inProgress: "In progress", rowsN: "{n} rows",
       filterRange: "Date range", filters: "Filters", from: "Start date", to: "End date", source: "Sources", model: "Model",
       rangeToday: "Today", range7: "7 d", range30: "30 d", range90: "90 d", rangeAll: "All", rangeCustom: "Custom",
@@ -542,8 +541,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       loading: "Загрузка данных…", loadError: "Данные временно недоступны. Повторите попытку позже.", retry: "Повторить", refreshTitle: "Обновить (включая онлайн-запрос лимитов)",
       partialTitle: "Некоторые источники недоступны", sourceEmpty: "Нет данных", sourceFailed: "Ошибка",
       summaryTokens: "Всего токенов", summaryInput: "Вход", summaryOutput: "Выход", summaryCacheRead: "Чтение кэша", summaryCacheWrite: "Запись кэша", summaryCost: "Оценка стоимости", summaryOther: "Прочие токены",
-      costHint: "По публичным ценам API, не счёт подписки",
-      costNote: "Стоимость рассчитана по публичным ценам и не является счётом подписки. Токены кэша и reasoning учитываются по правилам источника и не суммируются повторно.",
+      costHint: "По публичным ценам API, не счёт подписки", costHintPartial: "Частично известная стоимость (есть модели без цен, не менее)",
       tableTitle: "Детали", detailsHint: "Группировка по датам; нажмите на дату, чтобы свернуть", dateSource: "Дата / источник", showMore: "Показать ещё 7 дней", inProgress: "Идёт", rowsN: "строк: {n}",
       filterRange: "Период", filters: "Фильтры", from: "Начало", to: "Конец", source: "Источники", model: "Модель",
       rangeToday: "Сегодня", range7: "7 дн.", range30: "30 дн.", range90: "90 дн.", rangeAll: "Всё", rangeCustom: "Свой",
@@ -585,8 +583,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       loading: "Đang tải dữ liệu…", loadError: "Tạm thời không thể tải dữ liệu. Vui lòng thử lại sau.", retry: "Thử lại", refreshTitle: "Làm mới (gồm truy vấn hạn mức trực tuyến)",
       partialTitle: "Một số nguồn không khả dụng", sourceEmpty: "Không có dữ liệu", sourceFailed: "Lỗi",
       summaryTokens: "Tổng token", summaryInput: "Đầu vào", summaryOutput: "Đầu ra", summaryCacheRead: "Đọc bộ nhớ đệm", summaryCacheWrite: "Ghi bộ nhớ đệm", summaryCost: "Chi phí ước tính", summaryOther: "Token khác",
-      costHint: "Quy đổi theo giá API công khai, không phải hóa đơn đăng ký",
-      costNote: "Chi phí ước tính theo giá công khai, không phải hóa đơn đăng ký. Token bộ nhớ đệm và reasoning được tính theo quy ước của từng nguồn, không cộng trùng.",
+      costHint: "Quy đổi theo giá API công khai, không phải hóa đơn đăng ký", costHintPartial: "Chi phí đã biết một phần (có mô hình chưa có giá, tối thiểu)",
       tableTitle: "Chi tiết", detailsHint: "Nhóm theo ngày; nhấn vào dòng ngày để thu gọn", dateSource: "Ngày / nguồn", showMore: "Hiện thêm 7 ngày trước", inProgress: "Đang diễn ra", rowsN: "{n} dòng",
       filterRange: "Khoảng ngày", filters: "Bộ lọc", from: "Từ ngày", to: "Đến ngày", source: "Nguồn", model: "Mô hình",
       rangeToday: "Hôm nay", range7: "7 ngày", range30: "30 ngày", range90: "90 ngày", rangeAll: "Tất cả", rangeCustom: "Tùy chọn",
@@ -628,8 +625,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       loading: "사용량을 불러오는 중…", loadError: "일시적으로 사용량을 불러올 수 없습니다. 잠시 후 다시 시도하세요.", retry: "다시 시도", refreshTitle: "새로고침 (계정 한도 온라인 조회 포함)",
       partialTitle: "일부 소스를 사용할 수 없음", sourceEmpty: "데이터 없음", sourceFailed: "실패",
       summaryTokens: "총 토큰", summaryInput: "입력", summaryOutput: "출력", summaryCacheRead: "캐시 읽기", summaryCacheWrite: "캐시 쓰기", summaryCost: "예상 비용", summaryOther: "기타 토큰",
-      costHint: "API 공개 가격 환산, 구독 청구서 아님",
-      costNote: "예상 비용은 공개 가격 기준이며 구독 청구서가 아닙니다. 캐시 및 reasoning 토큰은 소스별 기준으로 총량에 포함되며 중복 합산하지 않습니다.",
+      costHint: "API 공개 가격 환산, 구독 청구서 아님", costHintPartial: "일부 알려진 비용 (가격 미정 모델 포함, 최소)",
       tableTitle: "상세", detailsHint: "날짜별 그룹; 날짜 행을 눌러 접기", dateSource: "날짜 / 소스", showMore: "이전 7일 더 보기", inProgress: "진행 중", rowsN: "{n}행",
       filterRange: "날짜 범위", filters: "필터", from: "시작일", to: "종료일", source: "소스", model: "모델",
       rangeToday: "오늘", range7: "7일", range30: "30일", range90: "90일", rangeAll: "전체", rangeCustom: "사용자 지정",
@@ -816,15 +812,36 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
     return String(n);
   }
   function formatExact(value) { return (Number(value) || 0).toLocaleString(state.language); }
-  function formatCost(value) {
+  function formatCost(value, incomplete) {
     if (value === null || value === undefined) return "—";
+    if (typeof value === "object") {
+      incomplete = Boolean(value.incomplete);
+      value = value.value;
+      if (value === null || value === undefined) return "—";
+    }
     const n = Number(value) || 0;
-    if (n === 0) return "$0.00";
-    if (n < 0.01) return "<$0.01";
-    if (n < 100) return "$" + n.toFixed(2);
-    return "$" + n.toFixed(0);
+    let formatted = "$0.00";
+    if (n === 0) formatted = "$0.00";
+    else if (n < 0.01) return incomplete ? "≥ <$0.01" : "<$0.01";
+    else if (n < 100) formatted = "$" + n.toFixed(2);
+    else formatted = "$" + n.toFixed(0);
+    return incomplete ? "≥ " + formatted : formatted;
   }
-  function costHTML(value) { return value === null || value === undefined ? '<span class="dash">—</span>' : esc(formatCost(value)); }
+  function costHTML(value) {
+    if (value === null || value === undefined) return '<span class="dash">—</span>';
+    let incomplete = false;
+    let amount = value;
+    if (typeof value === "object") {
+      incomplete = Boolean(value.incomplete);
+      amount = value.value;
+      if (amount === null || amount === undefined) return '<span class="dash">—</span>';
+    }
+    const text = formatCost(amount, incomplete);
+    if (incomplete) {
+      return '<span class="cost-partial" title="' + esc(t("costHintPartial")) + '">' + esc(text) + '</span>';
+    }
+    return esc(text);
+  }
 
   // ---------- dates (local calendar days, YYYY-MM-DD) ----------
   const pad2 = (n) => String(n).padStart(2, "0");
@@ -941,7 +958,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
           input: Number(row.inputTokens) || 0, output: Number(row.outputTokens) || 0,
           cacheRead: Number(row.cacheReadTokens) || 0, cacheWrite: Number(row.cacheCreationTokens) || 0,
           total: Number(row.totalTokens) || 0,
-          cost: row.missingPricing === true || typeof row.costUSD !== "number" ? null : row.costUSD
+          cost: ((row.missingPricing === true && row.costUSD === 0 && (Number(row.totalTokens) || 0) > 0) || typeof row.costUSD !== "number" || isNaN(row.costUSD)) ? null : row.costUSD
         };
         const models = (Array.isArray(row.models) ? row.models : []).filter((model) => model && typeof model.model === "string");
         if (!models.length) { entries.push(Object.assign({}, base, { model: "" })); return; }
@@ -988,20 +1005,32 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
   function costFor(entries, from, to) {
     if (allModelsSelected()) {
       let sum = 0;
-      let unknown = false;
+      let hasKnown = false;
+      let incomplete = false;
       const wanted = new Set(selectedSources());
       state.report.sources.forEach((source) => {
         if (!wanted.has(source.source)) return;
         (Array.isArray(source.daily) ? source.daily : []).forEach((row) => {
           if (!row || !isDateKey(row.date) || row.date < from || row.date > to) return;
-          if (row.missingPricing === true || typeof row.costUSD !== "number") unknown = true;
-          else sum += row.costUSD;
+          const tokens = Number(row.totalTokens) || 0;
+          if (row.missingPricing === true && tokens > 0) {
+            incomplete = true;
+          }
+          if (typeof row.costUSD === "number" && !isNaN(row.costUSD)) {
+            const isUnknown = row.missingPricing === true && row.costUSD === 0 && tokens > 0;
+            if (!isUnknown) {
+              sum += row.costUSD;
+              hasKnown = true;
+            }
+          }
         });
       });
-      return unknown ? null : sum;
+      return { value: hasKnown ? sum : null, incomplete: incomplete };
     }
     const totals = totalsOf(entries);
-    return totals.costUnknown ? null : totals.cost;
+    const hasKnown = totals.cost > 0 || (entries.length > 0 && totals.costUnknown < entries.length);
+    const incomplete = totals.costUnknown > 0;
+    return { value: hasKnown ? totals.cost : null, incomplete: incomplete };
   }
 
   function hasAnyData() {
@@ -1066,9 +1095,11 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
     const parts = [["summaryInput", tot.input, "--in"], ["summaryOutput", tot.output, "--out"], ["summaryCacheRead", tot.cacheRead, "--cr"], ["summaryCacheWrite", tot.cacheWrite, "--cw"]];
     if (other > 0) parts.push(["summaryOther", other, "--oth"]);
     const pct = (v) => (tot.total ? (v / tot.total) * 100 : 0);
+    const costData = costFor(entries, from, to);
+    const costHintText = costData && costData.incomplete && costData.value !== null ? t("costHintPartial") : t("costHint");
     setHTML(el("sum"),
       '<div class="kpi"><div class="l">' + esc(t("summaryTokens")) + '</div><div class="v num">' + esc(formatTokens(tot.total)) + '</div><div class="s num">' + esc(formatExact(tot.total)) + "</div></div>" +
-      '<div class="kpi"><div class="l">' + esc(t("summaryCost")) + '</div><div class="v num">' + esc(formatCost(costFor(entries, from, to))) + '</div><div class="s">' + esc(t("costHint")) + "</div></div>" +
+      '<div class="kpi"><div class="l">' + esc(t("summaryCost")) + '</div><div class="v num">' + esc(formatCost(costData)) + '</div><div class="s">' + esc(costHintText) + "</div></div>" +
       '<div class="comp"><div class="stack">' + parts.map((p) => '<span style="width:' + pct(p[1]).toFixed(3) + "%;background:var(" + p[2] + ')" title="' + esc(t(p[0])) + '"></span>').join("") + "</div>" +
       '<div class="legend">' + parts.map((p) => '<span class="item"><span class="dot" style="background:var(' + p[2] + ')"></span>' + esc(t(p[0])) + '<b class="num">' + esc(formatTokens(p[1])) + '</b><span class="num">' + pct(p[1]).toFixed(1) + "%</span></span>").join("") + "</div></div>");
     const extra = state.range === "custom" || state.range === "today" ? "" : " · " + (from === to ? from : from + " – " + to);
@@ -1273,7 +1304,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       const list = byDate.get(date).slice().sort((a, b) => b.total - a.total);
       const tot = totalsOf(list);
       const collapsed = state.collapsed.has(date);
-      const cost = tot.costUnknown && !allModelsSelected() ? null : costFor(list, date, date);
+      const cost = costFor(list, date, date);
       rows += '<tr class="day" data-day="' + date + '" aria-expanded="' + !collapsed + '"><td class="num">' + date + (date === now ? ' <span class="chip">' + esc(t("inProgress")) + "</span>" : "") +
         '</td><td style="color:var(--muted);font-weight:400">' + esc(t("rowsN", { n: list.length })) + '</td><td colspan="4"></td><td class="n num">' + esc(formatTokens(tot.total)) + '</td><td class="n num">' + costHTML(cost) + "</td></tr>";
       cards += '<button type="button" class="dhead num" data-day="' + date + '">' + date + " · " + esc(formatTokens(tot.total)) + (collapsed ? " ›" : "") + "</button>";
