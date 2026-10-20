@@ -26,6 +26,21 @@ func main() {
 	case "large":
 		fmt.Print(strings.Repeat("x", 4096))
 		return
+	case "path":
+		// Succeed only when the adapter received the expected store path.
+		want := env(prefix + "PI_PATH")
+		matched := want != ""
+		if matched {
+			matched = false
+			for index, argument := range os.Args {
+				if argument == "--pi-path" && index+1 < len(os.Args) && os.Args[index+1] == want {
+					matched = true
+				}
+			}
+		}
+		if !matched {
+			os.Exit(3)
+		}
 	case "ok", "empty", "badjson", "unknown", "":
 	default:
 		os.Exit(2)

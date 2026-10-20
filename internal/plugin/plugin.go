@@ -34,10 +34,7 @@ var (
 	Repository = "https://github.com/Roomen/cpa-harness-usage"
 )
 
-var (
-	defaultSources = []string{"claude", "codex", "opencode"}
-	knownSources   = map[string]struct{}{"claude": {}, "codex": {}, "opencode": {}}
-)
+var defaultSources = append([]string(nil), usage.KnownSources...)
 
 type snapshotter interface {
 	Snapshot(context.Context) usage.Report
@@ -202,6 +199,7 @@ func (p *Plugin) applyConfig(cfg usage.Config) bool {
 type configYAML struct {
 	Binary  *string   `yaml:"binary"`
 	Sources *[]string `yaml:"sources"`
+	OMPPath *string   `yaml:"omp_path"`
 }
 
 func parseConfig(raw []byte) (usage.Config, error) {
@@ -229,7 +227,7 @@ func parseConfig(raw []byte) (usage.Config, error) {
 		seen := make(map[string]struct{}, len(*parsed.Sources))
 		for _, source := range *parsed.Sources {
 			source = strings.TrimSpace(source)
-			if _, ok := knownSources[source]; !ok {
+			if !usage.SupportedSource(source) {
 				return usage.Config{}, errInvalidConfig
 			}
 			if _, duplicate := seen[source]; duplicate {
@@ -239,7 +237,14 @@ func parseConfig(raw []byte) (usage.Config, error) {
 			sources = append(sources, source)
 		}
 	}
-	return usage.Config{Binary: binary, Sources: sources}, nil
+	ompPath := ""
+	if parsed.OMPPath != nil {
+		ompPath = strings.TrimSpace(*parsed.OMPPath)
+		if strings.ContainsAny(ompPath, "\x00\r\n") {
+			return usage.Config{}, errInvalidConfig
+		}
+	}
+	return usage.Config{Binary: binary, Sources: sources, OMPPath: ompPath}, nil
 }
 
 var errInvalidConfig = &configError{}
@@ -268,7 +273,13 @@ func registrationResult() map[string]any {
 					"Name":        "sources",
 					"Type":        "array",
 					"Default":     append([]string(nil), defaultSources...),
-					"Description": "Local harnesses to report: claude, codex, opencode.",
+					"Description": "Local harnesses to report: claude, codex, opencode, omp.",
+				},
+				{
+					"Name":        "omp_path",
+					"Type":        "string",
+					"Default":     "",
+					"Description": "oh-my-pi sessions directory. Empty uses PI_CODING_AGENT_DIR/sessions, then ~/.omp/agent/sessions.",
 				},
 			},
 		},

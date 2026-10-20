@@ -11,10 +11,14 @@ import (
 	"errors"
 	"io"
 	"math"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 )
 
 const (
@@ -22,8 +26,29 @@ const (
 	DefaultCommandTimeout = 45 * time.Second
 	// DefaultMaxOutputBytes bounds the JSON read from one source.
 	DefaultMaxOutputBytes = 16 << 20
-	maxDailyRows          = 100_000
+	// DefaultConcurrency bounds parallel collector processes so a full scan
+	// stays cheap on small machines instead of starting one per source.
+	DefaultConcurrency = 4
+	maxDailyRows       = 100_000
 )
+
+// KnownSources lists every ccusage agent covered by the pinned collector,
+// plus omp (oh-my-pi), which is read through ccusage's pi adapter.
+var KnownSources = []string{
+	"claude", "codex", "opencode", "omp", "pi", "amp", "droid", "codebuff",
+	"hermes", "goose", "kilo", "copilot", "gemini", "antigravity", "kimi",
+	"qwen", "openclaw", "grok", "zcode",
+}
+
+// SupportedSource reports whether source is a known harness.
+func SupportedSource(source string) bool {
+	for _, known := range KnownSources {
+		if source == known {
+			return true
+		}
+	}
+	return false
+}
 
 // Source status values. Empty is a successful scan that found no rows, which
 // is different from a failed scan or an unsupported upstream schema.
@@ -47,18 +72,25 @@ const (
 type Config struct {
 	Binary  string
 	Sources []string
+	// OMPPath overrides the oh-my-pi sessions directory. Empty uses
+	// PI_CODING_AGENT_DIR/sessions, then ~/.omp/agent/sessions.
+	OMPPath string
 
-	// Timeout and MaxOutputBytes are optional overrides used by tests.
+	// Timeout, MaxOutputBytes, and Concurrency are optional overrides used by
+	// tests and embedders.
 	Timeout        time.Duration
 	MaxOutputBytes int
+	Concurrency    int
 }
 
 // Collector invokes ccusage and converts its output to a privacy-safe report.
 type Collector struct {
-	binary    string
-	sources   []string
-	timeout   time.Duration
-	maxOutput int
+	binary      string
+	sources     []string
+	ompPath     string
+	timeout     time.Duration
+	maxOutput   int
+	concurrency int
 }
 
 // Report contains one independently successful, empty, or failed result per
@@ -69,8 +101,9 @@ type Report struct {
 	Sources       []SourceReport `json:"sources"`
 }
 
-// SourceReport deliberately excludes source paths, model names, session IDs,
-// project names, prompts, and credentials.
+// SourceReport deliberately excludes source paths, session IDs, project names,
+// prompts, and credentials. Model names are included because the dashboard
+// classifies usage by model; they never appear in URLs or logs.
 type SourceReport struct {
 	Source string       `json:"source"`
 	Status string       `json:"status"`
@@ -81,15 +114,32 @@ type SourceReport struct {
 // DailyUsage contains only allowlisted aggregate counters. TotalTokens is the
 // value reported by ccusage and is never recomputed from the components:
 // sources differ in whether reasoning or cache tokens are already included.
+// Models carries the same day's per-model split when the collector reports it.
 type DailyUsage struct {
-	Date                string  `json:"date"`
-	InputTokens         uint64  `json:"inputTokens"`
-	OutputTokens        uint64  `json:"outputTokens"`
-	CacheCreationTokens uint64  `json:"cacheCreationTokens"`
-	CacheReadTokens     uint64  `json:"cacheReadTokens"`
-	ReasoningTokens     uint64  `json:"reasoningOutputTokens"`
-	TotalTokens         uint64  `json:"totalTokens"`
-	CostUSD             float64 `json:"costUSD"`
+	Date                string       `json:"date"`
+	InputTokens         uint64       `json:"inputTokens"`
+	OutputTokens        uint64       `json:"outputTokens"`
+	CacheCreationTokens uint64       `json:"cacheCreationTokens"`
+	CacheReadTokens     uint64       `json:"cacheReadTokens"`
+	ReasoningTokens     uint64       `json:"reasoningOutputTokens"`
+	TotalTokens         uint64       `json:"totalTokens"`
+	CostUSD             float64      `json:"costUSD"`
+	Models              []ModelUsage `json:"models"`
+}
+
+// ModelUsage is one model's contribution to a day. Model totals are reported
+// by ccusage for Codex; the other adapters omit them, so the non-overlapping
+// components are summed there. CostUSD is absent when the source does not
+// report per-model cost (Codex), and is never estimated by this plugin.
+type ModelUsage struct {
+	Model               string   `json:"model"`
+	InputTokens         uint64   `json:"inputTokens"`
+	OutputTokens        uint64   `json:"outputTokens"`
+	CacheCreationTokens uint64   `json:"cacheCreationTokens"`
+	CacheReadTokens     uint64   `json:"cacheReadTokens"`
+	ReasoningTokens     uint64   `json:"reasoningOutputTokens"`
+	TotalTokens         uint64   `json:"totalTokens"`
+	CostUSD             *float64 `json:"costUSD,omitempty"`
 }
 
 // New creates a collector. An empty binary uses the bundled collector.
@@ -106,12 +156,62 @@ func New(cfg Config) *Collector {
 	if maxOutput <= 0 {
 		maxOutput = DefaultMaxOutputBytes
 	}
-	return &Collector{
-		binary:    binary,
-		sources:   append([]string(nil), cfg.Sources...),
-		timeout:   timeout,
-		maxOutput: maxOutput,
+	ompPath := strings.TrimSpace(cfg.OMPPath)
+	if ompPath == "" {
+		ompPath = defaultOMPSessionsPath()
+	} else {
+		ompPath = absolutePath(expandHome(ompPath))
 	}
+	concurrency := cfg.Concurrency
+	if concurrency <= 0 {
+		concurrency = DefaultConcurrency
+	}
+	return &Collector{
+		binary:      binary,
+		sources:     append([]string(nil), cfg.Sources...),
+		ompPath:     ompPath,
+		timeout:     timeout,
+		maxOutput:   maxOutput,
+		concurrency: concurrency,
+	}
+}
+
+// defaultOMPSessionsPath follows oh-my-pi's own data location. The explicit
+// --pi-path is needed because ccusage only auto-detects ~/.pi by default.
+func defaultOMPSessionsPath() string {
+	if directory := strings.TrimSpace(os.Getenv("PI_CODING_AGENT_DIR")); directory != "" {
+		return absolutePath(filepath.Join(expandHome(directory), "sessions"))
+	}
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		return ""
+	}
+	return filepath.Join(home, ".omp", "agent", "sessions")
+}
+
+func expandHome(path string) string {
+	if path != "~" && !strings.HasPrefix(path, "~/") && !strings.HasPrefix(path, `~\`) {
+		return path
+	}
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		return path
+	}
+	if path == "~" {
+		return home
+	}
+	return filepath.Join(home, path[2:])
+}
+
+func absolutePath(path string) string {
+	if path == "" || filepath.IsAbs(path) {
+		return path
+	}
+	absolute, err := filepath.Abs(path)
+	if err != nil {
+		return path
+	}
+	return absolute
 }
 
 // Snapshot collects every configured source in parallel. A failure for one
@@ -120,10 +220,24 @@ func New(cfg Config) *Collector {
 func (c *Collector) Snapshot(ctx context.Context) Report {
 	sources := make([]SourceReport, len(c.sources))
 	var wg sync.WaitGroup
+	limit := c.concurrency
+	if limit <= 0 || limit > len(c.sources) {
+		limit = len(c.sources)
+	}
+	slots := make(chan struct{}, limit)
 	for index, source := range c.sources {
 		wg.Add(1)
 		go func(index int, source string) {
 			defer wg.Done()
+			select {
+			case slots <- struct{}{}:
+			case <-ctx.Done():
+				// Still produce a classified row so the report shape stays
+				// stable when the caller cancels mid-scan.
+				sources[index] = SourceReport{Source: safeSource(source), Status: StatusError, Error: ErrorCanceled, Daily: []DailyUsage{}}
+				return
+			}
+			defer func() { <-slots }()
 			sources[index] = c.snapshotOne(ctx, source)
 		}(index, source)
 	}
@@ -163,12 +277,7 @@ func safeSource(source string) string {
 }
 
 func supportedSource(source string) bool {
-	switch source {
-	case "claude", "codex", "opencode":
-		return true
-	default:
-		return false
-	}
+	return SupportedSource(source)
 }
 
 func (c *Collector) collectOne(ctx context.Context, source string) ([]DailyUsage, string) {
@@ -183,7 +292,16 @@ func (c *Collector) collectOne(ctx context.Context, source string) ([]DailyUsage
 			return nil, ErrorCommandFailed
 		}
 	}
-	cmd := exec.CommandContext(commandCtx, binary, source, "daily", "--json", "--offline")
+	args := []string{source, "daily", "--json", "--offline"}
+	if source == "omp" {
+		if c.ompPath == "" {
+			return nil, ErrorCommandFailed
+		}
+		// oh-my-pi writes pi-format sessions. ccusage exposes those through
+		// its pi adapter, but only auto-detects ~/.pi, so pass the store path.
+		args = []string{"pi", "daily", "--json", "--offline", "--pi-path", c.ompPath}
+	}
+	cmd := exec.CommandContext(commandCtx, binary, args...)
 	var stdout cappedBuffer
 	stdout.limit = c.maxOutput
 	cmd.Stdout = &stdout
@@ -206,7 +324,7 @@ func (c *Collector) collectOne(ctx context.Context, source string) ([]DailyUsage
 		return nil, ErrorCommandFailed
 	}
 
-	rows, err := parseDaily(stdout.Bytes())
+	rows, err := parseSourceDaily(stdout.Bytes(), source)
 	if err != nil {
 		if errors.Is(err, errTooManyRows) {
 			return nil, ErrorOutputTooLarge
@@ -214,6 +332,32 @@ func (c *Collector) collectOne(ctx context.Context, source string) ([]DailyUsage
 		return nil, ErrorUnknownSchema
 	}
 	return rows, ""
+}
+
+// parseSourceDaily applies source-specific normalization on top of the shared
+// daily contract.
+func parseSourceDaily(data []byte, source string) ([]DailyUsage, error) {
+	rows, err := parseDaily(data)
+	if err != nil {
+		return nil, err
+	}
+	if source == "omp" {
+		normalizeOMPModels(rows)
+	}
+	return rows, nil
+}
+
+// The pi adapter tags models with its adapter name. oh-my-pi is reported
+// through that adapter, so drop the implementation tag from the public name.
+func normalizeOMPModels(rows []DailyUsage) {
+	for rowIndex := range rows {
+		for modelIndex := range rows[rowIndex].Models {
+			name := rows[rowIndex].Models[modelIndex].Model
+			name = strings.TrimPrefix(name, "[pi] ")
+			name = strings.TrimPrefix(name, "[omp] ")
+			rows[rowIndex].Models[modelIndex].Model = name
+		}
+	}
 }
 
 var (
@@ -277,15 +421,29 @@ type rawReport struct {
 }
 
 type rawDaily struct {
-	Date                string          `json:"date"`
+	Date                string              `json:"date"`
+	InputTokens         json.RawMessage     `json:"inputTokens"`
+	OutputTokens        json.RawMessage     `json:"outputTokens"`
+	CacheCreationTokens json.RawMessage     `json:"cacheCreationTokens"`
+	CacheReadTokens     json.RawMessage     `json:"cacheReadTokens"`
+	ReasoningTokens     json.RawMessage     `json:"reasoningOutputTokens"`
+	TotalTokens         json.RawMessage     `json:"totalTokens"`
+	CostUSD             json.RawMessage     `json:"costUSD"`
+	TotalCost           json.RawMessage     `json:"totalCost"`
+	ModelBreakdowns     []rawModel          `json:"modelBreakdowns"`
+	Models              map[string]rawModel `json:"models"`
+}
+
+type rawModel struct {
+	ModelName           string          `json:"modelName"`
 	InputTokens         json.RawMessage `json:"inputTokens"`
 	OutputTokens        json.RawMessage `json:"outputTokens"`
 	CacheCreationTokens json.RawMessage `json:"cacheCreationTokens"`
 	CacheReadTokens     json.RawMessage `json:"cacheReadTokens"`
 	ReasoningTokens     json.RawMessage `json:"reasoningOutputTokens"`
 	TotalTokens         json.RawMessage `json:"totalTokens"`
-	CostUSD             json.RawMessage `json:"costUSD"`
-	TotalCost           json.RawMessage `json:"totalCost"`
+	Cost                json.RawMessage `json:"cost"`
+	StoredCost          json.RawMessage `json:"storedCost"`
 }
 
 // parseDaily validates the exact shapes emitted by ccusage 20.0.36 focused
@@ -344,9 +502,155 @@ func parseDaily(data []byte) ([]DailyUsage, error) {
 		if err := validateTokenTotal(row); err != nil {
 			return nil, err
 		}
+		if row.Models, err = parseModels(raw); err != nil {
+			return nil, err
+		}
+		if err := validateModelTotals(row); err != nil {
+			return nil, err
+		}
 		rows = append(rows, row)
 	}
 	return rows, nil
+}
+
+// parseModels accepts the two shapes emitted by the pinned collector:
+// modelBreakdowns (Claude, OpenCode, pi/omp) and models (Codex). Missing model
+// data is valid; a malformed present breakdown is a schema change.
+func parseModels(raw rawDaily) ([]ModelUsage, error) {
+	models := make([]ModelUsage, 0)
+	if len(raw.ModelBreakdowns) > 0 {
+		for _, item := range raw.ModelBreakdowns {
+			parsed, ok, err := parseModel(item, item.ModelName)
+			if err != nil {
+				return nil, err
+			}
+			if ok {
+				models = append(models, parsed)
+			}
+		}
+	} else {
+		for name, item := range raw.Models {
+			parsed, ok, err := parseModel(item, name)
+			if err != nil {
+				return nil, err
+			}
+			if ok {
+				models = append(models, parsed)
+			}
+		}
+	}
+	sort.SliceStable(models, func(i, j int) bool {
+		if models[i].TotalTokens != models[j].TotalTokens {
+			return models[i].TotalTokens > models[j].TotalTokens
+		}
+		return models[i].Model < models[j].Model
+	})
+	return models, nil
+}
+
+func parseModel(raw rawModel, name string) (ModelUsage, bool, error) {
+	name = sanitizeModelName(name)
+	if name == "" {
+		return ModelUsage{}, false, errors.New("missing model name")
+	}
+	if !hasCounters(raw) {
+		// Some adapters emit a name-only breakdown. It carries no usage, so
+		// the day's total stays authoritative and the model is unattributed.
+		return ModelUsage{}, false, nil
+	}
+	model := ModelUsage{Model: name}
+	var err error
+	if model.InputTokens, err = requiredNumber(raw.InputTokens); err != nil {
+		return ModelUsage{}, false, err
+	}
+	if model.OutputTokens, err = requiredNumber(raw.OutputTokens); err != nil {
+		return ModelUsage{}, false, err
+	}
+	if model.CacheCreationTokens, err = requiredNumber(raw.CacheCreationTokens); err != nil {
+		return ModelUsage{}, false, err
+	}
+	if model.CacheReadTokens, err = requiredNumber(raw.CacheReadTokens); err != nil {
+		return ModelUsage{}, false, err
+	}
+	if model.ReasoningTokens, err = optionalNumber(raw.ReasoningTokens); err != nil {
+		return ModelUsage{}, false, err
+	}
+	known, err := sumComponents(model)
+	if err != nil {
+		return ModelUsage{}, false, err
+	}
+	if len(raw.TotalTokens) > 0 && string(raw.TotalTokens) != "null" {
+		if model.TotalTokens, err = requiredNumber(raw.TotalTokens); err != nil {
+			return ModelUsage{}, false, err
+		}
+		if model.TotalTokens < known {
+			return ModelUsage{}, false, errors.New("inconsistent model total tokens")
+		}
+	} else {
+		model.TotalTokens = known
+	}
+	cost := raw.Cost
+	if len(cost) == 0 || string(cost) == "null" {
+		cost = raw.StoredCost
+	}
+	if len(cost) > 0 && string(cost) != "null" {
+		value, err := requiredDecimal(cost)
+		if err != nil {
+			return ModelUsage{}, false, err
+		}
+		model.CostUSD = &value
+	}
+	return model, true, nil
+}
+
+func hasCounters(raw rawModel) bool {
+	for _, value := range []json.RawMessage{raw.InputTokens, raw.OutputTokens, raw.CacheCreationTokens, raw.CacheReadTokens} {
+		if len(value) > 0 && string(value) != "null" {
+			return true
+		}
+	}
+	return false
+}
+
+func sumComponents(model ModelUsage) (uint64, error) {
+	total := model.InputTokens
+	for _, value := range []uint64{model.OutputTokens, model.CacheCreationTokens, model.CacheReadTokens} {
+		if total > math.MaxUint64-value {
+			return 0, errors.New("token counter overflow")
+		}
+		total += value
+	}
+	return total, nil
+}
+
+func validateModelTotals(row DailyUsage) error {
+	var total uint64
+	for _, model := range row.Models {
+		if total > math.MaxUint64-model.TotalTokens {
+			return errors.New("token counter overflow")
+		}
+		total += model.TotalTokens
+	}
+	// A source may leave usage unattributed (OpenCode folds reasoning into the
+	// reported total), but model rows can never exceed the authoritative total.
+	if total > row.TotalTokens {
+		return errors.New("model totals exceed daily total")
+	}
+	return nil
+}
+
+func sanitizeModelName(name string) string {
+	name = strings.TrimSpace(name)
+	name = strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7f {
+			return -1
+		}
+		return r
+	}, name)
+	if utf8.RuneCountInString(name) > 120 {
+		name = string([]rune(name)[:120])
+	}
+	return name
 }
 
 func validateTokenTotal(row DailyUsage) error {

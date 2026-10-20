@@ -144,7 +144,9 @@ func run(library, binary string) error {
 	}
 	defer C.smoke_shutdown(&api)
 	config, _ := json.Marshal(binary)
-	request, _ := json.Marshal(map[string][]byte{"config_yaml": []byte("binary: " + string(config) + "\n")})
+	// Keep the ABI smoke run to the three synthetic sources: the packaged
+	// collector supports more, but this test asserts exactly these rows.
+	request, _ := json.Marshal(map[string][]byte{"config_yaml": []byte("binary: " + string(config) + "\nsources: [claude, codex, opencode]\n")})
 	if _, err := call(&api, "plugin.register", request); err != nil {
 		return err
 	}

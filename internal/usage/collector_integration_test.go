@@ -34,13 +34,22 @@ func TestCollectorIntegration(t *testing.T) {
 	if _, err := os.Stat(absoluteBinary); err != nil {
 		t.Fatal("prepare the pinned native collector or set HARNESS_USAGE_TEST_BINARY")
 	}
-	for _, source := range []string{"claude", "codex", "opencode"} {
+	for _, source := range []string{"claude", "codex", "opencode", "omp"} {
 		t.Run(source, func(t *testing.T) {
 			root := t.TempDir()
 			environment := integrationEnvironment(t, root)
-			runIntegrationCollector(t, absoluteBinary, root, environment, source, "daily", "--help")
-			empty := runIntegrationCollector(t, absoluteBinary, root, environment, source, "daily", "--json", "--offline")
-			emptyRows, err := parseDaily(empty)
+			args := func(extra ...string) []string {
+				base := []string{source, "daily"}
+				if source == "omp" {
+					// oh-my-pi sessions are pi-format; the adapter needs the
+					// store path because it only auto-detects ~/.pi.
+					base = []string{"pi", "daily", "--pi-path", filepath.Join(root, "omp", "sessions")}
+				}
+				return append(base, extra...)
+			}
+			runIntegrationCollector(t, absoluteBinary, root, environment, args("--help")...)
+			empty := runIntegrationCollector(t, absoluteBinary, root, environment, args("--json", "--offline")...)
+			emptyRows, err := parseSourceDaily(empty, source)
 			if err != nil || len(emptyRows) != 0 {
 				t.Fatal("empty native report does not match the daily contract")
 			}
@@ -52,6 +61,8 @@ func TestCollectorIntegration(t *testing.T) {
 				target = "codex/sessions/2026/01/02/rollout-synthetic.jsonl"
 			case "opencode":
 				target = "opencode/storage/message/synthetic-session/synthetic-message.json"
+			case "omp":
+				target = "omp/sessions/synthetic-project/synthetic-session.jsonl"
 			}
 			extension := ".jsonl"
 			if source == "opencode" {
@@ -68,16 +79,21 @@ func TestCollectorIntegration(t *testing.T) {
 			if err := os.WriteFile(fixtureTarget, fixture, 0600); err != nil {
 				t.Fatal("write synthetic fixture")
 			}
-			output := runIntegrationCollector(t, absoluteBinary, root, environment, source, "daily", "--json", "--offline")
-			rows, err := parseDaily(output)
+			output := runIntegrationCollector(t, absoluteBinary, root, environment, args("--json", "--offline")...)
+			rows, err := parseSourceDaily(output, source)
 			if err != nil {
 				t.Fatalf("native daily schema rejected: %v", err)
 			}
-			expected := DailyUsage{Date: "2026-01-02", InputTokens: 100, OutputTokens: 50, CacheCreationTokens: 20, CacheReadTokens: 10, TotalTokens: 180, CostUSD: 0.125}
-			if source == "codex" {
-				expected = DailyUsage{Date: "2026-01-02", InputTokens: 270, OutputTokens: 125, CacheReadTokens: 30, ReasoningTokens: 15, TotalTokens: 425, CostUSD: 0.00159125}
-			} else if source == "opencode" {
+			expected := DailyUsage{Date: "2026-01-02", InputTokens: 100, OutputTokens: 50, CacheCreationTokens: 20, CacheReadTokens: 10, TotalTokens: 180, CostUSD: 0.125,
+				Models: []ModelUsage{{Model: "claude-sonnet-4-20250514", InputTokens: 100, OutputTokens: 50, CacheCreationTokens: 20, CacheReadTokens: 10, TotalTokens: 180, CostUSD: floatPtr(0.125)}}}
+			switch source {
+			case "codex":
+				expected = DailyUsage{Date: "2026-01-02", InputTokens: 270, OutputTokens: 125, CacheReadTokens: 30, ReasoningTokens: 15, TotalTokens: 425, CostUSD: 0.00159125,
+					Models: []ModelUsage{{Model: "gpt-5", InputTokens: 270, OutputTokens: 125, CacheReadTokens: 30, ReasoningTokens: 15, TotalTokens: 425}}}
+			case "opencode":
 				expected.TotalTokens = 185
+			case "omp":
+				expected.Models = []ModelUsage{{Model: "synthetic-model", InputTokens: 100, OutputTokens: 50, CacheCreationTokens: 20, CacheReadTokens: 10, TotalTokens: 180, CostUSD: floatPtr(0.125)}}
 			}
 			if len(rows) != 1 {
 				t.Fatalf("got %d daily rows, want one", len(rows))

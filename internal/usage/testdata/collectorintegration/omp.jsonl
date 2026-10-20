@@ -1,0 +1,2 @@
+{"type":"session","version":3,"id":"synthetic-session","timestamp":"2026-01-02T00:00:00.000Z","cwd":"/synthetic/project"}
+{"type":"message","id":"synthetic-entry-1","timestamp":"2026-01-02T00:00:01.000Z","message":{"role":"assistant","model":"synthetic-model","usage":{"input":100,"output":50,"cacheRead":10,"cacheWrite":20,"totalTokens":180,"cost":{"total":0.125}}}}
