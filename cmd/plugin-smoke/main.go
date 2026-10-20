@@ -175,6 +175,24 @@ func run(library, binary string) error {
 			return fmt.Errorf("isolated collector failed (%s: %s)", source.Source, source.Error)
 		}
 	}
+	// This host passes no callbacks, so a plain quota load stays offline and
+	// the isolated home has no session logs.
+	body, err = call(&api, "management.handle", []byte(`{"Method":"GET","Path":"/v0/management/harness-usage/quota"}`))
+	if err != nil {
+		return err
+	}
+	var quotaResponse struct {
+		StatusCode int
+		Body       []byte
+	}
+	var quotaReport struct {
+		PoolStatus string
+		Accounts   []json.RawMessage
+	}
+	if json.Unmarshal(body, &quotaResponse) != nil || quotaResponse.StatusCode != 200 ||
+		json.Unmarshal(quotaResponse.Body, &quotaReport) != nil || quotaReport.PoolStatus != "unavailable" || len(quotaReport.Accounts) != 0 {
+		return errors.New("offline quota response failed")
+	}
 	if _, err := call(&api, "plugin.quiesce", []byte(`{}`)); err != nil {
 		return err
 	}

@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"cpa-harness-usage/internal/quota"
 	"cpa-harness-usage/internal/usage"
 	"cpa-harness-usage/web"
 	"gopkg.in/yaml.v3"
@@ -19,7 +20,8 @@ const (
 	// SchemaVersion is the CPA RPC schema this plugin implements.
 	SchemaVersion = 6
 
-	DataPath = "/v0/management/harness-usage/daily"
+	DataPath  = "/v0/management/harness-usage/daily"
+	QuotaPath = "/v0/management/harness-usage/quota"
 	PagePath = "/v0/resource/plugins/harness-usage/usage"
 
 	cacheTTL = time.Minute
@@ -28,7 +30,7 @@ const (
 var (
 	// Version is the plugin release version shown by CPA. Release builds
 	// override it with the tag version via -ldflags.
-	Version = "0.0.3"
+	Version = "0.1.0"
 	// Repository is the project source URL shown by CPA. Release builds pin it
 	// via -ldflags so the published artifact names the canonical repository.
 	Repository = "https://github.com/Roomen/cpa-harness-usage"
@@ -38,6 +40,16 @@ var defaultSources = append([]string(nil), usage.KnownSources...)
 
 type snapshotter interface {
 	Snapshot(context.Context) usage.Report
+}
+
+// quotaService reports account quota. It is separate from the usage
+// collector: quota percentages and token counters are never combined.
+type quotaService interface {
+	Snapshot(refresh bool) (int, []byte)
+	SetHost(quota.HostFunc)
+	Pause()
+	Resume()
+	Close()
 }
 
 type scanCall struct {
@@ -51,6 +63,7 @@ type scanCall struct {
 type Plugin struct {
 	mu         sync.Mutex
 	collector  snapshotter
+	quota      quotaService
 	generation uint64
 	cached     []byte
 	expires    time.Time
@@ -66,15 +79,27 @@ func New() *Plugin {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Plugin{
 		collector:  usage.New(usage.Config{Sources: append([]string(nil), defaultSources...)}),
+		quota:      quota.New(quota.Config{UserAgent: "cpa-harness-usage/" + Version}),
 		baseCtx:    ctx,
 		cancelBase: cancel,
 		now:        time.Now,
 	}
 }
 
+// SetHost installs the CPA host callback used for quota requests and the
+// credential pool. Quota requests never use a direct HTTP client.
+func (p *Plugin) SetHost(host func(method string, request []byte) ([]byte, error)) {
+	if host == nil {
+		p.quota.SetHost(nil)
+		return
+	}
+	p.quota.SetHost(quota.HostFunc(host))
+}
+
 // Close permanently stops the plugin and cancels any in-flight scan. It is
 // idempotent and never waits for a scan, so shutdown cannot block on ccusage.
 func (p *Plugin) Close() {
+	p.quota.Close()
 	p.mu.Lock()
 	if p.closed {
 		p.mu.Unlock()
@@ -95,6 +120,7 @@ func (p *Plugin) Close() {
 // quiesce pauses future scans and cancels the current one. A later
 // reconfigure resumes the plugin; shutdown still follows on replacement.
 func (p *Plugin) quiesce() {
+	p.quota.Pause()
 	p.mu.Lock()
 	p.paused = true
 	p.cached = nil
@@ -134,6 +160,7 @@ func (p *Plugin) Handle(method string, raw []byte) (out []byte) {
 		return success(map[string]any{
 			"Routes": []map[string]string{
 				{"Method": "GET", "Path": "/harness-usage/daily"},
+				{"Method": "GET", "Path": "/harness-usage/quota"},
 			},
 			"Resources": []map[string]string{
 				{"Path": "/usage", "Menu": "Harness Usage", "Description": "Local harness daily usage"},
@@ -157,6 +184,15 @@ func (p *Plugin) Handle(method string, raw []byte) (out []byte) {
 			return pageResponse(web.Page)
 		case DataPath:
 			status, body := p.snapshot(wantsRefresh(req.Query))
+			return response(status, "application/json; charset=utf-8", body)
+		case QuotaPath:
+			p.mu.Lock()
+			unavailable := p.closed || p.paused
+			p.mu.Unlock()
+			if unavailable {
+				return response(503, "application/json; charset=utf-8", []byte(`{"error":"unavailable"}`))
+			}
+			status, body := p.quota.Snapshot(wantsRefresh(req.Query))
 			return response(status, "application/json; charset=utf-8", body)
 		default:
 			return response(404, "application/json; charset=utf-8", []byte(`{"error":"not_found"}`))
@@ -182,6 +218,7 @@ func (p *Plugin) applyConfig(cfg usage.Config) bool {
 		return false
 	}
 	p.collector = usage.New(cfg)
+	p.quota.Resume()
 	p.generation++
 	p.cached = nil
 	p.expires = time.Time{}

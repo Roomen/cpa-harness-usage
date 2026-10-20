@@ -6,295 +6,291 @@
 <meta name="color-scheme" content="light dark">
 <title>Harness Usage</title>
 <style>
+/* Layout: sticky toolbar → account quota → local usage summary → chart | ranking → details.
+   Quota and local token counters live in separate bands and are never summed. */
 :root {
-  --bg: #f5f7fa;
-  --bg-glow: rgba(44, 107, 237, .09);
-  --surface: #ffffff;
-  --surface-alt: #eef2f6;
-  --fg: #16202b;
-  --muted: #5d6b7a;
-  --border: #dde3ea;
-  --accent: #2c6bed;
-  --accent-soft: #e7eefd;
-  --success: #127a4b;
-  --warning: #96650a;
-  --error: #b42318;
-  --error-soft: #fdecea;
-  --c1: #2c6bed;
-  --c2: #0f9d76;
-  --c3: #e08a04;
-  --c4: #8b5cf6;
-  --c5: #e05252;
-  --c6: #0e9bb5;
-  --shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 10px 28px rgba(16, 24, 40, .05);
-  --radius: 16px;
+  --bg: #f3f5f8; --surface: #ffffff; --surface-2: #eef1f5; --fg: #141b24; --muted: #5b6878; --faint: #8a96a5; --line: #dfe4ea;
+  --accent: #2b62d9; --accent-soft: #e6edfc; --ok: #138a55; --warn: #b7740a; --crit: #c4311f;
+  --ok-soft: #e3f4ec; --warn-soft: #fbf0dc; --crit-soft: #fbe6e3;
+  --c1: #2b62d9; --c2: #0f9a72; --c3: #d9850a; --c4: #8455e8; --c5: #d64d6a; --c6: #0e93ad; --c7: #6b7a8c;
+  --in: #2b62d9; --out: #0f9a72; --cr: #9fb4d9; --cw: #8455e8; --oth: #b7c0cb;
+  --radius: 14px;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans", sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
-[data-theme="dark"] {
-  --bg: #0f141a;
-  --bg-glow: rgba(121, 167, 255, .10);
-  --surface: #161d25;
-  --surface-alt: #1e2731;
-  --fg: #e8eef5;
-  --muted: #9dabb9;
-  --border: #2a3642;
-  --accent: #79a7ff;
-  --accent-soft: #1c2b44;
-  --success: #4ade80;
-  --warning: #fbbf24;
-  --error: #f87b70;
-  --error-soft: #3a1d1b;
-  --c1: #79a7ff;
-  --c2: #34d399;
-  --c3: #fbbf24;
-  --c4: #c4b5fd;
-  --c5: #f87171;
-  --c6: #22d3ee;
-  --shadow: none;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]):not([data-theme="white"]) {
-    --bg: #0f141a;
-    --bg-glow: rgba(121, 167, 255, .10);
-    --surface: #161d25;
-    --surface-alt: #1e2731;
-    --fg: #e8eef5;
-    --muted: #9dabb9;
-    --border: #2a3642;
-    --accent: #79a7ff;
-    --accent-soft: #1c2b44;
-    --success: #4ade80;
-    --warning: #fbbf24;
-    --error: #f87b70;
-    --error-soft: #3a1d1b;
-    --c1: #79a7ff;
-    --c2: #34d399;
-    --c3: #fbbf24;
-    --c4: #c4b5fd;
-    --c5: #f87171;
-    --c6: #22d3ee;
-    --shadow: none;
-  }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]):not([data-theme="white"]) {
+  --bg: #0e1319; --surface: #151c24; --surface-2: #1c2530; --fg: #e6ecf3; --muted: #9aa8b7; --faint: #6f7d8c; --line: #26313d;
+  --accent: #7ea6ff; --accent-soft: #1b2a42; --ok: #4fd08f; --warn: #f2b84b; --crit: #ff7d6b;
+  --ok-soft: #14301f; --warn-soft: #33270f; --crit-soft: #3a1b18;
+  --c1: #7ea6ff; --c2: #3fcf9f; --c3: #f2b84b; --c4: #b79bff; --c5: #ff8aa3; --c6: #3cc9e4; --c7: #8a99aa;
+  --in: #7ea6ff; --out: #3fcf9f; --cr: #3f5272; --cw: #b79bff; --oth: #4a5868; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #0e1319; --surface: #151c24; --surface-2: #1c2530; --fg: #e6ecf3; --muted: #9aa8b7; --faint: #6f7d8c; --line: #26313d;
+  --accent: #7ea6ff; --accent-soft: #1b2a42; --ok: #4fd08f; --warn: #f2b84b; --crit: #ff7d6b;
+  --ok-soft: #14301f; --warn-soft: #33270f; --crit-soft: #3a1b18;
+  --c1: #7ea6ff; --c2: #3fcf9f; --c3: #f2b84b; --c4: #b79bff; --c5: #ff8aa3; --c6: #3cc9e4; --c7: #8a99aa;
+  --in: #7ea6ff; --out: #3fcf9f; --cr: #3f5272; --cw: #b79bff; --oth: #4a5868; color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { max-width: 100%; overflow-x: hidden; }
-html { background-color: var(--bg); }
-body {
-  margin: 0;
-  min-height: 100vh;
-  background:
-    radial-gradient(1100px 520px at 8% -12%, var(--bg-glow), transparent 62%),
-    var(--bg);
-  color: var(--fg);
-  font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans", sans-serif;
-  -webkit-text-size-adjust: 100%;
-}
-button, input, select { font: inherit; color: inherit; }
-.shell { width: 100%; max-width: 1200px; margin: 0 auto; padding: 26px 20px 52px; }
-.top {
-  display: flex; align-items: flex-start; justify-content: space-between;
-  gap: 18px; flex-wrap: wrap; margin-bottom: 22px;
-}
-.brand { min-width: 0; display: flex; gap: 12px; align-items: flex-start; }
-.mark {
-  width: 38px; height: 38px; border-radius: 11px; flex: none; margin-top: 2px;
-  background: linear-gradient(140deg, var(--accent), var(--c4));
-  display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 15px;
-  box-shadow: 0 6px 16px rgba(44, 107, 237, .25);
-}
-h1 { margin: 0; font-size: clamp(20px, 2.6vw, 25px); letter-spacing: -.015em; }
-.subtitle { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
-.top-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  min-height: 38px; padding: 7px 14px; border-radius: 10px;
-  border: 1px solid var(--border); background: var(--surface); color: var(--fg);
-  cursor: pointer; white-space: nowrap; transition: border-color .15s, background .15s, transform .06s;
-}
-.btn:hover { border-color: var(--accent); }
-.btn:active { transform: translateY(1px); }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.btn.primary:hover { filter: brightness(1.06); }
-[data-theme="dark"] .btn.primary { color: #0b1220; }
-.btn:disabled { opacity: .55; cursor: progress; }
-.btn.ghost { background: transparent; }
-.select-wrap { display: inline-flex; align-items: center; gap: 7px; padding: 0 4px 0 11px; min-height: 38px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
-.select-wrap span { font-size: 12px; color: var(--muted); white-space: nowrap; }
-.select-wrap select { border: 0; background: transparent; min-height: 34px; padding: 0 8px 0 0; cursor: pointer; }
-.select-wrap:focus-within { border-color: var(--accent); }
-.card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); box-shadow: var(--shadow);
-}
+html { background: var(--bg); }
+body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--fg); font: 14px/1.5 var(--sans); -webkit-text-size-adjust: 100%; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.num { font-variant-numeric: tabular-nums; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* toolbar */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.bar-in, .page { max-width: 1440px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+.bar-in { display: flex; align-items: center; gap: 12px; min-height: 56px; padding-block: 8px; }
+.brand { display: flex; align-items: baseline; gap: 10px; min-width: 0; margin-right: auto; }
+.brand h1 { margin: 0; font-size: 17px; letter-spacing: -.01em; white-space: nowrap; }
+.brand span { color: var(--faint); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tools { display: contents; }
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 9px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; padding: 5px 11px; border-radius: 7px; color: var(--muted); font-size: 13px; white-space: nowrap; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / .12); font-weight: 600; }
+.seg button.custom-on { color: var(--accent); }
+.ctl { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 11px; border: 1px solid var(--line); background: var(--surface); border-radius: 9px; font-size: 13px; white-space: nowrap; }
+.ctl:hover { border-color: var(--accent); }
+.ctl:disabled { opacity: .55; cursor: progress; }
+.ctl .k { color: var(--faint); }
+.ctl select { border: 0; background: transparent; padding: 0; }
+.icon-btn { width: 34px; padding: 0; justify-content: center; }
+.dd { position: relative; }
+.menu { position: absolute; right: 0; top: calc(100% + 6px); width: 270px; max-height: 70vh; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 32px rgb(0 0 0 / .16); padding: 6px; z-index: 6; }
+.menu label, .sheet .srcs label { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 8px; font-size: 13px; }
+.menu label:hover { background: var(--surface-2); }
+.menu .r, .sheet .srcs .r { margin-left: auto; color: var(--faint); font-size: 12px; white-space: nowrap; }
+.r.fail { color: var(--crit); }
+.menu-act { display: flex; gap: 6px; justify-content: flex-end; padding: 4px 4px 2px; border-top: 1px solid var(--line); margin-top: 4px; }
+.linkish { border: 0; background: none; color: var(--accent); font-size: 12px; padding: 3px 6px; border-radius: 6px; }
+.linkish:hover { background: var(--accent-soft); }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; display: inline-block; }
+.only-narrow { display: none; }
+
+.page { padding-block: 20px 48px; display: grid; gap: 20px; }
+.page > section { min-width: 0; }
+.band-h { display: flex; align-items: baseline; gap: 10px; margin: 0 0 10px; flex-wrap: wrap; }
+.band-h h2 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.band-h .note { color: var(--faint); font-size: 12px; }
+.band-h .right { margin-left: auto; font-size: 12px; color: var(--faint); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); min-width: 0; }
+
+/* auth + notices */
 .auth { max-width: 470px; margin: 56px auto; padding: 30px; }
 .auth h2 { margin: 0 0 8px; font-size: 19px; }
 .auth p { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
 .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .field label { font-size: 12px; font-weight: 600; color: var(--muted); }
-.field input {
-  width: 100%; min-width: 0; min-height: 42px; padding: 8px 11px;
-  border: 1px solid var(--border); border-radius: 10px; background: var(--surface);
-}
-.field input:focus-visible, .btn:focus-visible, .chip input:focus-visible + span,
-.rank-row:focus-visible, .seg button:focus-visible {
-  outline: 2px solid var(--accent); outline-offset: 2px;
-}
+.field input { width: 100%; min-width: 0; min-height: 42px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .auth-row { display: flex; gap: 10px; margin-top: 14px; }
-.auth-row .btn { flex: 1; }
-.auth-error { margin-top: 12px; color: var(--error); font-size: 13px; }
-.notice {
-  display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap;
-  padding: 12px 15px; margin-bottom: 16px; border-radius: 12px;
-  border: 1px solid var(--border); background: var(--surface);
-}
-.notice[data-kind="error"] { border-color: var(--error); background: var(--error-soft); }
-.notice[data-kind="warning"] { border-color: var(--warning); }
-.notice[data-kind="info"] { background: var(--surface); }
+.btn-p { background: var(--accent); color: var(--surface); border: 0; border-radius: 8px; padding: 6px 14px; font-size: 13px; font-weight: 600; }
+.auth-row .btn-p { flex: 1; min-height: 40px; font-size: 14px; }
+.auth-error { margin-top: 12px; color: var(--crit); font-size: 13px; }
+.notice { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; padding: 12px 15px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); }
+.notice[data-kind="error"] { border-color: var(--crit); background: var(--crit-soft); }
+.notice[data-kind="warning"] { border-color: var(--warn); background: var(--warn-soft); }
 .notice .message { flex: 1 1 240px; min-width: 0; }
 .notice .detail { color: var(--muted); font-size: 12px; margin-top: 2px; }
-.summary-grid {
-  display: grid; gap: 12px; margin-bottom: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-}
-.stat { position: relative; padding: 15px 16px 14px; overflow: hidden; }
-.stat::before {
-  content: ""; position: absolute; inset: 0 auto 0 0; width: 3px;
-  background: var(--stat-color, var(--accent));
-}
-.stat .label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-.stat .value { margin-top: 5px; font-size: clamp(19px, 2.3vw, 25px); font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -.015em; overflow-wrap: anywhere; }
-.stat .sub { margin-top: 2px; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; display: inline-block; }
-.toolbar { display: flex; gap: 18px; flex-wrap: wrap; padding: 15px 16px; margin-bottom: 16px; align-items: flex-start; }
-.toolbar .group { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.toolbar .group.grow { flex: 1 1 300px; }
-.group-head { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
-.group-label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .01em; }
-.linkish { border: 0; background: none; color: var(--accent); font-size: 12px; cursor: pointer; padding: 2px 4px; border-radius: 6px; }
-.linkish:hover { background: var(--accent-soft); }
-.chips { display: flex; gap: 7px; flex-wrap: wrap; }
-.chip { position: relative; }
-.chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.chip span {
-  display: inline-flex; align-items: center; gap: 6px; min-height: 32px;
-  padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border);
-  background: var(--surface); cursor: pointer; font-size: 12.5px; white-space: nowrap;
-  transition: border-color .15s, background .15s;
-}
-.chip span:hover { border-color: var(--accent); }
-.chip input:checked + span { border-color: var(--accent); background: var(--accent-soft); }
-.chip .count { color: var(--muted); font-variant-numeric: tabular-nums; }
-.range { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.range input[type="date"] {
-  min-height: 34px; padding: 4px 8px; border: 1px solid var(--border);
-  border-radius: 9px; background: var(--surface); min-width: 0; max-width: 100%;
-}
-.range .sep { color: var(--muted); font-size: 12px; }
-.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
-.seg button { border: 0; background: transparent; padding: 7px 12px; font-size: 12.5px; cursor: pointer; color: var(--muted); }
-.seg button + button { border-left: 1px solid var(--border); }
-.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--fg); font-weight: 600; }
-.panel { padding: 17px; margin-bottom: 16px; }
-.panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 13px; }
-.panel-head h2 { margin: 0; font-size: 16px; letter-spacing: -.01em; }
-.panel-head .meta { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
-.chart-scroll { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
-#chart { display: block; }
-#chart rect { transition: opacity .12s; }
-#chart rect:hover { opacity: .82; }
-.legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: var(--muted); }
-.legend span { display: inline-flex; align-items: center; gap: 6px; }
-.models { display: grid; gap: 2px; }
-.model-row {
-  display: grid; grid-template-columns: 22px minmax(120px, 1.5fr) minmax(90px, 1fr) 86px 92px;
-  gap: 10px; align-items: center; padding: 8px 6px; border-radius: 9px;
-}
-.model-row + .model-row { border-top: 1px solid var(--border); }
-.model-row.head { color: var(--muted); font-size: 11.5px; font-weight: 600; padding-bottom: 4px; }
-.model-row.head > span:first-child { visibility: hidden; }
-.model-row .rank-check { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
-.model-name { min-width: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.model-name .src { display: block; color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; }
-.share { height: 7px; border-radius: 999px; background: var(--surface-alt); box-shadow: inset 0 0 0 1px var(--border); overflow: hidden; }
-.share i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--c1), var(--c6)); }
-.num { text-align: right; font-variant-numeric: tabular-nums; font-size: 12.5px; white-space: nowrap; }
-.num.muted { color: var(--muted); }
-.table-scroll { overflow: auto; max-height: 540px; -webkit-overflow-scrolling: touch; border-radius: 10px; }
-table { width: 100%; border-collapse: collapse; min-width: 760px; font-variant-numeric: tabular-nums; }
-caption { text-align: left; padding-bottom: 8px; color: var(--muted); font-size: 12px; }
-th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
-th { position: sticky; top: 0; background: var(--surface-alt); font-size: 11.5px; color: var(--muted); font-weight: 600; z-index: 1; }
-th:first-child, td:first-child, th:nth-child(2), td:nth-child(2), th:nth-child(3), td:nth-child(3) { text-align: left; }
-td:nth-child(3) { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
-tbody tr:last-child td { border-bottom: 0; }
-tbody tr:hover td { background: var(--surface-alt); }
-td.muted { color: var(--muted); }
-tfoot td { font-weight: 650; border-bottom: 0; background: var(--surface); }
-.badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
-.badge .name { color: var(--fg); }
-.mono { font-family: var(--mono); font-size: 12px; }
-.empty { padding: 44px 20px; text-align: center; color: var(--muted); }
-.empty strong { display: block; color: var(--fg); margin-bottom: 6px; font-size: 15px; }
-.spinner {
-  width: 16px; height: 16px; border-radius: 50%;
-  border: 2px solid var(--border); border-top-color: var(--accent);
-  animation: spin .8s linear infinite; flex: none;
-}
+.spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent); animation: spin .8s linear infinite; flex: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } .btn, #chart rect { transition: none; } }
 .skeleton { display: grid; gap: 12px; }
-.skeleton .bar { height: 76px; border-radius: 12px; background: var(--surface-alt); animation: pulse 1.4s ease-in-out infinite; }
+.skeleton .sk { height: 76px; border-radius: 12px; background: var(--surface-2); animation: pulse 1.4s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: .55; } }
-.footnote { color: var(--muted); font-size: 11.5px; margin-top: 14px; line-height: 1.6; }
-.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-[hidden] { display: none !important; }
+.empty { padding: 40px 20px; text-align: center; color: var(--muted); }
+.empty strong { display: block; color: var(--fg); margin-bottom: 6px; font-size: 15px; }
+
+/* quota */
+.quota { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); grid-auto-flow: row dense; gap: 12px; }
+.qcard { padding: 16px; display: grid; gap: 14px; container-type: inline-size; align-content: start; }
+.qcard.local { grid-column: span 2; }
+.qhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.qhead strong { font-size: 15px; }
+.qcard.poolc .qhead strong { font-size: 14px; }
+.plan { font-size: 11px; padding: 1px 7px; border-radius: 99px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+.also { font-size: 11px; padding: 1px 7px; border-radius: 99px; border: 1px dashed var(--line); color: var(--muted); white-space: nowrap; }
+.src { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--faint); white-space: nowrap; }
+.src i { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
+.src.stale i { background: var(--warn); }
+.wins { display: grid; gap: 12px; }
+@container (min-width: 460px) { .wins { grid-template-columns: 1fr 1fr; gap: 18px; } }
+.wins.one { grid-template-columns: 1fr !important; }
+.win { display: grid; gap: 6px; }
+.win-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.win-top .lbl { font-size: 12px; color: var(--muted); }
+.win-top .big { font-size: 22px; font-weight: 650; letter-spacing: -.02em; }
+.win-top .big small { font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 3px; }
+.win-top .reset { margin-left: auto; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.meter { position: relative; height: 8px; border-radius: 99px; background: var(--surface-2); }
+.meter b { position: absolute; inset: 0 auto 0 0; border-radius: 99px; background: var(--ok); }
+.meter b.warn { background: var(--warn); }
+.meter b.crit { background: var(--crit); }
+.meter.unknown { background: repeating-linear-gradient(135deg, var(--line) 0 5px, transparent 5px 10px); }
+.win-top .big.unknown { color: var(--muted); }
+.meter .pace { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--fg); opacity: .55; border-radius: 1px; }
+.pace-txt { font-size: 12px; color: var(--faint); }
+.pace-txt.ahead { color: var(--warn); }
+.qerr { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; background: var(--warn-soft); color: var(--fg); font-size: 13px; }
+.qerr b { color: var(--warn); }
+.qhint { font-size: 12px; color: var(--faint); }
+.pool-toggle { text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.pool-toggle:hover { border-color: var(--accent); }
+.pool-toggle.open { background: var(--surface-2); }
+.pool-mini { display: flex; gap: 6px; flex-wrap: wrap; }
+.pool-act { font-size: 12px; color: var(--accent); }
+.pool-note { font-size: 12px; color: var(--faint); }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+.chip.ok { background: var(--ok-soft); color: var(--ok); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.chip.crit { background: var(--crit-soft); color: var(--crit); }
+.quota-msg { padding: 14px 16px; font-size: 13px; color: var(--muted); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; grid-column: 1 / -1; }
+
+/* summary */
+.sum { padding: 18px; display: grid; grid-template-columns: auto auto 1fr; gap: 28px; align-items: center; }
+.kpi .l { font-size: 12px; color: var(--muted); }
+.kpi .v { font-size: 30px; font-weight: 650; letter-spacing: -.025em; line-height: 1.15; }
+.kpi .s { font-size: 12px; color: var(--faint); }
+.comp { display: grid; gap: 10px; min-width: 0; }
+.stack { display: flex; height: 12px; border-radius: 99px; overflow: hidden; background: var(--surface-2); }
+.stack span { height: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; color: var(--muted); }
+.legend b { color: var(--fg); font-weight: 600; margin-left: 4px; }
+.legend .item { display: inline-flex; align-items: center; gap: 6px; }
+
+/* chart + ranking */
+.split { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: 12px; }
+.pad { padding: 16px 18px; }
+.ph { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.ph h3 { margin: 0; font-size: 15px; }
+.ph .meta { margin-left: auto; font-size: 12px; color: var(--faint); }
+.ph .seg.gran { margin-left: auto; }
+.chart-panel { display: flex; flex-direction: column; }
+.chart-box { flex: 1; min-height: 240px; position: relative; }
+#chart { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#chart text { fill: var(--faint); font-size: 11px; font-family: var(--sans); }
+#chart .grid { stroke: var(--line); }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.stat .l { font-size: 12px; color: var(--muted); }
+.stat .v { font-size: 17px; font-weight: 650; letter-spacing: -.01em; }
+.stat .s { font-size: 11px; color: var(--faint); }
+.up { color: var(--warn); } .down { color: var(--ok); }
+.gran button:disabled { opacity: .35; cursor: default; }
+.tip { position: fixed; pointer-events: none; background: var(--fg); color: var(--bg); font-size: 12px; padding: 8px 10px; border-radius: 8px; z-index: 9; min-width: 150px; max-width: 280px; }
+.tip div { display: flex; gap: 10px; } .tip div span:last-child { margin-left: auto; }
+.rank { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.rank li { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 8px 6px; border-radius: 8px; }
+.rank li:hover { background: var(--surface-2); }
+.rank .name { font-size: 13px; font-weight: 550; overflow-wrap: anywhere; cursor: pointer; }
+.rank .val { font-size: 13px; text-align: right; }
+.rank .sub { grid-column: 2 / 4; display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--faint); min-width: 0; }
+.rank .sub .srcs { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.rank .track { flex: 1; min-width: 30px; height: 4px; border-radius: 99px; background: var(--surface-2); }
+.rank .track b { display: block; height: 100%; border-radius: 99px; background: var(--accent); }
+.rank input { margin: 0; accent-color: var(--accent); }
+.rank-more { margin-top: 6px; width: 100%; justify-content: center; }
+.foot { margin: 12px 0 0; font-size: 12px; color: var(--faint); }
+
+/* details */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th.n, td.n { text-align: right; }
+td.model { max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
+tr.day td { background: var(--surface-2); font-weight: 600; cursor: pointer; }
+tr.day td:first-child { border-radius: 8px 0 0 8px; } tr.day td:last-child { border-radius: 0 8px 8px 0; }
+td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.dash { color: var(--faint); }
+.cards { display: none; }
+.more { display: flex; justify-content: center; margin-top: 12px; }
+
+@media (max-width: 1100px) {
+  .split { grid-template-columns: 1fr; }
+  .chart-box { flex: none; height: 280px; }
+  .sum { grid-template-columns: auto auto; }
+  .comp { grid-column: 1 / -1; }
+}
+@media (max-width: 960px) {
+  .brand span, .wide-only { display: none !important; }
+  .only-narrow { display: inline-flex; }
+}
 @media (max-width: 720px) {
-  .shell { padding: 16px 12px 36px; }
-  .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .stat { padding: 12px 13px; }
-  .toolbar { padding: 13px; gap: 14px; }
-  .panel { padding: 13px; }
+  .bar-in, .page { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .sum { grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; }
+  .kpi .v { font-size: 24px; }
+  .tbl-wrap { display: none; }
+  .cards { display: grid; gap: 8px; }
+  .dcard { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; }
+  .dcard .t { display: flex; gap: 8px; align-items: center; font-size: 13px; min-width: 0; }
+  .dcard .t .m { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .dcard .t b { margin-left: auto; }
+  .dcard .g { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; font-size: 12px; color: var(--muted); }
+  .dcard .g span b { display: block; color: var(--fg); font-weight: 500; }
+  .dhead { font-size: 12px; font-weight: 600; color: var(--muted); margin-top: 6px; border: 0; background: none; padding: 0; text-align: left; }
+  .chart-box { height: 210px; min-height: 0; }
+  .stats { grid-template-columns: 1fr 1fr; }
   .auth { margin: 18px auto; padding: 21px; }
-  .range { gap: 6px; }
-  .range input[type="date"] { flex: 1 1 130px; }
-  .top-actions { width: 100%; }
-  .top-actions .btn { flex: 1; }
-  .select-wrap { flex: 1; justify-content: space-between; }
-  .model-row { grid-template-columns: 20px minmax(90px, 1fr) 66px 76px; align-items: start; }
-  .model-row .share,
-  .model-row.head > span:nth-child(3) { display: none; }
-  .model-name { white-space: normal; overflow-wrap: anywhere; line-height: 1.35; }
 }
-@media (min-width: 980px) {
-  .summary-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+@media (max-width: 560px) {
+  .quota { grid-template-columns: 1fr; }
+  .qcard.local { grid-column: auto; }
 }
+/* filter sheet */
+.sheet-bg { position: fixed; inset: 0; background: rgb(0 0 0 / .35); z-index: 20; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 21; background: var(--surface); border-radius: 16px 16px 0 0; padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 14px; max-height: 80vh; overflow: auto; }
+.sheet h4 { margin: 0; font-size: 13px; color: var(--muted); font-weight: 600; }
+.sheet .seg { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); }
+.sheet .srcs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.sheet .srcs label { border: 1px solid var(--line); border-radius: 9px; }
+.sheet-custom { display: grid; gap: 8px; }
+/* time range */
+.range-wrap { position: relative; }
+.pop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 6; width: 300px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 32px rgb(0 0 0 / .16); padding: 12px; display: grid; gap: 10px; }
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 6px; align-items: center; }
+.row2 input { width: 100%; min-width: 0; height: 34px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 0 8px; font-size: 13px; }
+.quick { display: flex; flex-wrap: wrap; gap: 6px; }
+.quick button { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 3px 10px; font-size: 12px; color: var(--muted); }
+.quick button:hover { border-color: var(--accent); color: var(--fg); }
+.pop .act { display: flex; gap: 8px; justify-content: flex-end; }
+.err-txt { color: var(--crit); font-size: 12px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } .spinner { animation-duration: 2.4s; } }
 </style>
 </head>
 <body>
-<div class="shell">
-  <header class="top">
-    <div class="brand">
-      <div class="mark" aria-hidden="true">H</div>
-      <div>
-        <h1 data-i18n="appTitle">Harness 用量</h1>
-        <p class="subtitle" data-i18n="subtitle"></p>
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand"><h1 data-i18n="appTitle">Harness Usage</h1><span data-i18n="subtitle"></span></div>
+    <div class="tools" id="top-actions" hidden>
+      <div class="range-wrap wide-only">
+        <div class="seg" id="range" role="group"></div>
+        <div class="pop" id="custom-pop" hidden>
+          <div class="quick" id="quick"></div>
+          <div class="row2"><input type="date" id="from" data-i18n-label="from"><span>–</span><input type="date" id="to" data-i18n-label="to"></div>
+          <div class="err-txt" id="range-err" hidden></div>
+          <div class="act"><button class="ctl" type="button" id="custom-cancel" data-i18n="cancel"></button><button class="btn-p" type="button" id="custom-apply" data-i18n="apply"></button></div>
+        </div>
       </div>
-    </div>
-    <div class="top-actions" id="top-actions" hidden>
-      <label class="select-wrap">
-        <span data-i18n="autoRefresh"></span>
-        <select id="auto-refresh">
-          <option value="0" data-i18n="autoOff"></option>
-          <option value="30">30 s</option>
-          <option value="60">1 min</option>
-          <option value="300">5 min</option>
-        </select>
+      <div class="dd wide-only">
+        <button class="ctl" type="button" id="src-btn" aria-haspopup="true" aria-expanded="false"><span class="k" data-i18n="source"></span> <span id="src-lbl" class="num"></span> ▾</button>
+        <div class="menu" id="src-menu" hidden></div>
+      </div>
+      <button class="ctl only-narrow" type="button" id="filter-btn"><span data-i18n="filters"></span> · <span id="filter-lbl"></span></button>
+      <label class="ctl wide-only"><span class="k" data-i18n="autoRefresh"></span>
+        <select id="auto-refresh"><option value="0" data-i18n="autoOff"></option><option value="300" data-i18n="auto5"></option><option value="900" data-i18n="auto15"></option></select>
       </label>
-      <button class="btn" id="refresh" type="button" data-i18n="refresh">刷新</button>
+      <button class="ctl icon-btn" type="button" id="refresh" data-i18n-title="refreshTitle">⟳</button>
     </div>
-  </header>
+  </div>
+</header>
 
-  <section class="card auth" id="auth-form">
+<main class="page">
+  <section class="panel auth" id="auth-form">
     <h2 data-i18n="authTitle"></h2>
     <p data-i18n="authHint"></p>
     <form id="auth-controls" novalidate>
@@ -302,114 +298,74 @@ tfoot td { font-weight: 650; border-bottom: 0; background: var(--surface); }
         <label for="management-key" data-i18n="authPlaceholder"></label>
         <input id="management-key" name="management-key" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" required>
       </div>
-      <div class="auth-row">
-        <button class="btn primary" id="connect" type="submit" data-i18n="connect"></button>
-      </div>
+      <div class="auth-row"><button class="btn-p" id="connect" type="submit" data-i18n="connect"></button></div>
     </form>
     <div class="auth-error" id="auth-error" role="alert" hidden></div>
   </section>
 
-  <section id="dashboard" hidden aria-live="polite">
-    <div id="status-notice" class="notice" hidden></div>
-
-    <div id="loading" class="skeleton" hidden aria-label="loading">
-      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-    </div>
-
-    <div id="content" hidden>
-      <div class="summary-grid" id="summary"></div>
-
-      <div class="card toolbar">
-        <div class="group grow">
-          <div class="group-head">
-            <span class="group-label" data-i18n="filterSources"></span>
-            <span>
-              <button class="linkish" type="button" id="sources-all" data-i18n="all"></button>
-              <button class="linkish" type="button" id="sources-none" data-i18n="none"></button>
-            </span>
-          </div>
-          <div class="chips" id="source-filter"></div>
-        </div>
-        <div class="group grow">
-          <div class="group-head">
-            <span class="group-label" data-i18n="filterRange"></span>
-          </div>
-          <div class="chips" id="range-presets"></div>
-          <div class="range">
-            <label class="sr-only" for="date-from" data-i18n="from"></label>
-            <input id="date-from" type="date">
-            <span class="sep" aria-hidden="true">–</span>
-            <label class="sr-only" for="date-to" data-i18n="to"></label>
-            <input id="date-to" type="date">
-          </div>
-        </div>
-      </div>
-
-      <div class="card panel">
-        <div class="panel-head">
-          <h2 data-i18n="trendTitle"></h2>
-          <div class="seg" id="group-by" role="group" aria-label="group">
-            <button type="button" data-group="source" aria-pressed="true" data-i18n="groupSource"></button>
-            <button type="button" data-group="model" aria-pressed="false" data-i18n="groupModel"></button>
-          </div>
-          <span class="meta" id="generated"></span>
-        </div>
-        <div class="chart-scroll" id="chart-scroll">
-          <svg id="chart" role="img" aria-labelledby="chart-title" width="100%" height="270"></svg>
-          <span class="sr-only" id="chart-title"></span>
-        </div>
-        <div class="legend" id="legend"></div>
-      </div>
-
-      <div class="card panel" id="model-panel">
-        <div class="panel-head">
-          <h2 data-i18n="modelTitle"></h2>
-          <span class="meta" id="model-meta"></span>
-        </div>
-        <div class="models" id="model-list"></div>
-        <div class="footnote" data-i18n="modelCostNote"></div>
-      </div>
-
-      <div class="card panel">
-        <div class="panel-head">
-          <h2 data-i18n="tableTitle"></h2>
-        </div>
-        <div class="table-scroll" tabindex="0" aria-label="Details">
-          <table>
-            <caption class="sr-only" data-i18n="tableTitle"></caption>
-            <thead>
-              <tr>
-                <th scope="col" data-i18n="date"></th>
-                <th scope="col" data-i18n="source"></th>
-                <th scope="col" data-i18n="model"></th>
-                <th scope="col" data-i18n="summaryInput"></th>
-                <th scope="col" data-i18n="summaryOutput"></th>
-                <th scope="col" data-i18n="summaryCacheRead"></th>
-                <th scope="col" data-i18n="summaryCacheWrite"></th>
-                <th scope="col" data-i18n="summaryTokens"></th>
-                <th scope="col" data-i18n="summaryCost"></th>
-              </tr>
-            </thead>
-            <tbody id="rows"></tbody>
-            <tfoot id="rows-total"></tfoot>
-          </table>
-        </div>
-        <div class="footnote" data-i18n="costNote"></div>
-      </div>
-    </div>
-
-    <div class="card empty" id="empty-state" hidden>
-      <strong data-i18n="emptyTitle"></strong>
-      <span data-i18n="emptyHint"></span>
-    </div>
+  <section id="quota-section" hidden aria-live="polite">
+    <div class="band-h"><h2 data-i18n="quotaTitle"></h2><span class="note" data-i18n="quotaNote"></span><span class="right wide-only" data-i18n="quotaPaceNote"></span></div>
+    <div class="quota" id="quota"></div>
   </section>
+
+  <section id="dashboard" hidden aria-live="polite">
+    <div id="status-notice" class="notice" hidden style="margin-bottom:16px"></div>
+    <div id="loading" class="skeleton" hidden><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+    <div id="content" hidden style="display:grid;gap:20px">
+      <section id="sum-section">
+        <div class="band-h"><h2 data-i18n="usageTitle"></h2><span class="note" id="range-note"></span></div>
+        <div class="panel sum" id="sum"></div>
+      </section>
+      <section class="split" id="split">
+        <div class="panel pad chart-panel" id="chart-panel">
+          <div class="ph"><h3 id="chart-title"></h3>
+            <div class="seg gran" id="gran" role="group"><button type="button" data-g="day" data-i18n="granDay"></button><button type="button" data-g="week" data-i18n="granWeek"></button><button type="button" data-g="month" data-i18n="granMonth"></button></div>
+            <div class="seg" id="group-by" role="group"><button type="button" data-group="source" data-i18n="groupSource"></button><button type="button" data-group="model" data-i18n="groupModel"></button></div>
+          </div>
+          <div class="chart-box" id="chart-box"><svg id="chart" role="img"></svg></div>
+          <div class="legend" id="chart-legend" style="margin-top:8px"></div>
+          <div class="stats" id="stats"></div>
+        </div>
+        <div class="panel pad" id="model-panel">
+          <div class="ph"><h3 data-i18n="modelTitle"></h3><span class="meta" id="model-meta"></span></div>
+          <div id="model-notice"></div>
+          <ul class="rank" id="rank"></ul>
+          <button class="ctl rank-more" type="button" id="rank-more" hidden></button>
+          <p class="foot" data-i18n="modelCostNote"></p>
+        </div>
+      </section>
+      <section class="panel pad" id="details">
+        <div class="ph"><h3 data-i18n="tableTitle"></h3><span class="meta" data-i18n="detailsHint"></span></div>
+        <div class="tbl-wrap"><table><thead><tr><th data-i18n="dateSource"></th><th data-i18n="model"></th><th class="n" data-i18n="summaryInput"></th><th class="n" data-i18n="summaryOutput"></th><th class="n" data-i18n="summaryCacheRead"></th><th class="n" data-i18n="summaryCacheWrite"></th><th class="n" data-i18n="summaryTokens"></th><th class="n" data-i18n="summaryCost"></th></tr></thead><tbody id="rows"></tbody></table></div>
+        <div class="cards" id="cards"></div>
+        <div class="more"><button class="ctl" type="button" id="more-btn" data-i18n="showMore"></button></div>
+        <p class="foot" data-i18n="costNote"></p>
+      </section>
+    </div>
+    <div class="panel empty" id="empty-state" hidden><strong data-i18n="emptyTitle"></strong><span data-i18n="emptyHint"></span></div>
+  </section>
+</main>
+<div id="tip" class="tip" hidden></div>
+<div id="sheet-bg" class="sheet-bg" hidden></div>
+<div id="sheet" class="sheet" hidden role="dialog">
+  <h4 data-i18n="filterRange"></h4>
+  <div class="seg" id="range2"></div>
+  <div class="sheet-custom" id="sheet-custom" hidden>
+    <div class="quick" id="quick2"></div>
+    <div class="row2"><input type="date" id="from2" data-i18n-label="from"><span>–</span><input type="date" id="to2" data-i18n-label="to"></div>
+    <div class="err-txt" id="range-err2" hidden></div>
+  </div>
+  <h4 data-i18n="source"></h4><div class="srcs" id="srcs2"></div>
+  <h4 data-i18n="autoRefresh"></h4>
+  <div class="seg" id="auto2"><button type="button" data-a="0" data-i18n="autoOff"></button><button type="button" data-a="300" data-i18n="auto5"></button><button type="button" data-a="900" data-i18n="auto15"></button></div>
+  <button class="ctl" type="button" id="sheet-done" style="justify-content:center;height:40px" data-i18n="done"></button>
 </div>
 
 <script>
 "use strict";
 (function () {
   const DATA_PATH = "/v0/management/harness-usage/daily";
-  const PAGE_PATH = "/v0/resource/plugins/harness-usage/usage";
+  const QUOTA_PATH = "/v0/management/harness-usage/quota";
   const SOURCES = [
     "claude", "codex", "opencode", "omp", "pi", "amp", "droid", "codebuff",
     "hermes", "goose", "kilo", "copilot", "gemini", "antigravity", "kimi",
@@ -422,220 +378,317 @@ tfoot td { font-weight: 650; border-bottom: 0; background: var(--surface); }
     gemini: "Gemini CLI", antigravity: "Antigravity", kimi: "Kimi", qwen: "Qwen",
     openclaw: "OpenClaw", grok: "Grok CLI", zcode: "ZCode"
   };
-  const SOURCE_COLORS = {};
   const PALETTE = ["var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)", "var(--c5)", "var(--c6)"];
+  const SOURCE_COLORS = {};
   SOURCES.forEach((source, index) => { SOURCE_COLORS[source] = PALETTE[index % PALETTE.length]; });
+  const PROVIDER_COLORS = { claude: "var(--c1)", codex: "var(--c2)" };
   const STORAGE_LANGUAGE = "cli-proxy-language";
   const STORAGE_THEME = "cli-proxy-theme";
   const STORAGE_AUTH = "cli-proxy-auth";
   const OBFUSCATION_PREFIX = "enc::v1::";
   const OBFUSCATION_SALT = "cli-proxy-api-webui::secure-storage";
-  const TABLE_LIMIT = 600;
+  const RANK_TOP = 6;
+  const DAYS_STEP = 7;
+  // Provider quota is queried at most every five minutes; the plugin caches
+  // each account for the same period.
+  const QUOTA_MIN_NET_MS = 5 * 60 * 1000;
+  const MIN = 60e3, HOUR = 60 * MIN, DAY = 24 * HOUR;
 
   const STRINGS = {
     "zh-CN": {
-      appTitle: "Harness 用量", subtitle: "本机 AI 编程代理的历史用量，按来源与模型汇总",
+      appTitle: "Harness 用量", subtitle: "本机 coding agent 用量与账户额度",
       authTitle: "需要管理密钥", authHint: "输入 CPA 管理密钥以读取统计。密钥只保存在当前页面内存中，不会写入地址栏或浏览器存储。",
-      authPlaceholder: "CPA 管理密钥", connect: "读取用量",
-      authFailed: "管理密钥无效或已过期，请重试。",
-      loading: "正在读取本机用量…", loadError: "暂时无法读取用量，请稍后重试。",
-      retry: "重试", refresh: "刷新", partialTitle: "部分来源不可用",
-      sourceEmpty: "无数据", sourceFailed: "失败",
-      summaryTokens: "总 Token", summaryInput: "输入", summaryOutput: "输出",
-      summaryCacheRead: "缓存读取", summaryCacheWrite: "缓存写入", summaryCost: "估算费用", summaryOther: "其他 token",
+      authPlaceholder: "CPA 管理密钥", connect: "读取用量", authFailed: "管理密钥无效或已过期，请重试。",
+      loading: "正在读取本机用量…", loadError: "暂时无法读取用量，请稍后重试。", retry: "重试", refreshTitle: "刷新（含联网查询额度）",
+      partialTitle: "部分来源不可用", sourceEmpty: "无数据", sourceFailed: "采集失败",
+      summaryTokens: "总 Token", summaryInput: "输入", summaryOutput: "输出", summaryCacheRead: "缓存读", summaryCacheWrite: "缓存写", summaryCost: "估算费用", summaryOther: "其他 Token",
+      costHint: "按 API 公开价折算，非订阅账单",
       costNote: "费用按公开价格估算，不代表订阅账单；缓存与 reasoning token 已按来源口径计入总量，不再重复相加。",
-      trendTitle: "按日趋势", tableTitle: "明细",
-      filterSources: "来源筛选", filterRange: "日期范围", filterModels: "模型筛选",
-      range7: "近 7 天", range30: "近 30 天", range90: "近 90 天", rangeAll: "全部",
-      from: "开始日期", to: "结束日期", date: "日期", source: "来源", model: "模型",
-      groupBy: "图表分组", groupSource: "按来源", groupModel: "按模型",
-      modelTitle: "模型排行", modelMeta: "共 {n} 个模型",
-      modelEmpty: "所选范围内没有模型明细",
-      modelsNoneSelected: "已取消全部模型。勾选上方任意模型即可恢复图表与明细。",
+      tableTitle: "明细", detailsHint: "按日期分组，点击日期行折叠", dateSource: "日期 / 来源", showMore: "显示更早 7 天", inProgress: "进行中", rowsN: "{n} 行",
+      filterRange: "日期范围", filters: "筛选", from: "开始日期", to: "结束日期", source: "来源", model: "模型",
+      rangeToday: "今天", range7: "7 天", range30: "30 天", range90: "90 天", rangeAll: "全部", rangeCustom: "自定义",
+      labelAll: "全部历史", labelLast: "近 {n} 天", nSources: "{n} 个来源",
+      quickYesterday: "昨天", quickThisWeek: "本周", quickLastWeek: "上周", quickThisMonth: "本月", quickLastMonth: "上月", quickThisYear: "今年",
+      cancel: "取消", apply: "应用", done: "完成", all: "全选", none: "清空",
+      errMissing: "请选择开始和结束日期", errOrder: "开始日期不能晚于结束日期", errFuture: "结束日期不能晚于今天",
+      groupSource: "按来源", groupModel: "按模型", granDay: "日", granWeek: "周", granMonth: "月",
+      trendDay: "每日趋势", trendWeek: "每周趋势", trendMonth: "每月趋势", breakdown: "{date} 构成", dayEmpty: "这一天没有用量",
+      statAvg: "日均", statActiveDays: "{a} / {n} 天有用量", statPeak: "峰值日", statPrevN: "较前 {n} 天", statPrevToday: "较昨天（今天未结束）", statPrevDay: "较前一天",
+      statNoPrev: "早于最早记录，无法对比", statCache: "缓存命中率", statCacheHint: "缓存读 ÷（输入 + 缓存读）",
+      statActive: "活跃来源 / 模型", statActiveHint: "当天有用量的数量", statAvg7: "前 7 天日均", statAvg7Hint: "当天为其 {p}%",
+      modelTitle: "模型排名", modelMeta: "{n} 个模型", modelEmpty: "所选范围内没有用量",
+      modelsNoneSelected: "已取消全部模型。勾选任意模型即可恢复图表与明细。", rankExpand: "展开全部 {n} 个模型", rankCollapse: "收起",
+      modelCostNote: "勾选即筛选图表与明细。部分来源（如 Codex）不报告分模型费用，模型费用可能低于总费用。",
       other: "其他", unattributed: "未标注",
-      all: "全选", none: "清空", share: "占比",
-      autoRefresh: "自动刷新", autoOff: "关闭",
-      modelCostNote: "模型费用仅汇总来源提供的模型级费用；部分来源（如 Codex）不提供该数据，因此模型费用可能低于总费用。切换来源或勾选模型会立即更新图表与明细。",
+      autoRefresh: "自动刷新", autoOff: "关", auto5: "5 分钟", auto15: "15 分钟",
       emptyTitle: "所选范围内没有用量数据", emptyHint: "调整来源、模型或日期范围后再看。",
-      generated: "更新于", rowsCapped: "仅显示前 {n} 行，请缩窄日期范围。",
-      errorTimeout: "采集超时", errorCommandFailed: "采集器执行失败", errorUnknownSchema: "数据格式不兼容",
-      errorOutputTooLarge: "数据量超出上限", errorCanceled: "采集已取消",
-      errorUnsupported: "来源不受支持", errorGeneric: "未知错误",
-      total: "合计"
+      errorTimeout: "采集超时", errorCommandFailed: "采集器执行失败", errorUnknownSchema: "数据格式不兼容", errorOutputTooLarge: "数据量超出上限", errorCanceled: "采集已取消", errorUnsupported: "来源不受支持", errorGeneric: "未知错误",
+      quotaTitle: "账户额度", quotaNote: "订阅窗口剩余量，与下方本地 Token 统计相互独立", quotaPaceNote: "竖线 = 按时间均匀消耗时应在的位置",
+      usageTitle: "本地用量", local: "本机", poolTitle: "CPA 凭证池", poolMore: "另有 {n} 个账户", poolMerged: "{n} 个与本机登录为同一账户，已合并",
+      poolError: "暂时无法读取 CPA 凭证池", expand: "展开 ›", collapse: "收起 ‹", needsAttention: "需处理",
+      mergedHint: "CPA 凭证池里的同一账户已合并到这里，额度只查询一次",
+      remaining: "剩余", quotaUnknown: "未知", resetsIn: "{d}后重置", resetSince: "已重置，待联网确认", paceAhead: "比均匀消耗快 {n} 个百分点", paceOk: "消耗节奏正常", noWindows: "该账户没有额度窗口",
+      srcLive: "实时", srcCache: "缓存", srcSession: "会话日志", srcLiveHint: "经 CPA 代理联网获取", srcCacheHint: "5 分钟内查询过，复用缓存结果", srcSessionHint: "最近一次 Codex 会话记录的值；点 ⟳ 联网获取最新",
+      agoNow: "刚刚", agoMin: "{n} 分钟前", agoHour: "{n} 小时前", agoDay: "{n} 天前",
+      durDH: "{d} 天 {h} 小时", durHM: "{h} 小时 {m} 分", durM: "{m} 分钟",
+      win5h: "5 小时", win1d: "1 天", win7d: "7 天", win30d: "30 天", winH: "{n} 小时", winD: "{n} 天", winOther: "窗口",
+      qNotConfigured: "未在本机登录", qExpiredLocal: "令牌已过期，打开 CLI 即可自动刷新", qExpiredPool: "令牌已过期，等待 CPA 刷新后自动恢复",
+      qUpstream: "额度接口暂时不可用", qRateLimited: "查询过于频繁，请稍后再试", qKeychain: "未获得钥匙串授权，请在系统弹窗中允许 CPA 读取 Claude Code 凭证",
+      qSchema: "额度数据格式不兼容", qCanceled: "查询已取消", qGeneric: "额度查询失败", liveFailed: "联网查询失败：{r}",
+      quotaLoading: "正在读取账户额度…", quotaLoadError: "暂时无法读取账户额度", quotaEmpty: "未发现本机或 CPA 中的 Claude / Codex 账户"
     },
     "zh-TW": {
-      appTitle: "Harness 用量", subtitle: "本機 AI 編程代理的歷史用量，依來源與模型彙總",
+      appTitle: "Harness 用量", subtitle: "本機 coding agent 用量與帳戶額度",
       authTitle: "需要管理金鑰", authHint: "輸入 CPA 管理金鑰以讀取統計。金鑰只保存在目前頁面記憶體中，不會寫入網址或瀏覽器儲存。",
-      authPlaceholder: "CPA 管理金鑰", connect: "讀取用量",
-      authFailed: "管理金鑰無效或已過期，請重試。",
-      loading: "正在讀取本機用量…", loadError: "暫時無法讀取用量，請稍後再試。",
-      retry: "重試", refresh: "重新整理", partialTitle: "部分來源無法使用",
-      sourceEmpty: "無資料", sourceFailed: "失敗",
-      summaryTokens: "總 Token", summaryInput: "輸入", summaryOutput: "輸出",
-      summaryCacheRead: "快取讀取", summaryCacheWrite: "快取寫入", summaryCost: "預估費用", summaryOther: "其他 token",
+      authPlaceholder: "CPA 管理金鑰", connect: "讀取用量", authFailed: "管理金鑰無效或已過期，請重試。",
+      loading: "正在讀取本機用量…", loadError: "暫時無法讀取用量，請稍後再試。", retry: "重試", refreshTitle: "重新整理（含連網查詢額度）",
+      partialTitle: "部分來源無法使用", sourceEmpty: "無資料", sourceFailed: "擷取失敗",
+      summaryTokens: "總 Token", summaryInput: "輸入", summaryOutput: "輸出", summaryCacheRead: "快取讀取", summaryCacheWrite: "快取寫入", summaryCost: "預估費用", summaryOther: "其他 Token",
+      costHint: "依 API 公開價格換算，非訂閱帳單",
       costNote: "費用依公開價格估算，不代表訂閱帳單；快取與 reasoning token 已依來源定義計入總量，不會重複相加。",
-      trendTitle: "每日趨勢", tableTitle: "明細",
-      filterSources: "來源篩選", filterRange: "日期範圍", filterModels: "模型篩選",
-      range7: "近 7 天", range30: "近 30 天", range90: "近 90 天", rangeAll: "全部",
-      from: "開始日期", to: "結束日期", date: "日期", source: "來源", model: "模型",
-      groupBy: "圖表分組", groupSource: "依來源", groupModel: "依模型",
-      modelTitle: "模型排行", modelMeta: "共 {n} 個模型",
-      modelEmpty: "所選範圍內沒有模型明細",
-      modelsNoneSelected: "已取消全部模型。勾選上方任一模型即可恢復圖表與明細。",
+      tableTitle: "明細", detailsHint: "依日期分組，點擊日期列收合", dateSource: "日期 / 來源", showMore: "顯示更早 7 天", inProgress: "進行中", rowsN: "{n} 列",
+      filterRange: "日期範圍", filters: "篩選", from: "開始日期", to: "結束日期", source: "來源", model: "模型",
+      rangeToday: "今天", range7: "7 天", range30: "30 天", range90: "90 天", rangeAll: "全部", rangeCustom: "自訂",
+      labelAll: "全部歷史", labelLast: "近 {n} 天", nSources: "{n} 個來源",
+      quickYesterday: "昨天", quickThisWeek: "本週", quickLastWeek: "上週", quickThisMonth: "本月", quickLastMonth: "上月", quickThisYear: "今年",
+      cancel: "取消", apply: "套用", done: "完成", all: "全選", none: "清除",
+      errMissing: "請選擇開始與結束日期", errOrder: "開始日期不能晚於結束日期", errFuture: "結束日期不能晚於今天",
+      groupSource: "依來源", groupModel: "依模型", granDay: "日", granWeek: "週", granMonth: "月",
+      trendDay: "每日趨勢", trendWeek: "每週趨勢", trendMonth: "每月趨勢", breakdown: "{date} 組成", dayEmpty: "這一天沒有用量",
+      statAvg: "日均", statActiveDays: "{a} / {n} 天有用量", statPeak: "峰值日", statPrevN: "較前 {n} 天", statPrevToday: "較昨天（今天未結束）", statPrevDay: "較前一天",
+      statNoPrev: "早於最早紀錄，無法比較", statCache: "快取命中率", statCacheHint: "快取讀取 ÷（輸入 + 快取讀取）",
+      statActive: "活躍來源 / 模型", statActiveHint: "當天有用量的數量", statAvg7: "前 7 天日均", statAvg7Hint: "當天為其 {p}%",
+      modelTitle: "模型排名", modelMeta: "{n} 個模型", modelEmpty: "所選範圍內沒有用量",
+      modelsNoneSelected: "已取消全部模型。勾選任一模型即可恢復圖表與明細。", rankExpand: "展開全部 {n} 個模型", rankCollapse: "收起",
+      modelCostNote: "勾選即篩選圖表與明細。部分來源（如 Codex）不提供模型級費用，模型費用可能低於總費用。",
       other: "其他", unattributed: "未標註",
-      all: "全選", none: "清除", share: "佔比",
-      autoRefresh: "自動更新", autoOff: "關閉",
-      modelCostNote: "模型費用僅彙總來源提供的模型級費用；部分來源（如 Codex）不提供該資料，因此模型費用可能低於總費用。切換來源或勾選模型會立即更新圖表與明細。",
+      autoRefresh: "自動更新", autoOff: "關", auto5: "5 分鐘", auto15: "15 分鐘",
       emptyTitle: "所選範圍內沒有用量資料", emptyHint: "調整來源、模型或日期範圍後再查看。",
-      generated: "更新於", rowsCapped: "僅顯示前 {n} 列，請縮小日期範圍。",
-      errorTimeout: "擷取逾時", errorCommandFailed: "擷取器執行失敗", errorUnknownSchema: "資料格式不相容",
-      errorOutputTooLarge: "資料量超出上限", errorCanceled: "擷取已取消",
-      errorUnsupported: "來源不受支援", errorGeneric: "未知錯誤",
-      total: "合計"
+      errorTimeout: "擷取逾時", errorCommandFailed: "擷取器執行失敗", errorUnknownSchema: "資料格式不相容", errorOutputTooLarge: "資料量超出上限", errorCanceled: "擷取已取消", errorUnsupported: "來源不受支援", errorGeneric: "未知錯誤",
+      quotaTitle: "帳戶額度", quotaNote: "訂閱視窗剩餘量，與下方本機 Token 統計彼此獨立", quotaPaceNote: "直線 = 依時間均勻消耗時應在的位置",
+      usageTitle: "本機用量", local: "本機", poolTitle: "CPA 憑證池", poolMore: "另有 {n} 個帳戶", poolMerged: "{n} 個與本機登入為同一帳戶，已合併",
+      poolError: "暫時無法讀取 CPA 憑證池", expand: "展開 ›", collapse: "收起 ‹", needsAttention: "需處理",
+      mergedHint: "CPA 憑證池中的同一帳戶已合併到此處，額度只查詢一次",
+      remaining: "剩餘", quotaUnknown: "未知", resetsIn: "{d}後重設", resetSince: "已重設，待連網確認", paceAhead: "比均勻消耗快 {n} 個百分點", paceOk: "消耗節奏正常", noWindows: "此帳戶沒有額度視窗",
+      srcLive: "即時", srcCache: "快取", srcSession: "工作階段紀錄", srcLiveHint: "經 CPA 代理連網取得", srcCacheHint: "5 分鐘內查詢過，沿用快取結果", srcSessionHint: "最近一次 Codex 工作階段紀錄的值；點 ⟳ 連網取得最新",
+      agoNow: "剛剛", agoMin: "{n} 分鐘前", agoHour: "{n} 小時前", agoDay: "{n} 天前",
+      durDH: "{d} 天 {h} 小時", durHM: "{h} 小時 {m} 分", durM: "{m} 分鐘",
+      win5h: "5 小時", win1d: "1 天", win7d: "7 天", win30d: "30 天", winH: "{n} 小時", winD: "{n} 天", winOther: "視窗",
+      qNotConfigured: "未在本機登入", qExpiredLocal: "權杖已過期，開啟 CLI 即可自動更新", qExpiredPool: "權杖已過期，等待 CPA 更新後自動恢復",
+      qUpstream: "額度介面暫時無法使用", qRateLimited: "查詢過於頻繁，請稍後再試", qKeychain: "未取得鑰匙圈授權，請在系統視窗中允許 CPA 讀取 Claude Code 憑證",
+      qSchema: "額度資料格式不相容", qCanceled: "查詢已取消", qGeneric: "額度查詢失敗", liveFailed: "連網查詢失敗：{r}",
+      quotaLoading: "正在讀取帳戶額度…", quotaLoadError: "暫時無法讀取帳戶額度", quotaEmpty: "未發現本機或 CPA 中的 Claude / Codex 帳戶"
     },
     en: {
-      appTitle: "Harness Usage", subtitle: "Local AI coding-agent history, grouped by source and model",
+      appTitle: "Harness Usage", subtitle: "Local coding-agent usage and account quota",
       authTitle: "Management key required", authHint: "Enter your CPA management key to load statistics. The key stays in this page's memory and is never written to the address bar or browser storage.",
-      authPlaceholder: "CPA management key", connect: "Load usage",
-      authFailed: "The management key is invalid or has expired. Try again.",
-      loading: "Reading local usage…", loadError: "Usage is temporarily unavailable. Try again shortly.",
-      retry: "Retry", refresh: "Refresh", partialTitle: "Some sources are unavailable",
-      sourceEmpty: "No data", sourceFailed: "Failed",
-      summaryTokens: "Total tokens", summaryInput: "Input", summaryOutput: "Output",
-      summaryCacheRead: "Cache read", summaryCacheWrite: "Cache write", summaryCost: "Estimated cost", summaryOther: "Other tokens",
+      authPlaceholder: "CPA management key", connect: "Load usage", authFailed: "The management key is invalid or has expired. Try again.",
+      loading: "Reading local usage…", loadError: "Usage is temporarily unavailable. Try again shortly.", retry: "Retry", refreshTitle: "Refresh (also queries account quota online)",
+      partialTitle: "Some sources are unavailable", sourceEmpty: "No data", sourceFailed: "Failed",
+      summaryTokens: "Total tokens", summaryInput: "Input", summaryOutput: "Output", summaryCacheRead: "Cache read", summaryCacheWrite: "Cache write", summaryCost: "Estimated cost", summaryOther: "Other tokens",
+      costHint: "API list-price equivalent, not a subscription bill",
       costNote: "Cost is estimated from public prices and is not a subscription invoice. Cache and reasoning tokens follow each source's own total and are not added twice.",
-      trendTitle: "Daily trend", tableTitle: "Details",
-      filterSources: "Sources", filterRange: "Date range", filterModels: "Models",
-      range7: "Last 7 days", range30: "Last 30 days", range90: "Last 90 days", rangeAll: "All",
-      from: "Start date", to: "End date", date: "Date", source: "Source", model: "Model",
-      groupBy: "Chart groups", groupSource: "By source", groupModel: "By model",
-      modelTitle: "Model ranking", modelMeta: "{n} models",
-      modelEmpty: "No model detail in the selected range",
-      modelsNoneSelected: "All models are deselected. Check any model above to restore the chart and table.",
+      tableTitle: "Details", detailsHint: "Grouped by date; click a date row to collapse", dateSource: "Date / source", showMore: "Show 7 earlier days", inProgress: "In progress", rowsN: "{n} rows",
+      filterRange: "Date range", filters: "Filters", from: "Start date", to: "End date", source: "Sources", model: "Model",
+      rangeToday: "Today", range7: "7 d", range30: "30 d", range90: "90 d", rangeAll: "All", rangeCustom: "Custom",
+      labelAll: "All history", labelLast: "Last {n} days", nSources: "{n} sources",
+      quickYesterday: "Yesterday", quickThisWeek: "This week", quickLastWeek: "Last week", quickThisMonth: "This month", quickLastMonth: "Last month", quickThisYear: "This year",
+      cancel: "Cancel", apply: "Apply", done: "Done", all: "All", none: "None",
+      errMissing: "Choose a start and end date", errOrder: "The start date cannot be after the end date", errFuture: "The end date cannot be after today",
+      groupSource: "By source", groupModel: "By model", granDay: "Day", granWeek: "Week", granMonth: "Month",
+      trendDay: "Daily trend", trendWeek: "Weekly trend", trendMonth: "Monthly trend", breakdown: "{date} breakdown", dayEmpty: "No usage on this day",
+      statAvg: "Daily average", statActiveDays: "{a} / {n} days with usage", statPeak: "Peak day", statPrevN: "vs previous {n} days", statPrevToday: "vs yesterday (today in progress)", statPrevDay: "vs previous day",
+      statNoPrev: "Before the earliest record", statCache: "Cache hit rate", statCacheHint: "cache read ÷ (input + cache read)",
+      statActive: "Active sources / models", statActiveHint: "With usage on this day", statAvg7: "Previous 7-day average", statAvg7Hint: "This day is {p}% of it",
+      modelTitle: "Model ranking", modelMeta: "{n} models", modelEmpty: "No usage in the selected range",
+      modelsNoneSelected: "All models are deselected. Check any model to restore the chart and details.", rankExpand: "Show all {n} models", rankCollapse: "Show less",
+      modelCostNote: "Checking a model filters the chart and details. Some sources (for example Codex) do not report per-model cost, so model cost can be lower than the total.",
       other: "Other", unattributed: "Unattributed",
-      all: "All", none: "None", share: "Share",
-      autoRefresh: "Auto refresh", autoOff: "Off",
-      modelCostNote: "Model cost only sums per-model cost reported by the source. Some sources (for example Codex) do not report it, so model cost can be lower than total cost. Changing sources or models updates the chart and table immediately.",
+      autoRefresh: "Auto refresh", autoOff: "Off", auto5: "5 min", auto15: "15 min",
       emptyTitle: "No usage in the selected range", emptyHint: "Change the sources, models, or date range and try again.",
-      generated: "Updated", rowsCapped: "Showing the first {n} rows; narrow the date range.",
-      errorTimeout: "Collection timed out", errorCommandFailed: "Collector failed", errorUnknownSchema: "Incompatible data format",
-      errorOutputTooLarge: "Data exceeds the limit", errorCanceled: "Collection canceled",
-      errorUnsupported: "Unsupported source", errorGeneric: "Unknown error",
-      total: "Total"
+      errorTimeout: "Collection timed out", errorCommandFailed: "Collector failed", errorUnknownSchema: "Incompatible data format", errorOutputTooLarge: "Data exceeds the limit", errorCanceled: "Collection canceled", errorUnsupported: "Unsupported source", errorGeneric: "Unknown error",
+      quotaTitle: "Account quota", quotaNote: "Remaining subscription windows; independent of the local token counts below", quotaPaceNote: "Tick = where even use over time would be",
+      usageTitle: "Local usage", local: "Local", poolTitle: "CPA credential pool", poolMore: "{n} more accounts", poolMerged: "{n} same as a local login, merged",
+      poolError: "The CPA credential pool is unavailable", expand: "Expand ›", collapse: "Collapse ‹", needsAttention: "needs attention",
+      mergedHint: "The same account in the CPA pool is merged here and queried once",
+      remaining: "left", quotaUnknown: "Unknown", resetsIn: "resets in {d}", resetSince: "Reset since; refresh to confirm", paceAhead: "{n} points ahead of even pace", paceOk: "On pace", noWindows: "No quota windows for this account",
+      srcLive: "Live", srcCache: "Cached", srcSession: "Session log", srcLiveHint: "Fetched through the CPA proxy", srcCacheHint: "Queried within 5 minutes; cached result", srcSessionHint: "From the latest Codex session; press ⟳ to fetch live data",
+      agoNow: "just now", agoMin: "{n} min ago", agoHour: "{n} h ago", agoDay: "{n} d ago",
+      durDH: "{d} d {h} h", durHM: "{h} h {m} min", durM: "{m} min",
+      win5h: "5 hours", win1d: "1 day", win7d: "7 days", win30d: "30 days", winH: "{n} hours", winD: "{n} days", winOther: "Window",
+      qNotConfigured: "Not logged in on this machine", qExpiredLocal: "Token expired; opening the CLI refreshes it", qExpiredPool: "Token expired; recovers after CPA refreshes it",
+      qUpstream: "The quota service is temporarily unavailable", qRateLimited: "Queried too often; try again later", qKeychain: "Keychain access was not granted; allow CPA to read the Claude Code credential in the system prompt",
+      qSchema: "Incompatible quota data", qCanceled: "Query canceled", qGeneric: "Quota query failed", liveFailed: "Live query failed: {r}",
+      quotaLoading: "Reading account quota…", quotaLoadError: "Account quota is temporarily unavailable", quotaEmpty: "No Claude or Codex accounts found locally or in CPA"
     },
     ru: {
-      appTitle: "Использование Harness", subtitle: "История AI-агентов на этом компьютере по источникам и моделям",
+      appTitle: "Использование Harness", subtitle: "Использование AI-агентов на этом компьютере и лимиты аккаунтов",
       authTitle: "Требуется ключ управления", authHint: "Введите ключ управления CPA, чтобы загрузить статистику. Ключ хранится только в памяти этой страницы и не записывается в адресную строку или хранилище браузера.",
-      authPlaceholder: "Ключ управления CPA", connect: "Загрузить",
-      authFailed: "Ключ управления недействителен или истёк. Повторите попытку.",
-      loading: "Загрузка данных…", loadError: "Данные временно недоступны. Повторите попытку позже.",
-      retry: "Повторить", refresh: "Обновить", partialTitle: "Некоторые источники недоступны",
-      sourceEmpty: "Нет данных", sourceFailed: "Ошибка",
-      summaryTokens: "Всего токенов", summaryInput: "Вход", summaryOutput: "Выход",
-      summaryCacheRead: "Чтение кэша", summaryCacheWrite: "Запись кэша", summaryCost: "Оценка стоимости", summaryOther: "Прочие токены",
+      authPlaceholder: "Ключ управления CPA", connect: "Загрузить", authFailed: "Ключ управления недействителен или истёк. Повторите попытку.",
+      loading: "Загрузка данных…", loadError: "Данные временно недоступны. Повторите попытку позже.", retry: "Повторить", refreshTitle: "Обновить (включая онлайн-запрос лимитов)",
+      partialTitle: "Некоторые источники недоступны", sourceEmpty: "Нет данных", sourceFailed: "Ошибка",
+      summaryTokens: "Всего токенов", summaryInput: "Вход", summaryOutput: "Выход", summaryCacheRead: "Чтение кэша", summaryCacheWrite: "Запись кэша", summaryCost: "Оценка стоимости", summaryOther: "Прочие токены",
+      costHint: "По публичным ценам API, не счёт подписки",
       costNote: "Стоимость рассчитана по публичным ценам и не является счётом подписки. Токены кэша и reasoning учитываются по правилам источника и не суммируются повторно.",
-      trendTitle: "Динамика по дням", tableTitle: "Детали",
-      filterSources: "Источники", filterRange: "Период", filterModels: "Модели",
-      range7: "7 дней", range30: "30 дней", range90: "90 дней", rangeAll: "Всё",
-      from: "Начало", to: "Конец", date: "Дата", source: "Источник", model: "Модель",
-      groupBy: "Группы графика", groupSource: "По источнику", groupModel: "По модели",
-      modelTitle: "Рейтинг моделей", modelMeta: "моделей: {n}",
-      modelEmpty: "Нет данных по моделям за выбранный период",
-      modelsNoneSelected: "Все модели сняты. Отметьте любую модель выше, чтобы вернуть график и таблицу.",
+      tableTitle: "Детали", detailsHint: "Группировка по датам; нажмите на дату, чтобы свернуть", dateSource: "Дата / источник", showMore: "Показать ещё 7 дней", inProgress: "Идёт", rowsN: "строк: {n}",
+      filterRange: "Период", filters: "Фильтры", from: "Начало", to: "Конец", source: "Источники", model: "Модель",
+      rangeToday: "Сегодня", range7: "7 дн.", range30: "30 дн.", range90: "90 дн.", rangeAll: "Всё", rangeCustom: "Свой",
+      labelAll: "Вся история", labelLast: "Последние {n} дн.", nSources: "источников: {n}",
+      quickYesterday: "Вчера", quickThisWeek: "Эта неделя", quickLastWeek: "Прошлая неделя", quickThisMonth: "Этот месяц", quickLastMonth: "Прошлый месяц", quickThisYear: "Этот год",
+      cancel: "Отмена", apply: "Применить", done: "Готово", all: "Все", none: "Снять",
+      errMissing: "Выберите начальную и конечную дату", errOrder: "Начало не может быть позже конца", errFuture: "Конец не может быть позже сегодняшнего дня",
+      groupSource: "По источнику", groupModel: "По модели", granDay: "День", granWeek: "Неделя", granMonth: "Месяц",
+      trendDay: "По дням", trendWeek: "По неделям", trendMonth: "По месяцам", breakdown: "Состав за {date}", dayEmpty: "В этот день нет данных",
+      statAvg: "В среднем за день", statActiveDays: "{a} / {n} дн. с данными", statPeak: "Пиковый день", statPrevN: "к предыдущим {n} дн.", statPrevToday: "ко вчера (сегодня не завершён)", statPrevDay: "к предыдущему дню",
+      statNoPrev: "Раньше первой записи", statCache: "Доля попаданий в кэш", statCacheHint: "чтение кэша ÷ (вход + чтение кэша)",
+      statActive: "Активные источники / модели", statActiveHint: "С данными в этот день", statAvg7: "Среднее за 7 дней до", statAvg7Hint: "День составляет {p}%",
+      modelTitle: "Рейтинг моделей", modelMeta: "моделей: {n}", modelEmpty: "За выбранный период данных нет",
+      modelsNoneSelected: "Все модели сняты. Отметьте любую модель, чтобы вернуть график и детали.", rankExpand: "Показать все модели ({n})", rankCollapse: "Свернуть",
+      modelCostNote: "Отметка модели фильтрует график и детали. Некоторые источники (например, Codex) не сообщают стоимость по моделям, поэтому она может быть ниже общей.",
       other: "Прочее", unattributed: "Без атрибуции",
-      all: "Все", none: "Снять", share: "Доля",
-      autoRefresh: "Автообновление", autoOff: "Выкл.",
-      modelCostNote: "Стоимость моделей суммирует только данные источника. Некоторые источники (например, Codex) их не сообщают, поэтому стоимость модели может быть ниже общей. Смена источников или моделей сразу обновляет график и таблицу.",
+      autoRefresh: "Автообновление", autoOff: "Выкл.", auto5: "5 мин", auto15: "15 мин",
       emptyTitle: "За выбранный период данных нет", emptyHint: "Измените источники, модели или период.",
-      generated: "Обновлено", rowsCapped: "Показаны первые {n} строк; сузьте период.",
-      errorTimeout: "Истекло время сбора", errorCommandFailed: "Ошибка сборщика", errorUnknownSchema: "Несовместимый формат данных",
-      errorOutputTooLarge: "Превышен объём данных", errorCanceled: "Сбор отменён",
-      errorUnsupported: "Источник не поддерживается", errorGeneric: "Неизвестная ошибка",
-      total: "Итого"
+      errorTimeout: "Истекло время сбора", errorCommandFailed: "Ошибка сборщика", errorUnknownSchema: "Несовместимый формат данных", errorOutputTooLarge: "Превышен объём данных", errorCanceled: "Сбор отменён", errorUnsupported: "Источник не поддерживается", errorGeneric: "Неизвестная ошибка",
+      quotaTitle: "Лимиты аккаунтов", quotaNote: "Остаток окон подписки; не связан с локальным счётчиком токенов ниже", quotaPaceNote: "Отметка = где был бы равномерный расход",
+      usageTitle: "Локальное использование", local: "Этот компьютер", poolTitle: "Пул учётных данных CPA", poolMore: "Ещё аккаунтов: {n}", poolMerged: "Совпадают с локальным входом и объединены: {n}",
+      poolError: "Пул учётных данных CPA недоступен", expand: "Развернуть ›", collapse: "Свернуть ‹", needsAttention: "требует внимания",
+      mergedHint: "Тот же аккаунт из пула CPA объединён здесь и запрашивается один раз",
+      remaining: "осталось", quotaUnknown: "Неизвестно", resetsIn: "сброс через {d}", resetSince: "Уже сброшено; обновите для проверки", paceAhead: "Быстрее равномерного на {n} п.п.", paceOk: "Расход в норме", noWindows: "У аккаунта нет окон лимитов",
+      srcLive: "Онлайн", srcCache: "Кэш", srcSession: "Журнал сеанса", srcLiveHint: "Получено через прокси CPA", srcCacheHint: "Запрошено менее 5 минут назад; из кэша", srcSessionHint: "Из последнего сеанса Codex; нажмите ⟳ для онлайн-данных",
+      agoNow: "только что", agoMin: "{n} мин назад", agoHour: "{n} ч назад", agoDay: "{n} дн. назад",
+      durDH: "{d} дн. {h} ч", durHM: "{h} ч {m} мин", durM: "{m} мин",
+      win5h: "5 часов", win1d: "1 день", win7d: "7 дней", win30d: "30 дней", winH: "{n} ч", winD: "{n} дн.", winOther: "Окно",
+      qNotConfigured: "Вход на этом компьютере не выполнен", qExpiredLocal: "Токен истёк; откройте CLI, чтобы он обновился", qExpiredPool: "Токен истёк; восстановится после обновления в CPA",
+      qUpstream: "Сервис лимитов временно недоступен", qRateLimited: "Слишком частые запросы; повторите позже", qKeychain: "Нет доступа к связке ключей; разрешите CPA читать данные Claude Code в системном окне",
+      qSchema: "Несовместимые данные лимитов", qCanceled: "Запрос отменён", qGeneric: "Ошибка запроса лимитов", liveFailed: "Онлайн-запрос не удался: {r}",
+      quotaLoading: "Загрузка лимитов…", quotaLoadError: "Лимиты временно недоступны", quotaEmpty: "Аккаунты Claude и Codex не найдены ни локально, ни в CPA"
     },
     vi: {
-      appTitle: "Mức sử dụng Harness", subtitle: "Lịch sử AI coding agent trên máy này, theo nguồn và mô hình",
+      appTitle: "Mức sử dụng Harness", subtitle: "Mức sử dụng coding agent trên máy và hạn mức tài khoản",
       authTitle: "Cần khóa quản trị", authHint: "Nhập khóa quản trị CPA để tải số liệu. Khóa chỉ được giữ trong bộ nhớ của trang này và không ghi vào thanh địa chỉ hay bộ nhớ trình duyệt.",
-      authPlaceholder: "Khóa quản trị CPA", connect: "Tải dữ liệu",
-      authFailed: "Khóa quản trị không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.",
-      loading: "Đang tải dữ liệu…", loadError: "Tạm thời không thể tải dữ liệu. Vui lòng thử lại sau.",
-      retry: "Thử lại", refresh: "Làm mới", partialTitle: "Một số nguồn không khả dụng",
-      sourceEmpty: "Không có dữ liệu", sourceFailed: "Lỗi",
-      summaryTokens: "Tổng token", summaryInput: "Đầu vào", summaryOutput: "Đầu ra",
-      summaryCacheRead: "Đọc bộ nhớ đệm", summaryCacheWrite: "Ghi bộ nhớ đệm", summaryCost: "Chi phí ước tính", summaryOther: "Token khác",
+      authPlaceholder: "Khóa quản trị CPA", connect: "Tải dữ liệu", authFailed: "Khóa quản trị không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.",
+      loading: "Đang tải dữ liệu…", loadError: "Tạm thời không thể tải dữ liệu. Vui lòng thử lại sau.", retry: "Thử lại", refreshTitle: "Làm mới (gồm truy vấn hạn mức trực tuyến)",
+      partialTitle: "Một số nguồn không khả dụng", sourceEmpty: "Không có dữ liệu", sourceFailed: "Lỗi",
+      summaryTokens: "Tổng token", summaryInput: "Đầu vào", summaryOutput: "Đầu ra", summaryCacheRead: "Đọc bộ nhớ đệm", summaryCacheWrite: "Ghi bộ nhớ đệm", summaryCost: "Chi phí ước tính", summaryOther: "Token khác",
+      costHint: "Quy đổi theo giá API công khai, không phải hóa đơn đăng ký",
       costNote: "Chi phí ước tính theo giá công khai, không phải hóa đơn đăng ký. Token bộ nhớ đệm và reasoning được tính theo quy ước của từng nguồn, không cộng trùng.",
-      trendTitle: "Xu hướng theo ngày", tableTitle: "Chi tiết",
-      filterSources: "Nguồn", filterRange: "Khoảng ngày", filterModels: "Mô hình",
-      range7: "7 ngày", range30: "30 ngày", range90: "90 ngày", rangeAll: "Tất cả",
-      from: "Từ ngày", to: "Đến ngày", date: "Ngày", source: "Nguồn", model: "Mô hình",
-      groupBy: "Nhóm biểu đồ", groupSource: "Theo nguồn", groupModel: "Theo mô hình",
-      modelTitle: "Xếp hạng mô hình", modelMeta: "{n} mô hình",
-      modelEmpty: "Không có chi tiết mô hình trong khoảng đã chọn",
-      modelsNoneSelected: "Đã bỏ chọn tất cả mô hình. Chọn lại một mô hình ở trên để hiện biểu đồ và bảng.",
+      tableTitle: "Chi tiết", detailsHint: "Nhóm theo ngày; nhấn vào dòng ngày để thu gọn", dateSource: "Ngày / nguồn", showMore: "Hiện thêm 7 ngày trước", inProgress: "Đang diễn ra", rowsN: "{n} dòng",
+      filterRange: "Khoảng ngày", filters: "Bộ lọc", from: "Từ ngày", to: "Đến ngày", source: "Nguồn", model: "Mô hình",
+      rangeToday: "Hôm nay", range7: "7 ngày", range30: "30 ngày", range90: "90 ngày", rangeAll: "Tất cả", rangeCustom: "Tùy chọn",
+      labelAll: "Toàn bộ lịch sử", labelLast: "{n} ngày gần nhất", nSources: "{n} nguồn",
+      quickYesterday: "Hôm qua", quickThisWeek: "Tuần này", quickLastWeek: "Tuần trước", quickThisMonth: "Tháng này", quickLastMonth: "Tháng trước", quickThisYear: "Năm nay",
+      cancel: "Hủy", apply: "Áp dụng", done: "Xong", all: "Tất cả", none: "Bỏ chọn",
+      errMissing: "Hãy chọn ngày bắt đầu và kết thúc", errOrder: "Ngày bắt đầu không được sau ngày kết thúc", errFuture: "Ngày kết thúc không được sau hôm nay",
+      groupSource: "Theo nguồn", groupModel: "Theo mô hình", granDay: "Ngày", granWeek: "Tuần", granMonth: "Tháng",
+      trendDay: "Xu hướng theo ngày", trendWeek: "Xu hướng theo tuần", trendMonth: "Xu hướng theo tháng", breakdown: "Cơ cấu ngày {date}", dayEmpty: "Ngày này không có dữ liệu",
+      statAvg: "Trung bình ngày", statActiveDays: "{a} / {n} ngày có dữ liệu", statPeak: "Ngày cao nhất", statPrevN: "so với {n} ngày trước", statPrevToday: "so với hôm qua (hôm nay chưa hết)", statPrevDay: "so với ngày trước",
+      statNoPrev: "Trước bản ghi sớm nhất", statCache: "Tỷ lệ trúng bộ nhớ đệm", statCacheHint: "đọc bộ nhớ đệm ÷ (đầu vào + đọc bộ nhớ đệm)",
+      statActive: "Nguồn / mô hình hoạt động", statActiveHint: "Có dữ liệu trong ngày", statAvg7: "Trung bình 7 ngày trước", statAvg7Hint: "Ngày này bằng {p}%",
+      modelTitle: "Xếp hạng mô hình", modelMeta: "{n} mô hình", modelEmpty: "Không có dữ liệu trong khoảng đã chọn",
+      modelsNoneSelected: "Đã bỏ chọn tất cả mô hình. Chọn lại một mô hình để hiện biểu đồ và chi tiết.", rankExpand: "Hiện tất cả {n} mô hình", rankCollapse: "Thu gọn",
+      modelCostNote: "Chọn mô hình để lọc biểu đồ và chi tiết. Một số nguồn (ví dụ Codex) không cung cấp chi phí theo mô hình, nên chi phí mô hình có thể thấp hơn tổng.",
       other: "Khác", unattributed: "Không gán nguồn",
-      all: "Tất cả", none: "Bỏ chọn", share: "Tỷ lệ",
-      autoRefresh: "Tự động làm mới", autoOff: "Tắt",
-      modelCostNote: "Chi phí mô hình chỉ cộng dữ liệu do nguồn cung cấp. Một số nguồn (ví dụ Codex) không cung cấp, nên chi phí mô hình có thể thấp hơn tổng. Đổi nguồn hoặc mô hình sẽ cập nhật ngay biểu đồ và bảng.",
+      autoRefresh: "Tự động làm mới", autoOff: "Tắt", auto5: "5 phút", auto15: "15 phút",
       emptyTitle: "Không có dữ liệu trong khoảng đã chọn", emptyHint: "Hãy đổi nguồn, mô hình hoặc khoảng ngày.",
-      generated: "Cập nhật", rowsCapped: "Chỉ hiển thị {n} dòng đầu; hãy thu hẹp khoảng ngày.",
-      errorTimeout: "Hết thời gian thu thập", errorCommandFailed: "Bộ thu thập gặp lỗi", errorUnknownSchema: "Định dạng dữ liệu không tương thích",
-      errorOutputTooLarge: "Dữ liệu vượt quá giới hạn", errorCanceled: "Đã hủy thu thập",
-      errorUnsupported: "Nguồn không được hỗ trợ", errorGeneric: "Lỗi không xác định",
-      total: "Tổng"
+      errorTimeout: "Hết thời gian thu thập", errorCommandFailed: "Bộ thu thập gặp lỗi", errorUnknownSchema: "Định dạng dữ liệu không tương thích", errorOutputTooLarge: "Dữ liệu vượt quá giới hạn", errorCanceled: "Đã hủy thu thập", errorUnsupported: "Nguồn không được hỗ trợ", errorGeneric: "Lỗi không xác định",
+      quotaTitle: "Hạn mức tài khoản", quotaNote: "Phần còn lại của các khung đăng ký; độc lập với số token cục bộ bên dưới", quotaPaceNote: "Vạch = vị trí nếu dùng đều theo thời gian",
+      usageTitle: "Mức sử dụng cục bộ", local: "Máy này", poolTitle: "Kho thông tin xác thực CPA", poolMore: "Thêm {n} tài khoản", poolMerged: "{n} trùng với tài khoản đăng nhập trên máy, đã gộp",
+      poolError: "Không thể đọc kho thông tin xác thực CPA", expand: "Mở rộng ›", collapse: "Thu gọn ‹", needsAttention: "cần xử lý",
+      mergedHint: "Cùng tài khoản trong kho CPA đã được gộp vào đây và chỉ truy vấn một lần",
+      remaining: "còn lại", quotaUnknown: "Không rõ", resetsIn: "đặt lại sau {d}", resetSince: "Đã đặt lại; làm mới để xác nhận", paceAhead: "Nhanh hơn mức đều {n} điểm phần trăm", paceOk: "Đúng nhịp", noWindows: "Tài khoản này không có khung hạn mức",
+      srcLive: "Trực tuyến", srcCache: "Bộ nhớ đệm", srcSession: "Nhật ký phiên", srcLiveHint: "Lấy qua proxy CPA", srcCacheHint: "Đã truy vấn trong 5 phút; dùng kết quả đệm", srcSessionHint: "Từ phiên Codex gần nhất; nhấn ⟳ để lấy dữ liệu trực tuyến",
+      agoNow: "vừa xong", agoMin: "{n} phút trước", agoHour: "{n} giờ trước", agoDay: "{n} ngày trước",
+      durDH: "{d} ngày {h} giờ", durHM: "{h} giờ {m} phút", durM: "{m} phút",
+      win5h: "5 giờ", win1d: "1 ngày", win7d: "7 ngày", win30d: "30 ngày", winH: "{n} giờ", winD: "{n} ngày", winOther: "Khung",
+      qNotConfigured: "Chưa đăng nhập trên máy này", qExpiredLocal: "Token đã hết hạn; mở CLI để tự làm mới", qExpiredPool: "Token đã hết hạn; sẽ phục hồi sau khi CPA làm mới",
+      qUpstream: "Dịch vụ hạn mức tạm thời không khả dụng", qRateLimited: "Truy vấn quá thường xuyên; thử lại sau", qKeychain: "Chưa được cấp quyền Keychain; hãy cho phép CPA đọc thông tin Claude Code trong hộp thoại hệ thống",
+      qSchema: "Dữ liệu hạn mức không tương thích", qCanceled: "Đã hủy truy vấn", qGeneric: "Truy vấn hạn mức thất bại", liveFailed: "Truy vấn trực tuyến thất bại: {r}",
+      quotaLoading: "Đang tải hạn mức tài khoản…", quotaLoadError: "Tạm thời không thể tải hạn mức tài khoản", quotaEmpty: "Không tìm thấy tài khoản Claude hoặc Codex trên máy hay trong CPA"
     },
     ko: {
-      appTitle: "Harness 사용량", subtitle: "이 컴퓨터의 AI 코딩 에이전트 기록을 소스와 모델별로 요약",
+      appTitle: "Harness 사용량", subtitle: "이 컴퓨터의 코딩 에이전트 사용량과 계정 한도",
       authTitle: "관리 키 필요", authHint: "CPA 관리 키를 입력하면 통계를 불러옵니다. 키는 이 페이지 메모리에만 유지되며 주소 표시줄이나 브라우저 저장소에 기록되지 않습니다.",
-      authPlaceholder: "CPA 관리 키", connect: "불러오기",
-      authFailed: "관리 키가 유효하지 않거나 만료되었습니다. 다시 시도하세요.",
-      loading: "사용량을 불러오는 중…", loadError: "일시적으로 사용량을 불러올 수 없습니다. 잠시 후 다시 시도하세요.",
-      retry: "다시 시도", refresh: "새로고침", partialTitle: "일부 소스를 사용할 수 없음",
-      sourceEmpty: "데이터 없음", sourceFailed: "실패",
-      summaryTokens: "총 토큰", summaryInput: "입력", summaryOutput: "출력",
-      summaryCacheRead: "캐시 읽기", summaryCacheWrite: "캐시 쓰기", summaryCost: "예상 비용", summaryOther: "기타 토큰",
+      authPlaceholder: "CPA 관리 키", connect: "불러오기", authFailed: "관리 키가 유효하지 않거나 만료되었습니다. 다시 시도하세요.",
+      loading: "사용량을 불러오는 중…", loadError: "일시적으로 사용량을 불러올 수 없습니다. 잠시 후 다시 시도하세요.", retry: "다시 시도", refreshTitle: "새로고침 (계정 한도 온라인 조회 포함)",
+      partialTitle: "일부 소스를 사용할 수 없음", sourceEmpty: "데이터 없음", sourceFailed: "실패",
+      summaryTokens: "총 토큰", summaryInput: "입력", summaryOutput: "출력", summaryCacheRead: "캐시 읽기", summaryCacheWrite: "캐시 쓰기", summaryCost: "예상 비용", summaryOther: "기타 토큰",
+      costHint: "API 공개 가격 환산, 구독 청구서 아님",
       costNote: "예상 비용은 공개 가격 기준이며 구독 청구서가 아닙니다. 캐시 및 reasoning 토큰은 소스별 기준으로 총량에 포함되며 중복 합산하지 않습니다.",
-      trendTitle: "일별 추세", tableTitle: "상세",
-      filterSources: "소스", filterRange: "날짜 범위", filterModels: "모델",
-      range7: "7일", range30: "30일", range90: "90일", rangeAll: "전체",
-      from: "시작일", to: "종료일", date: "날짜", source: "소스", model: "모델",
-      groupBy: "차트 그룹", groupSource: "소스별", groupModel: "모델별",
-      modelTitle: "모델 순위", modelMeta: "모델 {n}개",
-      modelEmpty: "선택한 범위에 모델 상세가 없습니다",
-      modelsNoneSelected: "모든 모델을 해제했습니다. 위에서 모델을 선택하면 차트와 표가 다시 표시됩니다.",
+      tableTitle: "상세", detailsHint: "날짜별 그룹; 날짜 행을 눌러 접기", dateSource: "날짜 / 소스", showMore: "이전 7일 더 보기", inProgress: "진행 중", rowsN: "{n}행",
+      filterRange: "날짜 범위", filters: "필터", from: "시작일", to: "종료일", source: "소스", model: "모델",
+      rangeToday: "오늘", range7: "7일", range30: "30일", range90: "90일", rangeAll: "전체", rangeCustom: "사용자 지정",
+      labelAll: "전체 기록", labelLast: "최근 {n}일", nSources: "소스 {n}개",
+      quickYesterday: "어제", quickThisWeek: "이번 주", quickLastWeek: "지난주", quickThisMonth: "이번 달", quickLastMonth: "지난달", quickThisYear: "올해",
+      cancel: "취소", apply: "적용", done: "완료", all: "전체", none: "해제",
+      errMissing: "시작일과 종료일을 선택하세요", errOrder: "시작일은 종료일보다 늦을 수 없습니다", errFuture: "종료일은 오늘보다 늦을 수 없습니다",
+      groupSource: "소스별", groupModel: "모델별", granDay: "일", granWeek: "주", granMonth: "월",
+      trendDay: "일별 추세", trendWeek: "주별 추세", trendMonth: "월별 추세", breakdown: "{date} 구성", dayEmpty: "이 날은 사용량이 없습니다",
+      statAvg: "일 평균", statActiveDays: "{a} / {n}일 사용", statPeak: "최대 사용일", statPrevN: "이전 {n}일 대비", statPrevToday: "어제 대비 (오늘 진행 중)", statPrevDay: "전날 대비",
+      statNoPrev: "최초 기록 이전", statCache: "캐시 적중률", statCacheHint: "캐시 읽기 ÷ (입력 + 캐시 읽기)",
+      statActive: "활성 소스 / 모델", statActiveHint: "이 날 사용된 수", statAvg7: "이전 7일 평균", statAvg7Hint: "이 날은 그 {p}%",
+      modelTitle: "모델 순위", modelMeta: "모델 {n}개", modelEmpty: "선택한 범위에 사용량이 없습니다",
+      modelsNoneSelected: "모든 모델을 해제했습니다. 모델을 선택하면 차트와 상세가 다시 표시됩니다.", rankExpand: "모델 {n}개 모두 보기", rankCollapse: "접기",
+      modelCostNote: "모델을 선택하면 차트와 상세가 필터링됩니다. 일부 소스(예: Codex)는 모델별 비용을 제공하지 않아 모델 비용이 총 비용보다 낮을 수 있습니다.",
       other: "기타", unattributed: "미분류",
-      all: "전체", none: "해제", share: "비중",
-      autoRefresh: "자동 새로고침", autoOff: "끄기",
-      modelCostNote: "모델 비용은 소스가 제공한 모델별 비용만 합산합니다. 일부 소스(예: Codex)는 제공하지 않으므로 모델 비용이 총 비용보다 낮을 수 있습니다. 소스나 모델을 바꾸면 차트와 표가 즉시 갱신됩니다.",
+      autoRefresh: "자동 새로고침", autoOff: "끄기", auto5: "5분", auto15: "15분",
       emptyTitle: "선택한 범위에 사용량이 없습니다", emptyHint: "소스, 모델 또는 날짜 범위를 바꿔 보세요.",
-      generated: "업데이트", rowsCapped: "처음 {n}개 행만 표시합니다. 날짜 범위를 좁히세요.",
-      errorTimeout: "수집 시간 초과", errorCommandFailed: "수집기 실행 실패", errorUnknownSchema: "호환되지 않는 데이터 형식",
-      errorOutputTooLarge: "데이터 한도 초과", errorCanceled: "수집 취소됨",
-      errorUnsupported: "지원하지 않는 소스", errorGeneric: "알 수 없는 오류",
-      total: "합계"
+      errorTimeout: "수집 시간 초과", errorCommandFailed: "수집기 실행 실패", errorUnknownSchema: "호환되지 않는 데이터 형식", errorOutputTooLarge: "데이터 한도 초과", errorCanceled: "수집 취소됨", errorUnsupported: "지원하지 않는 소스", errorGeneric: "알 수 없는 오류",
+      quotaTitle: "계정 한도", quotaNote: "구독 기간별 남은 양; 아래 로컬 토큰 통계와 별개입니다", quotaPaceNote: "세로선 = 시간에 따라 균등하게 썼을 때의 위치",
+      usageTitle: "로컬 사용량", local: "이 컴퓨터", poolTitle: "CPA 자격 증명 풀", poolMore: "계정 {n}개 더", poolMerged: "{n}개는 로컬 로그인과 같은 계정이라 병합됨",
+      poolError: "CPA 자격 증명 풀을 읽을 수 없습니다", expand: "펼치기 ›", collapse: "접기 ‹", needsAttention: "확인 필요",
+      mergedHint: "CPA 풀의 같은 계정이 여기에 병합되어 한 번만 조회됩니다",
+      remaining: "남음", quotaUnknown: "알 수 없음", resetsIn: "{d} 후 초기화", resetSince: "이미 초기화됨; 새로고침으로 확인", paceAhead: "균등 사용보다 {n}%p 빠름", paceOk: "사용 속도 정상", noWindows: "이 계정에는 한도 기간이 없습니다",
+      srcLive: "실시간", srcCache: "캐시", srcSession: "세션 로그", srcLiveHint: "CPA 프록시를 통해 조회", srcCacheHint: "5분 이내 조회 결과를 재사용", srcSessionHint: "최근 Codex 세션 기록 값; ⟳을 눌러 실시간 조회",
+      agoNow: "방금", agoMin: "{n}분 전", agoHour: "{n}시간 전", agoDay: "{n}일 전",
+      durDH: "{d}일 {h}시간", durHM: "{h}시간 {m}분", durM: "{m}분",
+      win5h: "5시간", win1d: "1일", win7d: "7일", win30d: "30일", winH: "{n}시간", winD: "{n}일", winOther: "기간",
+      qNotConfigured: "이 컴퓨터에 로그인되어 있지 않음", qExpiredLocal: "토큰 만료; CLI를 열면 자동으로 갱신됩니다", qExpiredPool: "토큰 만료; CPA가 갱신하면 자동 복구됩니다",
+      qUpstream: "한도 서비스를 일시적으로 사용할 수 없음", qRateLimited: "조회가 너무 잦습니다; 나중에 다시 시도하세요", qKeychain: "키체인 권한이 없습니다; 시스템 창에서 CPA가 Claude Code 자격 증명을 읽도록 허용하세요",
+      qSchema: "호환되지 않는 한도 데이터", qCanceled: "조회 취소됨", qGeneric: "한도 조회 실패", liveFailed: "실시간 조회 실패: {r}",
+      quotaLoading: "계정 한도를 불러오는 중…", quotaLoadError: "계정 한도를 일시적으로 불러올 수 없습니다", quotaEmpty: "로컬이나 CPA에서 Claude / Codex 계정을 찾지 못했습니다"
     }
   };
 
   const state = {
     key: "",
     report: null,
+    quota: null,
+    quotaFailed: false,
     loading: false,
+    quotaLoading: false,
     sources: new Set(),
     sourcesTouched: false,
     models: new Set(),
     knownModels: new Set(),
     modelsTouched: false,
+    range: "30",
     from: "",
     to: "",
-    range: "30",
+    gran: null,
     group: "source",
+    shown: DAYS_STEP,
+    rankAll: false,
+    collapsed: new Set(),
+    poolOpen: false,
     auto: "0",
     timer: 0,
+    quotaTimer: 0,
+    lastAuto: 0,
+    lastQuotaNet: 0,
     pendingAutoRange: false,
     language: "zh-CN"
   };
 
   const el = (id) => document.getElementById(id);
-  const i18nNodes = () => document.querySelectorAll("[data-i18n]");
+
+  // DOM writes only happen when the rendered output changes, so refreshes
+  // with an unchanged snapshot cause zero DOM mutations.
+  function setHTML(node, html) {
+    if (node.__html !== html) { node.innerHTML = html; node.__html = html; }
+  }
+  function setText(node, text) { if (node.textContent !== text) node.textContent = text; }
+  function setHidden(node, hidden) { if (node.hidden !== hidden) node.hidden = hidden; }
+  function setAttr(node, name, value) { if (node.getAttribute(name) !== value) node.setAttribute(name, value); }
 
   function detectLanguage() {
     const candidates = [];
@@ -644,9 +697,7 @@ tfoot td { font-weight: 650; border-bottom: 0; background: var(--surface); }
       if (raw) {
         let parsed = null;
         try { parsed = JSON.parse(raw); } catch (e) { parsed = raw; }
-        const value = parsed && typeof parsed === "object"
-          ? (parsed.state && parsed.state.language) || parsed.language
-          : parsed;
+        const value = parsed && typeof parsed === "object" ? (parsed.state && parsed.state.language) || parsed.language : parsed;
         if (typeof value === "string") candidates.push(value);
       }
     } catch (e) { /* storage unavailable */ }
@@ -667,18 +718,23 @@ tfoot td { font-weight: 650; border-bottom: 0; background: var(--surface); }
   function t(key, vars) {
     const pack = STRINGS[state.language] || STRINGS.en;
     let value = pack[key] || STRINGS.en[key] || key;
-    if (vars) Object.keys(vars).forEach((name) => { value = value.replace("{" + name + "}", String(vars[name])); });
+    if (vars) Object.keys(vars).forEach((name) => { value = value.split("{" + name + "}").join(String(vars[name])); });
     return value;
   }
 
   function applyLanguage() {
     state.language = detectLanguage();
     document.documentElement.lang = state.language;
-    i18nNodes().forEach((node) => { node.textContent = t(node.dataset.i18n); });
+    document.querySelectorAll("[data-i18n]").forEach((node) => setText(node, t(node.dataset.i18n)));
+    document.querySelectorAll("[data-i18n-label]").forEach((node) => setAttr(node, "aria-label", t(node.dataset.i18nLabel)));
+    document.querySelectorAll("[data-i18n-title]").forEach((node) => { setAttr(node, "title", t(node.dataset.i18nTitle)); setAttr(node, "aria-label", t(node.dataset.i18nTitle)); });
     el("management-key").placeholder = t("authPlaceholder");
     document.title = t("appTitle");
-    if (state.report) render();
-    else { renderSourceFilter(); renderRangePresets(); }
+    renderRangeButtons();
+    fillQuick(el("quick"), el("from"), el("to"));
+    fillQuick(el("quick2"), el("from2"), el("to2"), () => applyCustom(el("from2").value, el("to2").value, el("range-err2")));
+    render();
+    renderQuota();
   }
 
   // Read the management center's saved key when this page runs on the same
@@ -691,9 +747,7 @@ tfoot td { font-weight: 650; border-bottom: 0; background: var(--surface); }
         const keyBytes = new TextEncoder().encode(OBFUSCATION_SALT + "|" + location.host + "|" + navigator.userAgent);
         const binary = atob(raw.slice(OBFUSCATION_PREFIX.length));
         const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i += 1) {
-          bytes[i] = binary.charCodeAt(i) ^ keyBytes[i % keyBytes.length];
-        }
+        for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i) ^ keyBytes[i % keyBytes.length];
         raw = new TextDecoder().decode(bytes);
       }
       const parsed = JSON.parse(raw);
@@ -711,9 +765,7 @@ tfoot td { font-weight: 650; border-bottom: 0; background: var(--surface); }
       if (raw) {
         let parsed = null;
         try { parsed = JSON.parse(raw); } catch (e) { parsed = raw; }
-        const value = parsed && typeof parsed === "object"
-          ? (parsed.state && parsed.state.theme) || parsed.theme
-          : parsed;
+        const value = parsed && typeof parsed === "object" ? (parsed.state && parsed.state.theme) || parsed.theme : parsed;
         if (typeof value === "string") theme = value;
       }
     } catch (e) { /* storage unavailable */ }
@@ -729,9 +781,8 @@ tfoot td { font-weight: 650; border-bottom: 0; background: var(--surface); }
 
   function formatTokens(value) {
     const n = Number(value) || 0;
-    if (n < 1000) return String(n);
-    const units = [[1e9, "B"], [1e6, "M"], [1e3, "K"]];
-    for (const [size, suffix] of units) {
+    if (n < 1000) return String(Math.round(n));
+    for (const [size, suffix] of [[1e9, "B"], [1e6, "M"], [1e3, "K"]]) {
       if (n >= size) {
         const scaled = n / size;
         return (scaled >= 100 ? scaled.toFixed(0) : scaled >= 10 ? scaled.toFixed(1) : scaled.toFixed(2)) + suffix;
@@ -739,11 +790,7 @@ tfoot td { font-weight: 650; border-bottom: 0; background: var(--surface); }
     }
     return String(n);
   }
-
-  function formatExact(value) {
-    return (Number(value) || 0).toLocaleString(state.language);
-  }
-
+  function formatExact(value) { return (Number(value) || 0).toLocaleString(state.language); }
   function formatCost(value) {
     if (value === null || value === undefined) return "—";
     const n = Number(value) || 0;
@@ -752,56 +799,72 @@ tfoot td { font-weight: 650; border-bottom: 0; background: var(--surface); }
     if (n < 100) return "$" + n.toFixed(2);
     return "$" + n.toFixed(0);
   }
+  function costHTML(value) { return value === null || value === undefined ? '<span class="dash">—</span>' : esc(formatCost(value)); }
 
-  function todayIso() {
-    const now = new Date();
-    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-    return local.toISOString().slice(0, 10);
-  }
+  // ---------- dates (local calendar days, YYYY-MM-DD) ----------
+  const pad2 = (n) => String(n).padStart(2, "0");
+  const keyOf = (d) => d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  const parseKey = (k) => { const p = k.split("-").map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+  const addDays = (k, n) => { const d = parseKey(k); d.setDate(d.getDate() + n); return keyOf(d); };
+  const diffDays = (a, b) => Math.round((parseKey(b) - parseKey(a)) / DAY);
+  const today = () => keyOf(new Date());
+  const short = (k) => k.slice(5).replace("-", "/");
+  const isDateKey = (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
 
-  function isoDaysAgo(days) {
-    const now = new Date();
-    now.setDate(now.getDate() - (days - 1));
-    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-    return local.toISOString().slice(0, 10);
-  }
-
-  function setPreset(range) {
-    state.range = range;
-    if (range === "all") {
-      state.from = "";
-      state.to = "";
-    } else {
-      state.from = isoDaysAgo(Number(range));
-      state.to = todayIso();
+  function firstDate() {
+    let first = "";
+    if (state.report && Array.isArray(state.report.sources)) {
+      state.report.sources.forEach((source) => (Array.isArray(source.daily) ? source.daily : []).forEach((row) => {
+        if (row && isDateKey(row.date) && (!first || row.date < first)) first = row.date;
+      }));
     }
-    el("date-from").value = state.from;
-    el("date-to").value = state.to;
-    renderRangePresets();
-    render();
+    const now = today();
+    return first && first < now ? first : now;
+  }
+
+  function span() {
+    const now = today();
+    switch (state.range) {
+      case "today": return [now, now];
+      case "all": return [firstDate(), now];
+      case "custom": return [state.from, state.to];
+      default: return [addDays(now, 1 - Number(state.range)), now];
+    }
+  }
+
+  function rangeLabel() {
+    const [f, to] = span();
+    if (state.range === "today") return t("rangeToday");
+    if (state.range === "all") return t("labelAll");
+    if (state.range === "custom") return f === to ? f : short(f) + " – " + short(to);
+    return t("labelLast", { n: state.range });
+  }
+
+  function autoGran(n) { return n <= 45 ? "day" : n <= 200 ? "week" : "month"; }
+  function granAllowed(g, n) { return g === "day" ? n <= 120 : g === "week" ? n >= 14 && n <= 730 : n >= 60; }
+  function effGran() { const [f, to] = span(), n = diffDays(f, to) + 1; return state.gran && granAllowed(state.gran, n) ? state.gran : autoGran(n); }
+  function bucketStart(k, g) {
+    if (g === "day") return k;
+    if (g === "month") return k.slice(0, 8) + "01";
+    const d = parseKey(k); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return keyOf(d); // ISO week, Monday start
+  }
+  function bucketEnd(start, g) {
+    if (g === "day") return start;
+    if (g === "week") return addDays(start, 6);
+    const d = parseKey(start); d.setMonth(d.getMonth() + 1); d.setDate(0); return keyOf(d);
   }
 
   function sourceLabel(source) { return SOURCE_LABELS[source] || source; }
-  function isKnownSource(source) { return SOURCES.indexOf(source) >= 0; }
 
   function errorLabel(code) {
-    const map = {
-      timeout: "errorTimeout",
-      command_failed: "errorCommandFailed",
-      unknown_schema: "errorUnknownSchema",
-      output_too_large: "errorOutputTooLarge",
-      canceled: "errorCanceled",
-      unsupported_source: "errorUnsupported"
-    };
+    const map = { timeout: "errorTimeout", command_failed: "errorCommandFailed", unknown_schema: "errorUnknownSchema", output_too_large: "errorOutputTooLarge", canceled: "errorCanceled", unsupported_source: "errorUnsupported" };
     return t(map[code] || "errorGeneric");
   }
 
   function sourceStatus() {
     const bySource = {};
     if (state.report && Array.isArray(state.report.sources)) {
-      state.report.sources.forEach((item) => {
-        if (item && typeof item.source === "string") bySource[item.source] = item;
-      });
+      state.report.sources.forEach((item) => { if (item && typeof item.source === "string") bySource[item.source] = item; });
     }
     return bySource;
   }
@@ -810,9 +873,7 @@ tfoot td { font-weight: 650; border-bottom: 0; background: var(--surface); }
   // choices win. New entries appear selected so no data is hidden silently.
   function reconcileSelection() {
     const statuses = sourceStatus();
-    if (!state.sourcesTouched) {
-      state.sources = new Set(Object.keys(statuses).filter((source) => statuses[source].status === "ok"));
-    }
+    if (!state.sourcesTouched) state.sources = new Set(Object.keys(statuses).filter((source) => statuses[source].status === "ok"));
     const models = collectModels();
     if (!state.modelsTouched) {
       state.models = new Set(models);
@@ -822,34 +883,16 @@ tfoot td { font-weight: 650; border-bottom: 0; background: var(--surface); }
     const known = new Set(models);
     const knownBefore = state.knownModels || new Set();
     const next = new Set(Array.from(state.models).filter((model) => known.has(model)));
-    models.forEach((model) => {
-      if (!knownBefore.has(model)) next.add(model);
-    });
+    models.forEach((model) => { if (!knownBefore.has(model)) next.add(model); });
     state.models = next;
     state.knownModels = known;
   }
 
   function collectModels() {
+    const [f, to] = span();
     const names = new Set();
-    if (!state.report || !Array.isArray(state.report.sources)) return [];
-    state.report.sources.forEach((source) => {
-      if (!source || !state.sources.has(source.source) || source.status === "error") return;
-      (Array.isArray(source.daily) ? source.daily : []).forEach((row) => {
-        if (!row || typeof row.date !== "string") return;
-        if (state.from && row.date < state.from) return;
-        if (state.to && row.date > state.to) return;
-        (Array.isArray(row.models) ? row.models : []).forEach((model) => {
-          if (model && typeof model.model === "string") names.add(model.model);
-        });
-      });
-    });
+    buildEntries(f, to).forEach((entry) => { if (entry.model) names.add(entry.model); });
     return Array.from(names);
-  }
-
-  function dateInRange(date) {
-    if (state.from && date < state.from) return false;
-    if (state.to && date > state.to) return false;
-    return true;
   }
 
   function selectedSources() {
@@ -857,465 +900,365 @@ tfoot td { font-weight: 650; border-bottom: 0; background: var(--surface); }
     return Object.keys(statuses).filter((source) => state.sources.has(source) && statuses[source].status !== "error");
   }
 
-  // Build (date, source, model) entries. A day's reported total is
-  // authoritative: unattributed tokens become an "unattributed" entry instead
-  // of being dropped or redistributed.
-  function buildEntries() {
+  // Build (date, source, model) entries between two dates. A day's reported
+  // total is authoritative: unattributed tokens become an "unattributed"
+  // entry instead of being dropped or redistributed.
+  function buildEntries(from, to) {
     const entries = [];
     if (!state.report || !Array.isArray(state.report.sources)) return entries;
     const wanted = new Set(selectedSources());
     state.report.sources.forEach((source) => {
       if (!wanted.has(source.source)) return;
       (Array.isArray(source.daily) ? source.daily : []).forEach((row) => {
-        if (!row || typeof row.date !== "string" || !dateInRange(row.date)) return;
+        if (!row || !isDateKey(row.date) || row.date < from || row.date > to) return;
         const base = {
-          date: row.date,
-          source: source.source,
-          input: Number(row.inputTokens) || 0,
-          output: Number(row.outputTokens) || 0,
-          cacheRead: Number(row.cacheReadTokens) || 0,
-          cacheWrite: Number(row.cacheCreationTokens) || 0,
-          total: Number(row.totalTokens) || 0,
-          cost: typeof row.costUSD === "number" ? row.costUSD : null
+          date: row.date, source: source.source,
+          input: Number(row.inputTokens) || 0, output: Number(row.outputTokens) || 0,
+          cacheRead: Number(row.cacheReadTokens) || 0, cacheWrite: Number(row.cacheCreationTokens) || 0,
+          total: Number(row.totalTokens) || 0, cost: typeof row.costUSD === "number" ? row.costUSD : null
         };
         const models = (Array.isArray(row.models) ? row.models : []).filter((model) => model && typeof model.model === "string");
-        if (!models.length) {
-          entries.push(Object.assign({}, base, { model: "", costKnown: base.cost !== null }));
-          return;
-        }
-        let known = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0, cost: 0 };
+        if (!models.length) { entries.push(Object.assign({}, base, { model: "" })); return; }
+        const known = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0, cost: 0 };
         let costComplete = true;
         models.forEach((model) => {
           const cost = typeof model.costUSD === "number" ? model.costUSD : null;
           if (cost === null) costComplete = false;
-          entries.push({
-            date: row.date,
-            source: source.source,
-            model: model.model,
-            input: Number(model.inputTokens) || 0,
-            output: Number(model.outputTokens) || 0,
-            cacheRead: Number(model.cacheReadTokens) || 0,
-            cacheWrite: Number(model.cacheCreationTokens) || 0,
-            total: Number(model.totalTokens) || 0,
-            cost: cost,
-            costKnown: cost !== null
-          });
-          known.input += Number(model.inputTokens) || 0;
-          known.output += Number(model.outputTokens) || 0;
-          known.cacheRead += Number(model.cacheReadTokens) || 0;
-          known.cacheWrite += Number(model.cacheCreationTokens) || 0;
-          known.total += Number(model.totalTokens) || 0;
+          const entry = {
+            date: row.date, source: source.source, model: model.model,
+            input: Number(model.inputTokens) || 0, output: Number(model.outputTokens) || 0,
+            cacheRead: Number(model.cacheReadTokens) || 0, cacheWrite: Number(model.cacheCreationTokens) || 0,
+            total: Number(model.totalTokens) || 0, cost: cost
+          };
+          entries.push(entry);
+          ["input", "output", "cacheRead", "cacheWrite", "total"].forEach((k) => { known[k] += entry[k]; });
           if (cost !== null) known.cost += cost;
         });
-        const remainder = {
-          input: Math.max(0, base.input - known.input),
-          output: Math.max(0, base.output - known.output),
-          cacheRead: Math.max(0, base.cacheRead - known.cacheRead),
-          cacheWrite: Math.max(0, base.cacheWrite - known.cacheWrite),
-          total: Math.max(0, base.total - known.total)
-        };
-        const costRemainder = costComplete && base.cost !== null ? Math.max(0, base.cost - known.cost) : null;
-        if (remainder.total > 0 || remainder.input || remainder.output || remainder.cacheRead || remainder.cacheWrite || (costRemainder || 0) > 1e-9) {
-          entries.push({
-            date: row.date, source: source.source, model: "",
-            input: remainder.input, output: remainder.output, cacheRead: remainder.cacheRead,
-            cacheWrite: remainder.cacheWrite, total: remainder.total,
-            cost: costRemainder, costKnown: costRemainder !== null
-          });
+        const rest = {};
+        ["input", "output", "cacheRead", "cacheWrite", "total"].forEach((k) => { rest[k] = Math.max(0, base[k] - known[k]); });
+        const costRest = costComplete && base.cost !== null ? Math.max(0, base.cost - known.cost) : null;
+        if (rest.total > 0 || rest.input || rest.output || rest.cacheRead || rest.cacheWrite || (costRest || 0) > 1e-9) {
+          entries.push(Object.assign({ date: row.date, source: source.source, model: "", cost: costRest }, rest));
         }
       });
     });
     return entries;
   }
 
-  function modelSelected(model) {
-    if (!state.modelsTouched) return true;
-    return state.models.has(model);
-  }
+  function modelSelected(model) { return !state.modelsTouched || state.models.has(model); }
+  function filteredEntries(from, to) { return buildEntries(from, to).filter((entry) => entry.model === "" || modelSelected(entry.model)); }
+  function allModelsSelected() { return !state.modelsTouched || state.models.size >= collectModels().length; }
 
-  function filteredEntries() {
-    return buildEntries().filter((entry) => entry.model === "" || modelSelected(entry.model));
-  }
-
-  function entriesTotals(entries) {
-    return entries.reduce((acc, entry) => {
-      acc.input += entry.input;
-      acc.output += entry.output;
-      acc.cacheRead += entry.cacheRead;
-      acc.cacheWrite += entry.cacheWrite;
-      acc.total += entry.total;
-      if (entry.cost !== null) { acc.cost += entry.cost; acc.costRows += 1; } else { acc.costUnknown += 1; }
+  function totalsOf(entries) {
+    return entries.reduce((acc, e) => {
+      acc.input += e.input; acc.output += e.output; acc.cacheRead += e.cacheRead; acc.cacheWrite += e.cacheWrite; acc.total += e.total;
+      if (e.cost !== null) acc.cost += e.cost; else acc.costUnknown += 1;
       return acc;
-    }, { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0, cost: 0, costRows: 0, costUnknown: 0 });
+    }, { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0, cost: 0, costUnknown: 0 });
   }
 
-  // Whether any selected source holds rows at all, ignoring the date filter.
+  // With every model selected the reported day cost is authoritative; with a
+  // model subset only per-model costs can be summed.
+  function costFor(entries, from, to) {
+    if (allModelsSelected()) {
+      let sum = 0;
+      const wanted = new Set(selectedSources());
+      state.report.sources.forEach((source) => {
+        if (!wanted.has(source.source)) return;
+        (Array.isArray(source.daily) ? source.daily : []).forEach((row) => { if (row && isDateKey(row.date) && row.date >= from && row.date <= to) sum += Number(row.costUSD) || 0; });
+      });
+      return sum;
+    }
+    const totals = totalsOf(entries);
+    return totals.costUnknown ? null : totals.cost;
+  }
+
   function hasAnyData() {
-    const wanted = new Set(selectedSources());
-    return state.report.sources.some((source) =>
-      wanted.has(source.source) && (Array.isArray(source.daily) ? source.daily : [])
-        .some((row) => row && typeof row.date === "string")
-    );
+    return buildEntries("0000-00-00", "9999-99-99").length > 0;
   }
 
-  function dayRows() {
-    const wanted = new Set(selectedSources());
-    const rows = [];
-    state.report.sources.forEach((source) => {
-      if (!wanted.has(source.source)) return;
-      (Array.isArray(source.daily) ? source.daily : []).forEach((row) => {
-        if (row && typeof row.date === "string" && dateInRange(row.date)) rows.push(row);
-      });
-    });
-    return rows;
+  // ---------- toolbar ----------
+  const RANGES = [["today", "rangeToday"], ["7", "range7"], ["30", "range30"], ["90", "range90"], ["all", "rangeAll"], ["custom", "rangeCustom"]];
+  function renderRangeButtons() {
+    const html = RANGES.map(([r, key]) => '<button type="button" data-r="' + r + '">' + esc(t(key)) + "</button>").join("");
+    setHTML(el("range"), html);
+    setHTML(el("range2"), html);
   }
 
-  function renderSummary(entries) {
-    const totals = entriesTotals(entries);
-    const allModelSelected = !state.modelsTouched || Array.from(state.models).length >= collectModels().length;
-    const rowCost = dayRows().reduce((sum, row) => sum + (Number(row.costUSD) || 0), 0);
-    const costValue = allModelSelected ? rowCost : (totals.costUnknown ? null : totals.cost);
-    const other = Math.max(0, totals.total - totals.input - totals.output - totals.cacheRead - totals.cacheWrite);
-    const exactSub = (value) => (value >= 1000 ? formatExact(value) : "");
-    const cards = [
-      ["summaryTokens", formatTokens(totals.total), "var(--accent)", other ? t("summaryOther") + ": " + formatTokens(other) : exactSub(totals.total)],
-      ["summaryInput", formatTokens(totals.input), "var(--c1)", exactSub(totals.input)],
-      ["summaryOutput", formatTokens(totals.output), "var(--c2)", exactSub(totals.output)],
-      ["summaryCacheRead", formatTokens(totals.cacheRead), "var(--c3)", exactSub(totals.cacheRead)],
-      ["summaryCacheWrite", formatTokens(totals.cacheWrite), "var(--c4)", exactSub(totals.cacheWrite)],
-      ["summaryCost", formatCost(costValue), "var(--c6)", allModelSelected ? "" : t("model")]
-    ];
-    el("summary").innerHTML = cards.map(([key, value, color, sub]) =>
-      '<div class="card stat" style="--stat-color:' + color + '"><div class="label"><span class="dot" style="background:' + color + '"></span>' +
-      esc(t(key)) + '</div><div class="value">' + esc(value) + '</div>' +
-      (sub ? '<div class="sub">' + esc(sub) + "</div>" : "") + "</div>"
-    ).join("");
+  function renderRange() {
+    document.querySelectorAll("#range button, #range2 button").forEach((b) => setAttr(b, "aria-pressed", String(b.dataset.r === state.range)));
+    const custom = el("range").querySelector('[data-r="custom"]');
+    if (custom) {
+      setText(custom, state.range === "custom" ? rangeLabel() : t("rangeCustom"));
+      custom.classList.toggle("custom-on", state.range === "custom");
+    }
+    setText(el("filter-lbl"), rangeLabel());
   }
 
-  function sourceCounts() {
-    const counts = {};
-    buildEntries().forEach((entry) => {
-      if (!entry.model) return;
-      counts[entry.source] = (counts[entry.source] || 0) + entry.total;
-    });
-    return counts;
-  }
-
-  function renderSourceFilter() {
-    const host = el("source-filter");
+  function renderSources() {
     const statuses = sourceStatus();
-    const listed = Object.keys(statuses).length ? Object.keys(statuses) : SOURCES;
-    const counts = sourceCounts();
-    host.innerHTML = "";
-    listed.forEach((source) => {
+    const listed = Object.keys(statuses);
+    const item = (source) => {
       const status = statuses[source];
-      const label = document.createElement("label");
-      label.className = "chip";
-      const input = document.createElement("input");
-      input.type = "checkbox";
-      input.checked = state.sources.has(source);
-      input.value = source;
-      input.disabled = status && status.status === "error";
-      input.addEventListener("change", () => {
-        state.sourcesTouched = true;
-        if (input.checked) state.sources.add(source); else state.sources.delete(source);
-        render();
-      });
-      const span = document.createElement("span");
-      const dot = document.createElement("i");
-      dot.className = "dot";
-      dot.style.background = SOURCE_COLORS[source] || "var(--muted)";
-      span.appendChild(dot);
-      span.appendChild(document.createTextNode(sourceLabel(source)));
-      if (status && status.status === "error") {
-        const flag = document.createElement("em");
-        flag.className = "mono";
-        flag.style.color = "var(--error)";
-        flag.style.fontStyle = "normal";
-        flag.textContent = " · " + t("sourceFailed");
-        span.appendChild(flag);
-      } else if (status && status.status === "empty") {
-        const flag = document.createElement("em");
-        flag.className = "mono";
-        flag.style.color = "var(--muted)";
-        flag.style.fontStyle = "normal";
-        flag.textContent = " · " + t("sourceEmpty");
-        span.appendChild(flag);
-      } else if (counts[source]) {
-        const count = document.createElement("span");
-        count.className = "count";
-        count.textContent = formatTokens(counts[source]);
-        span.appendChild(count);
-      }
-      label.appendChild(input);
-      label.appendChild(span);
-      host.appendChild(label);
+      const failed = status.status === "error";
+      const flag = failed ? '<span class="r fail">' + esc(t("sourceFailed")) + "</span>" : status.status === "empty" ? '<span class="r">' + esc(t("sourceEmpty")) + "</span>" : "";
+      return '<label><input type="checkbox" data-s="' + esc(source) + '"' + (state.sources.has(source) && !failed ? " checked" : "") + (failed ? " disabled" : "") + '><span class="dot" style="background:' + (SOURCE_COLORS[source] || "var(--c7)") + '"></span>' + esc(sourceLabel(source)) + flag + "</label>";
+    };
+    const items = listed.map(item).join("");
+    setHTML(el("src-menu"), items + '<div class="menu-act"><button type="button" class="linkish" data-sall="1">' + esc(t("all")) + '</button><button type="button" class="linkish" data-sall="0">' + esc(t("none")) + "</button></div>");
+    setHTML(el("srcs2"), items);
+    // Checkbox state is a property: keep it in sync without rewriting markup.
+    document.querySelectorAll("input[data-s]").forEach((input) => {
+      const want = state.sources.has(input.dataset.s) && !input.disabled;
+      if (input.checked !== want) input.checked = want;
     });
-  }
-
-  function renderRangePresets() {
-    const host = el("range-presets");
-    host.innerHTML = "";
-    [["7", "range7"], ["30", "range30"], ["90", "range90"], ["all", "rangeAll"]].forEach(([value, key]) => {
-      const label = document.createElement("label");
-      label.className = "chip";
-      const input = document.createElement("input");
-      input.type = "radio";
-      input.name = "range";
-      input.value = value;
-      input.checked = state.range === value;
-      input.addEventListener("change", () => setPreset(value));
-      const span = document.createElement("span");
-      span.textContent = t(key);
-      label.appendChild(input);
-      label.appendChild(span);
-      host.appendChild(label);
-    });
+    setText(el("src-lbl"), selectedSources().length + " / " + listed.length);
+    document.querySelectorAll("#auto2 button").forEach((b) => setAttr(b, "aria-pressed", String(b.dataset.a === state.auto)));
   }
 
   function renderStatus() {
     const notice = el("status-notice");
-    if (!state.report) { notice.hidden = true; return; }
     const statuses = sourceStatus();
     const failures = Object.keys(statuses).filter((key) => statuses[key].status === "error");
-    if (!failures.length) {
-      notice.hidden = true;
-      notice.innerHTML = "";
-      return;
-    }
-    notice.hidden = false;
-    notice.dataset.kind = "warning";
-    notice.innerHTML = '<div class="message"><strong>' + esc(t("partialTitle")) + "</strong>" +
+    if (!failures.length) { setHidden(notice, true); return; }
+    setAttr(notice, "data-kind", "warning");
+    setHTML(notice, '<div class="message"><strong>' + esc(t("partialTitle")) + "</strong>" +
       failures.map((key) => '<div class="detail">' + esc(sourceLabel(key)) + " · " + esc(errorLabel(statuses[key].error)) + "</div>").join("") +
-      '</div><button class="btn" type="button" id="retry">' + esc(t("retry")) + "</button>";
-    const retry = el("retry");
-    if (retry) retry.addEventListener("click", () => load(true));
+      '</div><button class="ctl" type="button" data-retry="1">' + esc(t("retry")) + "</button>");
+    setHidden(notice, false);
+  }
+
+  // ---------- usage ----------
+  function renderSummary(entries, from, to) {
+    const tot = totalsOf(entries);
+    const other = Math.max(0, tot.total - tot.input - tot.output - tot.cacheRead - tot.cacheWrite);
+    const parts = [["summaryInput", tot.input, "--in"], ["summaryOutput", tot.output, "--out"], ["summaryCacheRead", tot.cacheRead, "--cr"], ["summaryCacheWrite", tot.cacheWrite, "--cw"]];
+    if (other > 0) parts.push(["summaryOther", other, "--oth"]);
+    const pct = (v) => (tot.total ? (v / tot.total) * 100 : 0);
+    setHTML(el("sum"),
+      '<div class="kpi"><div class="l">' + esc(t("summaryTokens")) + '</div><div class="v num">' + esc(formatTokens(tot.total)) + '</div><div class="s num">' + esc(formatExact(tot.total)) + "</div></div>" +
+      '<div class="kpi"><div class="l">' + esc(t("summaryCost")) + '</div><div class="v num">' + esc(formatCost(costFor(entries, from, to))) + '</div><div class="s">' + esc(t("costHint")) + "</div></div>" +
+      '<div class="comp"><div class="stack">' + parts.map((p) => '<span style="width:' + pct(p[1]).toFixed(3) + "%;background:var(" + p[2] + ')" title="' + esc(t(p[0])) + '"></span>').join("") + "</div>" +
+      '<div class="legend">' + parts.map((p) => '<span class="item"><span class="dot" style="background:var(' + p[2] + ')"></span>' + esc(t(p[0])) + '<b class="num">' + esc(formatTokens(p[1])) + '</b><span class="num">' + pct(p[1]).toFixed(1) + "%</span></span>").join("") + "</div></div>");
+    const extra = state.range === "custom" || state.range === "today" ? "" : " · " + (from === to ? from : from + " – " + to);
+    setText(el("range-note"), rangeLabel() + extra + " · " + t("nSources", { n: selectedSources().length }));
   }
 
   const UNATTRIBUTED = "\u0000unattributed";
-
-  function aggregateBy(entries, key) {
-    const groups = new Map();
-    entries.forEach((entry) => {
-      const name = key === "model" ? (entry.model || UNATTRIBUTED) : entry.source;
-      const current = groups.get(name) || { name, total: 0, input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
-      current.total += entry.total;
-      current.input += entry.input;
-      current.output += entry.output;
-      current.cacheRead += entry.cacheRead;
-      current.cacheWrite += entry.cacheWrite;
-      groups.set(name, current);
+  function chartKeys(entries) {
+    const totals = new Map();
+    entries.forEach((e) => {
+      const k = state.group === "model" ? (e.model || UNATTRIBUTED) : e.source;
+      totals.set(k, (totals.get(k) || 0) + e.total);
     });
-    return groups;
-  }
-
-  function renderChart(entries) {
-    const svg = el("chart");
-    const scroll = el("chart-scroll");
-    const legend = el("legend");
-    const byDate = new Map();
-    const groupTotals = new Map();
-    entries.forEach((entry) => {
-      const name = state.group === "model" ? (entry.model || t("unattributed")) : entry.source;
-      const day = byDate.get(entry.date) || { date: entry.date, groups: new Map(), total: 0 };
-      byDate.set(entry.date, day);
-      const current = day.groups.get(name) || { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 };
-      current.input += entry.input;
-      current.output += entry.output;
-      current.cacheRead += entry.cacheRead;
-      current.cacheWrite += entry.cacheWrite;
-      current.total += entry.total;
-      day.groups.set(name, current);
-      day.total += entry.total;
-      groupTotals.set(name, (groupTotals.get(name) || 0) + entry.total);
-    });
-    const ranked = Array.from(groupTotals.entries()).sort((a, b) => b[1] - a[1]);
-    const visible = ranked.slice(0, 6).map(([name]) => name);
-    const hidden = ranked.length > 6;
-    const colorFor = (name) => {
-      const index = visible.indexOf(name);
-      return index >= 0 ? PALETTE[index % PALETTE.length] : "var(--muted)";
+    const ranked = Array.from(totals.entries()).sort((a, b) => b[1] - a[1]).map((x) => x[0]);
+    const keys = ranked.slice(0, 6).map((k, i) => ({
+      k, c: state.group === "source" ? (SOURCE_COLORS[k] || PALETTE[i % PALETTE.length]) : PALETTE[i % PALETTE.length],
+      name: state.group === "source" ? sourceLabel(k) : k === UNATTRIBUTED ? t("unattributed") : k
+    }));
+    if (ranked.length > 6) keys.push({ k: "\u0000other", c: "var(--c7)", name: t("other") });
+    const map = new Map(keys.map((k) => [k.k, k]));
+    const keyFor = (e) => {
+      const k = state.group === "model" ? (e.model || UNATTRIBUTED) : e.source;
+      return map.has(k) ? k : "\u0000other";
     };
-    const labelFor = (name) => (state.group === "source" ? sourceLabel(name) : name);
-
-    legend.innerHTML = visible.map((name) =>
-      '<span><i class="dot" style="background:' + colorFor(name) + '"></i>' + esc(labelFor(name)) + "</span>"
-    ).join("") + (hidden ? '<span><i class="dot" style="background:var(--muted)"></i>' + esc(t("other")) + "</span>" : "");
-    el("chart-title").textContent = t("trendTitle");
-    svg.setAttribute("aria-label", t("trendTitle"));
-
-    const days = Array.from(byDate.values()).sort((a, b) => a.date.localeCompare(b.date));
-    if (!days.length) {
-      svg.innerHTML = "";
-      svg.setAttribute("viewBox", "0 0 320 120");
-      svg.setAttribute("height", "120");
-      svg.setAttribute("width", "320");
-      svg.style.minWidth = "";
-      return;
-    }
-    const barSlot = 28;
-    const width = Math.max(scroll.clientWidth || 320, days.length * barSlot + 48);
-    const height = 270;
-    const padTop = 14, padBottom = 30, padLeft = 50, padRight = 12;
-    const plotW = width - padLeft - padRight;
-    const plotH = height - padTop - padBottom;
-    const maxTotal = Math.max.apply(null, days.map((day) => Math.max(day.total, 1)));
-    const niceMax = nicestMax(maxTotal);
-    let out = "";
-    for (let step = 0; step <= 4; step += 1) {
-      const value = (niceMax / 4) * step;
-      const y = padTop + plotH - (plotH * step) / 4;
-      out += '<line x1="' + padLeft + '" x2="' + (width - padRight) + '" y1="' + y + '" y2="' + y + '" style="stroke:var(--border);stroke-width:1"/>';
-      out += '<text x="' + (padLeft - 8) + '" y="' + (y + 4) + '" text-anchor="end" style="fill:var(--muted);font-size:11px">' + esc(formatTokens(value)) + "</text>";
-    }
-    const labelStep = Math.max(1, Math.ceil(days.length / Math.max(1, Math.floor(plotW / 64))));
-    days.forEach((day, index) => {
-      const slot = plotW / days.length;
-      const barW = Math.max(6, Math.min(22, slot * 0.62));
-      const x = padLeft + slot * index + (slot - barW) / 2;
-      const ordered = Array.from(day.groups.entries()).sort((a, b) => {
-        const aIndex = visible.indexOf(a[0]);
-        const bIndex = visible.indexOf(b[0]);
-        return (aIndex < 0 ? 99 : aIndex) - (bIndex < 0 ? 99 : bIndex);
-      });
-      let y = padTop + plotH;
-      const tooltip = day.date + " · " + t("summaryTokens") + " " + formatTokens(day.total);
-      out += '<g><title>' + esc(tooltip) + "</title>";
-      ordered.forEach(([name, value]) => {
-        if (!value.total) return;
-        const h = (value.total / niceMax) * plotH;
-        y -= h;
-        out += '<rect x="' + x + '" y="' + y + '" width="' + barW + '" height="' + h + '" rx="2" style="fill:' + colorFor(name) + '"/>';
-      });
-      out += "</g>";
-      if (index % labelStep === 0) {
-        out += '<text x="' + (x + barW / 2) + '" y="' + (height - 10) + '" text-anchor="middle" style="fill:var(--muted);font-size:11px">' + esc(day.date.slice(5)) + "</text>";
-      }
-    });
-    svg.setAttribute("viewBox", "0 0 " + width + " " + height);
-    svg.setAttribute("height", height);
-    svg.setAttribute("width", width);
-    svg.style.minWidth = width + "px";
-    svg.innerHTML = out;
+    return { keys, keyFor };
   }
 
-  function nicestMax(value) {
-    const exponent = Math.pow(10, Math.floor(Math.log10(value || 1)));
-    const fraction = value / exponent;
-    const steps = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
-    return (steps.find((step) => fraction <= step) || 10) * exponent;
+  let chartState = null;
+  function renderChart(entries, from, to) {
+    const svg = el("chart");
+    const W = Math.round(svg.clientWidth), H = Math.round(svg.clientHeight);
+    const single = from === to;
+    const { keys, keyFor } = chartKeys(entries);
+    setHTML(el("chart-legend"), single ? "" : keys.map((k) => '<span class="item"><span class="dot" style="background:' + k.c + '"></span>' + esc(k.name) + "</span>").join(""));
+    setHidden(el("gran"), single);
+    if (!W || !H) return;
+    setAttr(svg, "viewBox", "0 0 " + W + " " + H);
+    if (single) drawBreakdown(svg, W, H, entries, keys, keyFor, from);
+    else drawTrend(svg, W, H, entries, keys, keyFor, from, to);
+    setAttr(svg, "aria-label", el("chart-title").textContent);
+  }
+
+  // One day selected: the trend would collapse to one bar, so show its composition.
+  function drawBreakdown(svg, W, H, entries, keys, keyFor, day) {
+    chartState = null;
+    setText(el("chart-title"), t("breakdown", { date: day }));
+    const agg = {};
+    entries.forEach((e) => { const k = keyFor(e); agg[k] = (agg[k] || 0) + e.total; });
+    const list = keys.filter((k) => agg[k.k]).map((k) => Object.assign({}, k, { v: agg[k.k] })).sort((a, b) => b.v - a.v);
+    if (!list.length) { setHTML(svg, '<text x="' + W / 2 + '" y="' + H / 2 + '" text-anchor="middle">' + esc(t("dayEmpty")) + "</text>"); return; }
+    const max = list[0].v, tot = list.reduce((a, b) => a + b.v, 0);
+    const labW = Math.min(170, W * 0.36), valW = 92, rowH = Math.min(34, (H - 8) / list.length), bh = Math.min(16, rowH * 0.55);
+    let out = "";
+    list.forEach((k, i) => {
+      const y = 4 + i * rowH + rowH / 2, bw = Math.max(2, (W - labW - valW) * k.v / max);
+      const name = k.name.length > 26 ? k.name.slice(0, 25) + "…" : k.name;
+      out += '<text x="' + (labW - 10) + '" y="' + (y + 4) + '" text-anchor="end" style="fill:var(--fg)">' + esc(name) + "</text>";
+      out += '<rect x="' + labW + '" y="' + (y - bh / 2) + '" width="' + bw.toFixed(1) + '" height="' + bh + '" rx="3" style="fill:' + k.c + '"/>';
+      out += '<text x="' + (labW + bw + 8).toFixed(1) + '" y="' + (y + 4) + '">' + esc(formatTokens(k.v)) + " · " + ((k.v / tot) * 100).toFixed(0) + "%</text>";
+    });
+    setHTML(svg, out);
+  }
+
+  function drawTrend(svg, W, H, entries, keys, keyFor, from, to) {
+    const g = effGran();
+    setText(el("chart-title"), t({ day: "trendDay", week: "trendWeek", month: "trendMonth" }[g]));
+    const now = today();
+    const buckets = [], index = {};
+    for (let d = from; d <= to; d = addDays(d, 1)) {
+      const b = bucketStart(d, g);
+      if (!(b in index)) { index[b] = buckets.length; buckets.push({ key: b, first: d, last: d, s: {} }); }
+      buckets[index[b]].last = d;
+    }
+    entries.forEach((e) => {
+      const b = buckets[index[bucketStart(e.date, g)]];
+      if (!b) return;
+      const k = keyFor(e);
+      b.s[k] = (b.s[k] || 0) + e.total;
+    });
+    const pl = 46, pr = 8, pt = 8, pb = 22, iw = W - pl - pr, ih = H - pt - pb;
+    const max = Math.max(1, ...buckets.map((b) => Object.values(b.s).reduce((a, c) => a + c, 0)));
+    const step = Math.pow(10, Math.floor(Math.log10(max / 4)));
+    const tick = [1, 2, 2.5, 5, 10].map((m) => m * step).find((v) => max / v <= 5) || max;
+    const top = Math.ceil(max / tick) * tick, y = (v) => pt + ih - (v / top) * ih;
+    const bw = iw / buckets.length, gap = Math.min(g === "day" ? 4 : 8, bw * 0.25);
+    const lab = (b) => (g === "month" ? b.key.slice(2, 7).replace("-", "/") : short(b.key));
+    let out = "";
+    for (let v = 0; v <= top + 1e-9; v += tick) out += '<line class="grid" x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(v).toFixed(1) + '" y2="' + y(v).toFixed(1) + '"/><text x="' + (pl - 6) + '" y="' + (y(v) + 4).toFixed(1) + '" text-anchor="end">' + esc(formatTokens(v)) + "</text>";
+    const every = Math.ceil(buckets.length / Math.max(2, Math.floor(iw / 56)));
+    buckets.forEach((b, i) => {
+      let acc = 0;
+      const x = pl + i * bw + gap / 2;
+      // Buckets cut by the range edge or still running (today) are drawn lighter.
+      const partial = g === "day" ? b.key === now : (b.key < from || bucketEnd(b.key, g) > to || (b.key <= now && bucketEnd(b.key, g) >= now));
+      keys.forEach((k) => {
+        const v = b.s[k.k] || 0;
+        if (!v) return;
+        out += '<rect x="' + x.toFixed(1) + '" y="' + y(acc + v).toFixed(1) + '" width="' + Math.max(1, bw - gap).toFixed(1) + '" height="' + (y(acc) - y(acc + v)).toFixed(1) + '" rx="1.5" style="fill:' + k.c + (partial ? ";fill-opacity:.5" : "") + '"/>';
+        acc += v;
+      });
+      out += '<rect data-i="' + i + '" x="' + (pl + i * bw).toFixed(1) + '" y="' + pt + '" width="' + bw.toFixed(1) + '" height="' + ih + '" fill="transparent"/>';
+      if ((buckets.length - 1 - i) % every === 0) out += '<text x="' + (x + (bw - gap) / 2).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(lab(b)) + "</text>";
+    });
+    setHTML(svg, out);
+    chartState = { buckets, keys, g };
+  }
+
+  function showTip(event) {
+    const tip = el("tip");
+    const i = event.target && event.target.dataset ? event.target.dataset.i : null;
+    if (i == null || !chartState) { tip.hidden = true; return; }
+    const b = chartState.buckets[Number(i)];
+    const tot = Object.values(b.s).reduce((a, c) => a + c, 0);
+    const head = chartState.g === "day" ? b.key : b.first + " – " + b.last;
+    tip.innerHTML = "<div><b>" + esc(head) + '</b><span class="num">' + esc(formatTokens(tot)) + "</span></div>" +
+      chartState.keys.filter((k) => b.s[k.k]).map((k) => '<div><span><span class="dot" style="background:' + k.c + '"></span> ' + esc(k.name) + '</span><span class="num">' + esc(formatTokens(b.s[k.k])) + "</span></div>").join("");
+    tip.hidden = false;
+    tip.style.left = Math.max(8, Math.min(event.clientX + 14, innerWidth - 290)) + "px";
+    tip.style.top = event.clientY + 14 + "px";
+  }
+
+  function renderGran(from, to) {
+    const n = diffDays(from, to) + 1, g = effGran();
+    document.querySelectorAll("#gran button").forEach((b) => {
+      const disabled = !granAllowed(b.dataset.g, n);
+      if (b.disabled !== disabled) b.disabled = disabled;
+      setAttr(b, "aria-pressed", String(b.dataset.g === g));
+    });
+    document.querySelectorAll("#group-by button").forEach((b) => setAttr(b, "aria-pressed", String(b.dataset.group === state.group)));
   }
 
   // Model ranking doubles as the model filter. Aggregates ignore the model
-  // selection so deselected models stay visible and can be re-enabled.
-  function renderModels() {
-    const host = el("model-list");
-    const entries = buildEntries();
-    const groups = aggregateBy(entries, "model");
-    const sourcesFor = {};
-    entries.forEach((entry) => {
-      if (!entry.model) return;
-      (sourcesFor[entry.model] = sourcesFor[entry.model] || new Set()).add(entry.source);
+  // selection so deselected models stay listed and can be re-enabled.
+  function renderRank(from, to) {
+    const agg = new Map();
+    buildEntries(from, to).forEach((e) => {
+      if (!e.model) return;
+      const a = agg.get(e.model) || { total: 0, cost: null, sources: new Set() };
+      a.total += e.total;
+      if (e.cost !== null) a.cost = (a.cost || 0) + e.cost;
+      a.sources.add(sourceLabel(e.source));
+      agg.set(e.model, a);
     });
-    const costFor = {};
-    const knownFor = {};
-    entries.forEach((entry) => {
-      if (!entry.model) return;
-      if (entry.cost !== null) {
-        costFor[entry.model] = (costFor[entry.model] || 0) + entry.cost;
-        knownFor[entry.model] = (knownFor[entry.model] || 0) + entry.total;
-      }
-    });
-    const rows = Array.from(groups.values()).filter((row) => row.name !== UNATTRIBUTED)
-      .sort((a, b) => b.total - a.total);
-    const total = rows.reduce((sum, row) => sum + row.total, 0);
-    const all = collectModels();
-    el("model-meta").textContent = rows.length ? t("modelMeta", { n: rows.length }) : "";
-    if (!rows.length) {
-      host.innerHTML = '<div class="empty" style="padding:24px 8px">' + esc(t("modelEmpty")) + "</div>";
-      return;
-    }
-    const noneSelected = state.modelsTouched && !rows.some((row) => state.models.has(row.name));
-    let html = (noneSelected
-      ? '<div class="notice" data-kind="info" style="margin:0 0 10px;padding:9px 12px"><div class="message">' + esc(t("modelsNoneSelected")) + "</div></div>"
-      : "") + '<div class="model-row head" aria-hidden="true"><span></span><span>' + esc(t("model")) +
-      "</span><span>" + esc(t("share")) + "</span><span class='num'>" + esc(t("summaryTokens")) +
-      "</span><span class='num'>" + esc(t("summaryCost")) + "</span></div>";
-    rows.forEach((row) => {
-      const share = total > 0 ? (row.total / total) * 100 : 0;
-      const sources = Array.from(sourcesFor[row.name] || []).map(sourceLabel).join(", ");
-      const cost = knownFor[row.name] ? costFor[row.name] : null;
-      const checked = state.models.has(row.name) || !state.modelsTouched;
-      html += '<label class="model-row">' +
-        '<input class="rank-check" type="checkbox" value="' + esc(row.name) + '"' + (checked ? " checked" : "") + ">" +
-        '<span class="model-name" title="' + esc(row.name + (sources ? " · " + sources : "")) + '">' + esc(row.name) +
-        '<span class="src">' + esc(sources) + "</span></span>" +
-        '<span class="share"><i style="width:' + Math.max(2, share).toFixed(1) + '%"></i></span>' +
-        '<span class="num">' + esc(formatTokens(row.total)) + "</span>" +
-        '<span class="num' + (cost === null ? " muted" : "") + '">' + esc(formatCost(cost)) + "</span>" +
-        "</label>";
-    });
-    host.innerHTML = html;
-    host.querySelectorAll(".rank-check").forEach((input) => {
-      input.addEventListener("change", () => {
-        state.modelsTouched = true;
-        if (input.checked) state.models.add(input.value); else state.models.delete(input.value);
-        render();
-      });
+    const list = Array.from(agg.entries()).sort((a, b) => b[1].total - a[1].total);
+    const tot = list.reduce((s, x) => s + x[1].total, 0) || 1;
+    const max = list.length ? Math.max(1, list[0][1].total) : 1;
+    setText(el("model-meta"), list.length ? t("modelMeta", { n: list.length }) : "");
+    const noneSelected = state.modelsTouched && list.length && !list.some((x) => state.models.has(x[0]));
+    setHTML(el("model-notice"), noneSelected ? '<div class="notice" style="margin:0 0 10px;padding:9px 12px"><div class="message">' + esc(t("modelsNoneSelected")) + "</div></div>" : "");
+    const more = el("rank-more");
+    setHidden(more, list.length <= RANK_TOP);
+    setText(more, state.rankAll ? t("rankCollapse") : t("rankExpand", { n: list.length }));
+    const shown = state.rankAll ? list : list.slice(0, RANK_TOP);
+    setHTML(el("rank"), shown.map(([m, v]) => '<li><input type="checkbox" data-m="' + esc(m) + '"' + (modelSelected(m) ? " checked" : "") + ">" +
+      '<span class="name" data-mlabel="1">' + esc(m) + '</span><span class="val num">' + esc(formatTokens(v.total)) + "</span>" +
+      '<div class="sub"><span class="track"><b style="width:' + ((v.total / max) * 100).toFixed(1) + '%"></b></span><span class="num">' + ((v.total / tot) * 100).toFixed(1) + '%</span><span class="srcs">' + esc(Array.from(v.sources).join(", ")) + '</span><span class="num">' + (v.cost === null ? "" : esc(formatCost(v.cost))) + "</span></div></li>").join("") ||
+      '<li style="color:var(--faint);display:block">' + esc(t("modelEmpty")) + "</li>");
+    document.querySelectorAll("#rank input[data-m]").forEach((input) => {
+      const want = modelSelected(input.dataset.m);
+      if (input.checked !== want) input.checked = want;
     });
   }
 
-  function renderTable(entries) {
-    const body = el("rows");
-    const totalRow = el("rows-total");
-    const rows = entries.slice().sort((a, b) =>
-      b.date.localeCompare(a.date) || String(a.source).localeCompare(b.source) ||
-      String(a.model).localeCompare(b.model) || b.total - a.total
-    );
-    const shown = rows.slice(0, TABLE_LIMIT);
-    body.innerHTML = "";
-    shown.forEach((row) => {
-      const tr = document.createElement("tr");
-      const cells = [
-        row.date,
-        null,
-        row.model || t("unattributed"),
-        formatTokens(row.input),
-        formatTokens(row.output),
-        formatTokens(row.cacheRead),
-        formatTokens(row.cacheWrite),
-        formatTokens(row.total),
-        formatCost(row.cost)
-      ];
-      cells.forEach((value, index) => {
-        const td = document.createElement("td");
-        if (index === 1) {
-          td.innerHTML = '<span class="badge"><i class="dot" style="background:' + (SOURCE_COLORS[row.source] || "var(--muted)") + '"></i><span class="name">' + esc(sourceLabel(row.source)) + "</span></span>";
-        } else if (index === 0) {
-          td.textContent = value;
-          td.className = "mono";
-        } else {
-          td.textContent = value;
-          if (index === 8 && row.cost === null) td.className = "muted";
-        }
-        tr.appendChild(td);
-      });
-      body.appendChild(tr);
-    });
-    const totals = entriesTotals(entries);
-    const allModelSelected = !state.modelsTouched || Array.from(state.models).length >= collectModels().length;
-    const cost = allModelSelected ? dayRows().reduce((sum, row) => sum + (Number(row.costUSD) || 0), 0) : (totals.costUnknown ? null : totals.cost);
-    let footer = "";
-    if (entries.length) {
-      footer = "<tr><td>" + esc(t("total")) + "</td><td></td><td></td><td>" + esc(formatTokens(totals.input)) +
-        "</td><td>" + esc(formatTokens(totals.output)) + "</td><td>" + esc(formatTokens(totals.cacheRead)) +
-        "</td><td>" + esc(formatTokens(totals.cacheWrite)) + "</td><td>" + esc(formatTokens(totals.total)) +
-        "</td><td>" + esc(formatCost(cost)) + "</td></tr>";
-      if (rows.length > TABLE_LIMIT) {
-        footer += '<tr><td colspan="9" class="footnote">' + esc(t("rowsCapped", { n: TABLE_LIMIT })) + "</td></tr>";
-      }
+  function renderStats(entries, from, to) {
+    const sum = (list) => list.reduce((a, e) => a + e.total, 0);
+    const n = diffDays(from, to) + 1, single = n === 1, now = today(), first = firstDate();
+    const total = sum(entries);
+    let inp = 0, cr = 0;
+    entries.forEach((e) => { inp += e.input; cr += e.cacheRead; });
+    const pf = addDays(from, -n), pe = addDays(from, -1);
+    const prevTotal = pf >= first ? sum(filteredEntries(pf, pe)) : 0;
+    const delta = pf >= first && prevTotal ? ((total - prevTotal) / prevTotal) * 100 : null;
+    const cmp = single ? (from === now ? t("statPrevToday") : t("statPrevDay")) : t("statPrevN", { n });
+    const cells = [];
+    if (single) {
+      const srcs = new Set(), models = new Set();
+      entries.forEach((e) => { if (e.total) { srcs.add(e.source); if (e.model) models.add(e.model); } });
+      cells.push([t("statActive"), srcs.size + " / " + models.size, t("statActiveHint")]);
+      const avg7 = sum(filteredEntries(addDays(from, -7), addDays(from, -1))) / 7;
+      cells.push([t("statAvg7"), formatTokens(Math.round(avg7)), avg7 ? t("statAvg7Hint", { p: ((total / avg7) * 100).toFixed(0) }) : "—"]);
+    } else {
+      const byDay = {};
+      entries.forEach((e) => { byDay[e.date] = (byDay[e.date] || 0) + e.total; });
+      const active = Object.keys(byDay).filter((d) => byDay[d] > 0);
+      const peak = active.sort((a, b) => byDay[b] - byDay[a])[0];
+      cells.push([t("statAvg"), formatTokens(Math.round(total / Math.max(1, active.length))), t("statActiveDays", { a: active.length, n })]);
+      cells.push([t("statPeak"), peak ? formatTokens(byDay[peak]) : "—", peak || "—"]);
     }
-    totalRow.innerHTML = footer;
+    cells.push([cmp, delta === null ? "—" : (delta > 0 ? "+" : "") + delta.toFixed(0) + "%", delta === null ? t("statNoPrev") : (pf === pe ? pf : short(pf) + " – " + short(pe)) + "：" + formatTokens(prevTotal), delta === null ? "" : delta > 0 ? "up" : "down"]);
+    cells.push([t("statCache"), ((cr / Math.max(1, inp + cr)) * 100).toFixed(1) + "%", t("statCacheHint")]);
+    setHTML(el("stats"), cells.map((c) => '<div class="stat"><div class="l">' + esc(c[0]) + '</div><div class="v num ' + (c[3] || "") + '">' + esc(c[1]) + '</div><div class="s num">' + esc(c[2]) + "</div></div>").join(""));
+  }
+
+  function renderDetails(entries) {
+    const byDate = new Map();
+    entries.forEach((e) => { if (!byDate.has(e.date)) byDate.set(e.date, []); byDate.get(e.date).push(e); });
+    const dates = Array.from(byDate.keys()).sort().reverse();
+    setHidden(el("more-btn").parentNode, dates.length <= state.shown);
+    const now = today();
+    let rows = "", cards = "";
+    dates.slice(0, state.shown).forEach((date) => {
+      const list = byDate.get(date).slice().sort((a, b) => b.total - a.total);
+      const tot = totalsOf(list);
+      const collapsed = state.collapsed.has(date);
+      const cost = tot.costUnknown && !allModelsSelected() ? null : costFor(list, date, date);
+      rows += '<tr class="day" data-day="' + date + '" aria-expanded="' + !collapsed + '"><td class="num">' + date + (date === now ? ' <span class="chip">' + esc(t("inProgress")) + "</span>" : "") +
+        '</td><td style="color:var(--muted);font-weight:400">' + esc(t("rowsN", { n: list.length })) + '</td><td colspan="4"></td><td class="n num">' + esc(formatTokens(tot.total)) + '</td><td class="n num">' + costHTML(cost) + "</td></tr>";
+      cards += '<button type="button" class="dhead num" data-day="' + date + '">' + date + " · " + esc(formatTokens(tot.total)) + (collapsed ? " ›" : "") + "</button>";
+      if (collapsed) return;
+      list.forEach((e) => {
+        const color = SOURCE_COLORS[e.source] || "var(--c7)";
+        const model = e.model || t("unattributed");
+        rows += '<tr><td><span class="srcname"><span class="dot" style="background:' + color + '"></span>' + esc(sourceLabel(e.source)) + '</span></td><td class="model" title="' + esc(model) + '">' + esc(model) +
+          '</td><td class="n num">' + esc(formatTokens(e.input)) + '</td><td class="n num">' + esc(formatTokens(e.output)) + '</td><td class="n num">' + esc(formatTokens(e.cacheRead)) + '</td><td class="n num">' + esc(formatTokens(e.cacheWrite)) +
+          '</td><td class="n num"><b>' + esc(formatTokens(e.total)) + '</b></td><td class="n num">' + costHTML(e.cost) + "</td></tr>";
+        cards += '<div class="dcard"><div class="t"><span class="dot" style="background:' + color + '"></span><span class="m">' + esc(model) + '</span><b class="num">' + esc(formatTokens(e.total)) + "</b></div>" +
+          '<div class="g num"><span>' + esc(t("summaryInput")) + "<b>" + esc(formatTokens(e.input)) + "</b></span><span>" + esc(t("summaryOutput")) + "<b>" + esc(formatTokens(e.output)) + "</b></span><span>" + esc(t("summaryCacheRead")) + "<b>" + esc(formatTokens(e.cacheRead)) + "</b></span><span>" + esc(t("summaryCost")) + "<b>" + costHTML(e.cost) + "</b></span></div></div>";
+      });
+    });
+    setHTML(el("rows"), rows || '<tr><td colspan="8" style="color:var(--faint);text-align:center;padding:24px">' + esc(t("modelEmpty")) + "</td></tr>");
+    setHTML(el("cards"), cards || '<p style="color:var(--faint);text-align:center">' + esc(t("modelEmpty")) + "</p>");
   }
 
   function render() {
@@ -1323,102 +1266,274 @@ tfoot td { font-weight: 650; border-bottom: 0; background: var(--surface); }
     reconcileSelection();
     // A preset window can miss older history entirely (for example after a
     // long break). Widen to "all" once, on the first snapshot only: a later
-    // custom range chosen by the user is never overridden.
+    // range chosen by the user is never overridden.
     if (state.pendingAutoRange) {
       state.pendingAutoRange = false;
-      if (state.range !== "all" && !filteredEntries().length && hasAnyData()) {
-        state.range = "all";
-        state.from = "";
-        state.to = "";
-        el("date-from").value = "";
-        el("date-to").value = "";
-        renderRangePresets();
+      const [f0, t0] = span();
+      if (state.range !== "all" && !filteredEntries(f0, t0).length && hasAnyData()) state.range = "all";
+    }
+    const [from, to] = span();
+    const base = buildEntries(from, to);
+    const entries = filteredEntries(from, to);
+    const statuses = sourceStatus();
+    const failed = Object.keys(statuses).some((key) => statuses[key].status === "error");
+    setHidden(el("loading"), true);
+    setHidden(el("content"), false);
+    setHidden(el("empty-state"), entries.length > 0 || base.length > 0 || failed);
+    // The model panel is also the model filter: hiding it when every model is
+    // deselected would make the selection impossible to restore.
+    const show = entries.length > 0;
+    setHidden(el("sum-section"), !show);
+    setHidden(el("split"), !show && !base.length);
+    setHidden(el("chart-panel"), !show);
+    setHidden(el("details"), !show);
+    renderRange();
+    renderSources();
+    renderStatus();
+    if (show) {
+      renderSummary(entries, from, to);
+      renderGran(from, to);
+      renderChart(entries, from, to);
+      renderStats(entries, from, to);
+      renderDetails(entries);
+    }
+    renderRank(from, to);
+    setHidden(el("top-actions"), false);
+  }
+
+  // ---------- quota ----------
+  function ago(iso) {
+    const ms = Date.now() - Date.parse(iso);
+    if (!(ms >= 0) || ms < MIN) return t("agoNow");
+    if (ms < HOUR) return t("agoMin", { n: Math.floor(ms / MIN) });
+    if (ms < DAY) return t("agoHour", { n: Math.floor(ms / HOUR) });
+    return t("agoDay", { n: Math.floor(ms / DAY) });
+  }
+  function dur(ms) {
+    const d = Math.floor(ms / DAY), h = Math.floor((ms % DAY) / HOUR), m = Math.max(1, Math.floor((ms % HOUR) / MIN));
+    return d ? t("durDH", { d, h }) : h ? t("durHM", { h, m }) : t("durM", { m });
+  }
+  function windowLabel(w) {
+    switch (w.kind) {
+      case "session": return t("win5h");
+      case "daily": return t("win1d");
+      case "weekly": return t("win7d");
+      case "monthly": return t("win30d");
+    }
+    const s = Number(w.windowSeconds) || 0;
+    if (s && s % 86400 === 0) return t("winD", { n: s / 86400 });
+    if (s && s % 3600 === 0) return t("winH", { n: s / 3600 });
+    return t("winOther");
+  }
+  const sev = (rem) => (rem <= 10 ? "crit" : rem <= 30 ? "warn" : "");
+  // remainingOf is null when the balance is unknown: the report omits
+  // usedPercent (a session-log window already reset when the snapshot was
+  // taken), or the window's reset time has passed while this page held the
+  // report. A reset window no longer has a known balance, so neither the
+  // percentage nor the meter may be drawn from the old value.
+  const remainingOf = (w, now = Date.now()) => {
+    if (!w) return null;
+    const raw = w.usedPercent;
+    if (raw === null || raw === undefined) return null;
+    const reset = w.resetsAt ? Date.parse(w.resetsAt) : NaN;
+    if (isFinite(reset) && reset <= now) return null;
+    const used = Number(raw);
+    if (!isFinite(used)) return null;
+    return Math.max(0, Math.min(100, Math.round(100 - used)));
+  };
+  const minRemaining = (a, now = Date.now()) => {
+    if (a.status !== "ok") return -1;
+    // Never pass remainingOf directly to map: it would receive the array
+    // index as the clock and keep pre-reset balances.
+    const known = (Array.isArray(a.windows) ? a.windows : []).map((w) => remainingOf(w, now)).filter((v) => v !== null);
+    // Cards without a known window sort after cards with one.
+    return known.length ? Math.min.apply(null, known) : 101;
+  };
+
+  function quotaError(a) {
+    const map = { not_configured: "qNotConfigured", upstream_error: "qUpstream", rate_limited: "qRateLimited", keychain_denied: "qKeychain", unknown_schema: "qSchema", canceled: "qCanceled" };
+    if (a.error === "token_expired") return t(a.origin === "local" ? "qExpiredLocal" : "qExpiredPool");
+    return t(map[a.error] || "qGeneric");
+  }
+
+  function winHTML(w, full) {
+    const now = Date.now();
+    const rem = remainingOf(w, now);
+    const known = rem !== null;
+    const reset = w.resetsAt ? Date.parse(w.resetsAt) : NaN;
+    const span = Number(w.windowSeconds) * 1000;
+    const elapsed = isFinite(reset) && span > 0 ? Math.min(100, Math.max(0, 100 - ((reset - now) / span) * 100)) : null;
+    const used = known ? 100 - rem : 0;
+    const ahead = known && elapsed !== null && used > elapsed + 8;
+    let resetText = "";
+    if (w.resetSinceObserved) resetText = t("resetSince");
+    else if (isFinite(reset)) resetText = reset > now ? t("resetsIn", { d: dur(reset - now) }) : t("resetSince");
+    const label = windowLabel(w);
+    const value = known ? rem + "%<small>" + esc(t("remaining")) + "</small>" : esc(t("quotaUnknown"));
+    const aria = known
+      ? ' role="meter" aria-valuenow="' + rem + '" aria-valuemin="0" aria-valuemax="100"'
+      : ' role="img"';
+    return '<div class="win"><div class="win-top"><span class="lbl">' + esc(label) + '</span><span class="big num' + (known ? "" : " unknown") + '">' + value + '</span><span class="reset num">' + esc(resetText) + "</span></div>" +
+      '<div class="meter' + (known ? "" : " unknown") + '"' + aria + ' aria-label="' + esc(label + " " + t(known ? "remaining" : "quotaUnknown")) + '">' +
+      (known ? '<b class="' + sev(rem) + '" style="width:' + rem + '%"></b>' : "") +
+      (known && elapsed !== null ? '<i class="pace" style="left:calc(' + (100 - elapsed).toFixed(1) + '% - 1px)"></i>' : "") + "</div>" +
+      (full && known && elapsed !== null ? '<div class="pace-txt' + (ahead ? " ahead" : "") + '">' + esc(ahead ? t("paceAhead", { n: Math.round(used - elapsed) }) : t("paceOk")) + "</div>" : "") + "</div>";
+  }
+
+  function providerName(p) { return p === "claude" ? "Claude" : p === "codex" ? "Codex" : String(p); }
+
+  function sourceBadge(a) {
+    if (a.status !== "ok" || !a.observedAt) return "";
+    const key = a.source === "session_log" ? "srcSession" : a.source === "live" ? "srcLive" : "srcCache";
+    const stale = a.source !== "live";
+    return '<span class="src' + (stale ? " stale" : "") + '" title="' + esc(t(key + "Hint")) + '"><i></i>' + esc(t(key)) + " · " + esc(ago(a.observedAt)) + "</span>";
+  }
+
+  function bodyHTML(a, full) {
+    if (a.status !== "ok") return '<div class="qerr"><b>!</b>' + esc(quotaError(a)) + "</div>";
+    const windows = Array.isArray(a.windows) ? a.windows : [];
+    let html = windows.length ? '<div class="wins' + (full ? "" : " one") + '">' + windows.map((w) => winHTML(w, full)).join("") + "</div>" : '<div class="qhint">' + esc(t("noWindows")) + "</div>";
+    if (a.liveError) html += '<div class="qhint">' + esc(t("liveFailed", { r: quotaError({ error: a.liveError, origin: a.origin }) })) + "</div>";
+    return html;
+  }
+
+  function renderQuota() {
+    const section = el("quota-section");
+    const host = el("quota");
+    if (!state.key || el("auth-form").hidden === false) { setHidden(section, true); return; }
+    setHidden(section, false);
+    if (!state.quota) {
+      setHTML(host, state.quotaFailed
+        ? '<div class="panel quota-msg"><span>' + esc(t("quotaLoadError")) + '</span><button class="ctl" type="button" data-qretry="1">' + esc(t("retry")) + "</button></div>"
+        : '<div class="panel quota-msg"><span class="spinner" aria-hidden="true"></span>' + esc(t("quotaLoading")) + "</div>");
+      return;
+    }
+    const accounts = (Array.isArray(state.quota.accounts) ? state.quota.accounts : []).filter((a) => a && (a.origin === "pool" || a.error !== "not_configured"));
+    const locals = accounts.filter((a) => a.origin === "local");
+    // One clock for the whole render so summary chips, ordering, and card
+    // bodies agree about which windows have already reset.
+    const now = Date.now();
+    const pool = accounts.filter((a) => a.origin === "pool").sort((a, b) => minRemaining(a, now) - minRemaining(b, now) || a.poolNumber - b.poolNumber);
+    const mergedCount = locals.reduce((n, a) => n + (Array.isArray(a.mergedPool) ? a.mergedPool.length : 0), 0);
+    const parts = locals.map((a) => {
+      const merged = Array.isArray(a.mergedPool) && a.mergedPool.length ? '<span class="also" title="' + esc(t("mergedHint")) + '">= CPA ' + a.mergedPool.map((n) => "#" + n).join(", ") + "</span>" : "";
+      return '<article class="panel qcard local"><div class="qhead"><span class="dot" style="background:' + (PROVIDER_COLORS[a.provider] || "var(--c7)") + '"></span><strong>' + esc(providerName(a.provider)) + '</strong><span class="plan">' + esc(t("local") + (a.plan ? " · " + a.plan : "")) + "</span>" + merged + sourceBadge(a) + "</div>" + bodyHTML(a, true) + "</article>";
+    });
+    if (pool.length || mergedCount || state.quota.poolStatus === "error") {
+      const chips = pool.map((a) => {
+        if (a.status !== "ok") return '<span class="chip warn">#' + a.poolNumber + " " + esc(t("needsAttention")) + "</span>";
+        const rem = minRemaining(a, now);
+        if (rem > 100) return '<span class="chip">#' + a.poolNumber + " —</span>";
+        return '<span class="chip ' + (sev(rem) || "ok") + '">#' + a.poolNumber + " " + rem + "%</span>";
+      }).join("");
+      const note = state.quota.poolStatus === "error" ? '<div class="pool-note">' + esc(t("poolError")) + "</div>" : "";
+      parts.push('<button type="button" class="panel qcard pool-toggle' + (state.poolOpen ? " open" : "") + '" data-pool="1" aria-expanded="' + state.poolOpen + '"' + (pool.length ? "" : " disabled") + '>' +
+        '<div class="qhead"><strong>' + esc(t("poolTitle")) + "</strong>" + (pool.length ? '<span class="plan">' + esc(t("poolMore", { n: pool.length })) + "</span>" : "") + "</div>" +
+        (state.poolOpen ? "" : '<div class="pool-mini">' + chips + "</div>") + note +
+        (mergedCount ? '<div class="pool-note">' + esc(t("poolMerged", { n: mergedCount })) + "</div>" : "") +
+        (pool.length ? '<span class="pool-act">' + esc(state.poolOpen ? t("collapse") : t("expand")) + "</span>" : "") + "</button>");
+      if (state.poolOpen) {
+        pool.forEach((a) => {
+          const merged = Array.isArray(a.mergedPool) && a.mergedPool.length ? '<span class="also" title="' + esc(t("mergedHint")) + '">= #' + a.mergedPool.join(", #") + "</span>" : "";
+          parts.push('<article class="panel qcard poolc"><div class="qhead"><span class="dot" style="background:' + (PROVIDER_COLORS[a.provider] || "var(--c7)") + '"></span><strong>' + esc(providerName(a.provider) + " · CPA #" + a.poolNumber) + "</strong>" + (a.plan ? '<span class="plan">' + esc(a.plan) + "</span>" : "") + merged + sourceBadge(a) + "</div>" + bodyHTML(a, false) + "</article>");
+        });
       }
     }
-    const baseEntries = buildEntries();
-    const entries = filteredEntries();
-    const statuses = sourceStatus();
-    const failed = Object.keys(statuses).filter((key) => statuses[key].status === "error");
-    el("loading").hidden = true;
-    el("content").hidden = false;
-    el("empty-state").hidden = entries.length > 0 || failed.length > 0 || baseEntries.length > 0;
-    el("content").querySelectorAll(".summary-grid, .panel").forEach((node) => {
-      // The model panel is also the model filter: hiding it when every model is
-      // deselected would make the selection impossible to restore.
-      const keep = node.id === "model-panel" && baseEntries.length > 0;
-      node.style.display = entries.length || keep ? "" : "none";
+    if (!parts.length) parts.push('<div class="panel quota-msg">' + esc(t("quotaEmpty")) + "</div>");
+    setHTML(host, parts.join(""));
+  }
+
+  // renderQuota reads the clock: a window whose reset passed while the page
+  // held the report drops to "unknown". Re-render exactly when the next reset
+  // is due so a determined balance is never shown past its window, and keep
+  // the per-minute tick for the countdown text. Neither path uses the network.
+  function scheduleQuotaReset() {
+    clearTimeout(state.quotaTimer);
+    state.quotaTimer = 0;
+    if (!state.quota || !state.key || document.hidden) return;
+    const now = Date.now();
+    let next = Infinity;
+    (Array.isArray(state.quota.accounts) ? state.quota.accounts : []).forEach((a) => {
+      if (!a || a.status !== "ok" || !Array.isArray(a.windows)) return;
+      a.windows.forEach((w) => {
+        const reset = w && w.resetsAt ? Date.parse(w.resetsAt) : NaN;
+        if (isFinite(reset) && reset > now) next = Math.min(next, reset);
+      });
     });
-    renderStatus();
-    renderSourceFilter();
-    renderSummary(entries);
-    renderChart(entries);
-    renderModels();
-    renderTable(entries);
-    document.querySelectorAll("#group-by button").forEach((button) => {
-      button.setAttribute("aria-pressed", String(button.dataset.group === state.group));
-    });
-    const generated = state.report.generatedAt ? new Date(state.report.generatedAt) : null;
-    el("generated").textContent = generated && !isNaN(generated)
-      ? t("generated") + " " + generated.toLocaleString(state.language)
-      : "";
-    el("top-actions").hidden = false;
-    el("refresh").disabled = state.loading;
+    if (!isFinite(next)) return;
+    // setTimeout caps a delay at 32 bits; re-arm daily for far-off resets.
+    state.quotaTimer = setTimeout(tickQuota, Math.min(next - now, DAY) + 1000);
   }
 
-  function showLoading(quiet) {
-    state.loading = true;
-    if (quiet) return; // background refreshes must not touch the DOM
-    el("refresh").disabled = true;
-    el("loading").hidden = false;
-    el("content").hidden = true;
-    el("empty-state").hidden = true;
-    const status = el("status-notice");
-    status.hidden = false;
-    status.dataset.kind = "info";
-    status.innerHTML = '<span class="spinner" aria-hidden="true"></span><div class="message">' + esc(t("loading")) + "</div>";
+  function tickQuota() {
+    if (document.hidden || !state.quota) return;
+    renderQuota();
+    // scheduleQuotaReset clears the handle it is about to replace, so the
+    // per-minute tick cannot leave orphaned timers behind.
+    scheduleQuotaReset();
   }
 
-  function showLoadError() {
-    state.loading = false;
-    el("loading").hidden = true;
-    const notice = el("status-notice");
-    notice.hidden = false;
-    notice.dataset.kind = "error";
-    notice.innerHTML = '<div class="message">' + esc(t("loadError")) + '</div><button class="btn" type="button" id="retry">' + esc(t("retry")) + "</button>";
-    const retry = el("retry");
-    if (retry) retry.addEventListener("click", () => load(true));
-    el("refresh").disabled = false;
-  }
-
-  async function load(force, quiet) {
-    if (!state.key || state.loading) return;
-    if (!quiet) {
-      el("auth-error").hidden = true;
-      el("auth-form").hidden = true;
-      el("dashboard").hidden = false;
-    }
-    showLoading(quiet);
+  // ---------- loading ----------
+  async function apiGet(path) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 90000);
     try {
-      const url = DATA_PATH + (force ? "?refresh=1" : "");
-      const response = await fetch(url, {
+      return await fetch(path, {
         method: "GET",
         headers: { Authorization: "Bearer " + state.key },
         cache: "no-store",
         credentials: "omit",
         signal: controller.signal
       });
-      if (response.status === 401 || response.status === 403) {
-        state.key = "";
-        stopAuto();
-        el("dashboard").hidden = true;
-        el("top-actions").hidden = true;
-        el("auth-form").hidden = false;
-        el("auth-error").hidden = false;
-        el("auth-error").textContent = t("authFailed");
-        return;
-      }
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  function authFailed() {
+    state.key = "";
+    state.report = null;
+    state.quota = null;
+    stopAuto();
+    setHidden(el("dashboard"), true);
+    setHidden(el("quota-section"), true);
+    setHidden(el("top-actions"), true);
+    setHidden(el("auth-form"), false);
+    setHidden(el("auth-error"), false);
+    setText(el("auth-error"), t("authFailed"));
+  }
+
+  function showLoading() {
+    setHidden(el("loading"), false);
+    setHidden(el("content"), true);
+    setHidden(el("empty-state"), true);
+    const status = el("status-notice");
+    setAttr(status, "data-kind", "info");
+    setHTML(status, '<span class="spinner" aria-hidden="true"></span><div class="message">' + esc(t("loading")) + "</div>");
+    setHidden(status, false);
+  }
+
+  function showLoadError() {
+    setHidden(el("loading"), true);
+    const notice = el("status-notice");
+    setAttr(notice, "data-kind", "error");
+    setHTML(notice, '<div class="message">' + esc(t("loadError")) + '</div><button class="ctl" type="button" data-retry="1">' + esc(t("retry")) + "</button>");
+    setHidden(notice, false);
+  }
+
+  function updateRefreshButton() {
+    const busy = state.loading || state.quotaLoading;
+    const button = el("refresh");
+    if (button.disabled !== busy) button.disabled = busy;
+  }
+
+  async function loadUsage(force, quiet) {
+    if (!state.key || state.loading) return;
+    state.loading = true;
+    if (!quiet) { updateRefreshButton(); if (!state.report) showLoading(); }
+    try {
+      const response = await apiGet(DATA_PATH + (force ? "?refresh=1" : ""));
+      if (response.status === 401 || response.status === 403) { state.loading = false; authFailed(); return; }
       if (!response.ok) throw new Error("request failed");
       const data = await response.json();
       if (!data || !Array.isArray(data.sources)) throw new Error("invalid payload");
@@ -1426,35 +1541,87 @@ tfoot td { font-weight: 650; border-bottom: 0; background: var(--surface); }
       state.report = data;
       if (!previous) state.pendingAutoRange = true;
       state.loading = false;
-      // A quiet refresh with an unchanged snapshot must not rebuild the DOM:
-      // re-rendering churns layout and CPU for identical pixels.
+      // A quiet refresh with an unchanged snapshot must not rebuild the DOM.
       if (!(quiet && previous && previous.generatedAt === data.generatedAt)) render();
     } catch (error) {
       state.loading = false;
+      if (!state.key) return;
       if (state.report) render();
-      showLoadError();
+      if (!quiet) showLoadError();
     } finally {
-      clearTimeout(timer);
       state.loading = false;
-      if (!quiet) el("refresh").disabled = false;
+      if (!quiet) updateRefreshButton();
     }
   }
 
-  // Auto refresh never forces a scan and pauses while the tab is hidden, so a
-  // background page cannot keep waking the collector or the CPU.
+  // Quota loads are independent of usage loads: one failing never hides the
+  // other. net=true asks the plugin to query providers (?refresh=1); the
+  // plugin still reuses each account's result for five minutes.
+  async function loadQuota(net, quiet) {
+    if (!state.key || state.quotaLoading) return;
+    if (net && Date.now() - state.lastQuotaNet < QUOTA_MIN_NET_MS && !state.forceNet) net = false;
+    state.forceNet = false;
+    state.quotaLoading = true;
+    if (net) state.lastQuotaNet = Date.now();
+    if (!quiet) updateRefreshButton();
+    try {
+      const response = await apiGet(QUOTA_PATH + (net ? "?refresh=1" : ""));
+      if (response.status === 401 || response.status === 403) { state.quotaLoading = false; authFailed(); return; }
+      if (!response.ok) throw new Error("request failed");
+      const data = await response.json();
+      if (!data || !Array.isArray(data.accounts)) throw new Error("invalid payload");
+      state.quota = data;
+      state.quotaFailed = false;
+      state.quotaLoading = false;
+      renderQuota();
+      scheduleQuotaReset();
+      // Opening the page fetches live quota once when the plugin has nothing
+      // recent; later network queries only come from ⟳ or auto refresh.
+      if (!net && !quiet && needsNet(data)) loadQuota(true, false);
+    } catch (error) {
+      state.quotaLoading = false;
+      if (!state.key) return;
+      if (!state.quota) state.quotaFailed = true;
+      renderQuota();
+    } finally {
+      state.quotaLoading = false;
+      if (!quiet) updateRefreshButton();
+    }
+  }
+
+  function needsNet(data) {
+    const refreshed = data.refreshedAt ? Date.parse(data.refreshedAt) : NaN;
+    return !(Date.now() - refreshed < QUOTA_MIN_NET_MS);
+  }
+
+  function loadAll(force) {
+    loadUsage(force, false);
+    if (force) state.forceNet = true;
+    loadQuota(force, false);
+  }
+
+  // Auto refresh runs only while the page is visible: a hidden or closed page
+  // never queries the collector or provider APIs. It never forces a usage
+  // rescan; quota network queries stay at least five minutes apart.
+  function autoTick() {
+    if (document.hidden || !state.key) return;
+    state.lastAuto = Date.now();
+    loadUsage(false, true);
+    loadQuota(true, true);
+  }
+
   function scheduleAuto() {
     clearTimeout(state.timer);
     const seconds = Number(state.auto);
     if (!seconds) return;
-    state.timer = setTimeout(async () => {
-      if (!document.hidden && state.key) await load(false, true);
-      scheduleAuto();
-    }, seconds * 1000);
+    state.timer = setTimeout(() => { autoTick(); scheduleAuto(); }, seconds * 1000);
   }
 
   function startAuto(seconds) {
     state.auto = String(seconds);
-    el("auto-refresh").value = state.auto;
+    if (el("auto-refresh").value !== state.auto) el("auto-refresh").value = state.auto;
+    document.querySelectorAll("#auto2 button").forEach((b) => setAttr(b, "aria-pressed", String(b.dataset.a === state.auto)));
+    state.lastAuto = Date.now();
     scheduleAuto();
   }
 
@@ -1465,6 +1632,92 @@ tfoot td { font-weight: 650; border-bottom: 0; background: var(--surface); }
     el("auto-refresh").value = "0";
   }
 
+  // ---------- custom range ----------
+  function quickRanges() {
+    const now = today();
+    const monday = bucketStart(now, "week");
+    const lastMonthEnd = (() => { const d = parseKey(now.slice(0, 8) + "01"); d.setDate(0); return keyOf(d); })();
+    return [
+      ["quickYesterday", [addDays(now, -1), addDays(now, -1)]],
+      ["quickThisWeek", [monday, now]],
+      ["quickLastWeek", [addDays(monday, -7), addDays(monday, -1)]],
+      ["quickThisMonth", [now.slice(0, 8) + "01", now]],
+      ["quickLastMonth", [lastMonthEnd.slice(0, 8) + "01", lastMonthEnd]],
+      ["quickThisYear", [now.slice(0, 5) + "01-01", now]]
+    ];
+  }
+  function fillQuick(node, fromEl, toEl, after) {
+    setHTML(node, quickRanges().map((q, i) => '<button type="button" data-q="' + i + '">' + esc(t(q[0])) + "</button>").join(""));
+    node.onclick = (event) => {
+      const b = event.target.closest("button");
+      if (!b) return;
+      const range = quickRanges()[Number(b.dataset.q)][1];
+      fromEl.value = range[0];
+      toEl.value = range[1];
+      if (after) after();
+    };
+  }
+  function validRange(f, to) {
+    if (!isDateKey(f) || !isDateKey(to)) return t("errMissing");
+    if (f > to) return t("errOrder");
+    if (to > today()) return t("errFuture");
+    return "";
+  }
+  function setDateLimits() {
+    const now = today();
+    ["from", "to", "from2", "to2"].forEach((id) => el(id).max = now);
+  }
+  function openCustom() {
+    const [f, to] = span();
+    el("from").value = f; el("to").value = to;
+    setDateLimits();
+    setHidden(el("range-err"), true);
+    setHidden(el("custom-pop"), false);
+    el("from").focus();
+  }
+  function applyCustom(f, to, errEl) {
+    const err = validRange(f, to);
+    setText(errEl, err);
+    setHidden(errEl, !err);
+    if (err) return false;
+    const now = today();
+    state.range = f === to && f === now ? "today" : "custom";
+    // Dates before the earliest recorded day are allowed and simply show an
+    // empty range; clamping the start here could invert a valid range.
+    state.from = f;
+    state.to = to;
+    state.gran = null;
+    state.shown = DAYS_STEP;
+    render();
+    return true;
+  }
+  function pickRange(event, inSheet) {
+    const b = event.target.closest("button");
+    if (!b) return;
+    if (b.dataset.r === "custom") {
+      if (inSheet) {
+        const [f, to] = span();
+        el("from2").value = f; el("to2").value = to;
+        setDateLimits();
+        setHidden(el("sheet-custom"), false);
+      } else {
+        openCustom();
+      }
+      return;
+    }
+    state.range = b.dataset.r;
+    state.gran = null;
+    state.shown = DAYS_STEP;
+    setHidden(el("sheet-custom"), true);
+    render();
+  }
+
+  function sheet(open) {
+    setHidden(el("sheet"), !open);
+    setHidden(el("sheet-bg"), !open);
+    if (open) setHidden(el("sheet-custom"), state.range !== "custom");
+  }
+
   function wire() {
     el("auth-controls").addEventListener("submit", (event) => {
       event.preventDefault();
@@ -1472,72 +1725,118 @@ tfoot td { font-weight: 650; border-bottom: 0; background: var(--surface); }
       const value = input.value.trim();
       input.value = "";
       if (!value) return;
-      state.key = value;
-      load(false);
+      start(value);
     });
-    el("refresh").addEventListener("click", () => load(true));
+    el("refresh").addEventListener("click", () => loadAll(true));
     el("auto-refresh").addEventListener("change", (event) => startAuto(event.target.value));
-    el("sources-all").addEventListener("click", () => {
-      state.sourcesTouched = true;
-      Object.keys(sourceStatus()).forEach((source) => state.sources.add(source));
-      render();
+    el("auto2").addEventListener("click", (event) => { const b = event.target.closest("button"); if (b) startAuto(b.dataset.a); });
+    el("range").addEventListener("click", (event) => { event.stopPropagation(); pickRange(event, false); });
+    el("range2").addEventListener("click", (event) => pickRange(event, true));
+    el("custom-apply").addEventListener("click", () => { if (applyCustom(el("from").value, el("to").value, el("range-err"))) setHidden(el("custom-pop"), true); });
+    el("custom-cancel").addEventListener("click", () => setHidden(el("custom-pop"), true));
+    ["from2", "to2"].forEach((id) => el(id).addEventListener("change", () => applyCustom(el("from2").value, el("to2").value, el("range-err2"))));
+    el("gran").addEventListener("click", (event) => { const b = event.target.closest("button"); if (!b || b.disabled) return; state.gran = b.dataset.g; render(); });
+    el("group-by").addEventListener("click", (event) => { const b = event.target.closest("button"); if (!b) return; state.group = b.dataset.group; render(); });
+    el("src-btn").addEventListener("click", (event) => {
+      event.stopPropagation();
+      const menu = el("src-menu");
+      setHidden(menu, !menu.hidden);
+      setAttr(el("src-btn"), "aria-expanded", String(!menu.hidden));
     });
-    el("sources-none").addEventListener("click", () => {
-      state.sourcesTouched = true;
-      state.sources = new Set();
-      render();
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest(".dd")) { setHidden(el("src-menu"), true); setAttr(el("src-btn"), "aria-expanded", "false"); }
+      if (!event.target.closest(".range-wrap")) setHidden(el("custom-pop"), true);
+      const target = event.target.closest("button");
+      if (!target) return;
+      if (target.dataset.retry) loadUsage(true, false);
+      else if (target.dataset.qretry) { state.forceNet = true; loadQuota(true, false); }
+      else if (target.dataset.pool) { state.poolOpen = !state.poolOpen; renderQuota(); }
+      else if (target.dataset.sall) {
+        state.sourcesTouched = true;
+        const statuses = sourceStatus();
+        state.sources = target.dataset.sall === "1" ? new Set(Object.keys(statuses).filter((s) => statuses[s].status !== "error")) : new Set();
+        render();
+      } else if (target.classList.contains("dhead")) toggleDay(target.dataset.day);
     });
-    document.querySelectorAll("#group-by button").forEach((button) => {
-      button.addEventListener("click", () => {
-        state.group = button.dataset.group;
-        if (state.report) render();
-      });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") { setHidden(el("custom-pop"), true); setHidden(el("src-menu"), true); sheet(false); }
     });
-    el("date-from").addEventListener("change", (event) => {
-      state.from = event.target.value;
-      state.range = "custom";
-      renderRangePresets();
-      render();
-    });
-    el("date-to").addEventListener("change", (event) => {
-      state.to = event.target.value;
-      state.range = "custom";
-      renderRangePresets();
-      render();
-    });
-    const media = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
-    if (media && media.addEventListener) {
-      media.addEventListener("change", () => { if (!document.documentElement.hasAttribute("data-theme")) applyTheme(); });
-    }
-    let resizeTimer = 0;
-    window.addEventListener("resize", () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => { if (state.report) renderChart(filteredEntries()); }, 120);
-    });
-    window.addEventListener("storage", (event) => {
-      if (event.key === STORAGE_LANGUAGE || event.key === STORAGE_THEME) {
-        applyTheme();
-        applyLanguage();
-        if (state.report) render();
+    document.addEventListener("change", (event) => {
+      const data = event.target.dataset || {};
+      if (data.s) {
+        state.sourcesTouched = true;
+        if (event.target.checked) state.sources.add(data.s); else state.sources.delete(data.s);
+        render();
+      } else if (data.m) {
+        state.modelsTouched = true;
+        if (event.target.checked) state.models.add(data.m); else state.models.delete(data.m);
+        render();
       }
     });
-    document.addEventListener("visibilitychange", () => {
-      if (!document.hidden && state.auto !== "0" && state.key && !state.loading) load(false, true);
+    el("rank").addEventListener("click", (event) => {
+      const label = event.target.closest("[data-mlabel]");
+      if (!label) return;
+      const input = label.parentNode.querySelector("input[data-m]");
+      if (input) input.click();
     });
+    el("rows").addEventListener("click", (event) => { const tr = event.target.closest("tr.day"); if (tr) toggleDay(tr.dataset.day); });
+    el("more-btn").addEventListener("click", () => { state.shown += DAYS_STEP; render(); });
+    el("rank-more").addEventListener("click", () => { state.rankAll = !state.rankAll; render(); });
+    el("filter-btn").addEventListener("click", () => sheet(true));
+    el("sheet-bg").addEventListener("click", () => sheet(false));
+    el("sheet-done").addEventListener("click", () => sheet(false));
+    el("chart").addEventListener("pointermove", showTip);
+    el("chart").addEventListener("pointerleave", () => { el("tip").hidden = true; });
+    const media = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+    if (media && media.addEventListener) media.addEventListener("change", () => { if (!document.documentElement.hasAttribute("data-theme")) applyTheme(); });
+    let lastBox = "", resizeTimer = 0;
+    if (window.ResizeObserver) {
+      new ResizeObserver((items) => {
+        const r = items[0].contentRect, key = Math.round(r.width) + "x" + Math.round(r.height);
+        if (key === lastBox) return;
+        lastBox = key;
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => { if (state.report && !el("chart-panel").hidden) { const [f, to] = span(); renderChart(filteredEntries(f, to), f, to); } }, 40);
+      }).observe(el("chart-box"));
+    }
+    window.addEventListener("storage", (event) => {
+      if (event.key === STORAGE_LANGUAGE || event.key === STORAGE_THEME) { applyTheme(); applyLanguage(); }
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden || !state.key) return;
+      renderQuota(); // countdowns and windows that reset while hidden
+      scheduleQuotaReset();
+      const seconds = Number(state.auto);
+      if (seconds && Date.now() - state.lastAuto >= seconds * 1000) { autoTick(); scheduleAuto(); }
+    });
+    // Reset countdowns are relative; refresh their text while visible. No
+    // network request is made here.
+    setInterval(tickQuota, MIN);
+  }
+
+  function toggleDay(day) {
+    if (!day) return;
+    if (state.collapsed.has(day)) state.collapsed.delete(day); else state.collapsed.add(day);
+    render();
+  }
+
+  function start(key) {
+    state.key = key;
+    setHidden(el("auth-error"), true);
+    setHidden(el("auth-form"), true);
+    setHidden(el("dashboard"), false);
+    setHidden(el("top-actions"), false);
+    renderQuota();
+    loadAll(false);
   }
 
   applyTheme();
   applyLanguage();
   wire();
-  setPreset("30");
 
   const saved = readSavedKey();
-  if (saved) {
-    state.key = saved;
-    load(false);
-  } else {
-    el("management-key").focus();
-  }
+  if (saved) start(saved);
+  else el("management-key").focus();
 })();
 </script>
 </body>
