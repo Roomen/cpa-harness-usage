@@ -89,7 +89,7 @@ func TestCollectorIntegration(t *testing.T) {
 			switch source {
 			case "codex":
 				expected = DailyUsage{Date: "2026-01-02", InputTokens: 270, OutputTokens: 125, CacheReadTokens: 30, ReasoningTokens: 15, TotalTokens: 425, CostUSD: 0.00159125,
-					Models: []ModelUsage{{Model: "gpt-5", InputTokens: 270, OutputTokens: 125, CacheReadTokens: 30, ReasoningTokens: 15, TotalTokens: 425}}}
+					Models: []ModelUsage{{Model: "gpt-5", InputTokens: 270, OutputTokens: 125, CacheReadTokens: 30, ReasoningTokens: 15, TotalTokens: 425, CostUSD: floatPtr(0.00159125)}}}
 			case "opencode":
 				expected.TotalTokens = 185
 			case "omp":

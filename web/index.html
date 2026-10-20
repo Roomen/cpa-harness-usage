@@ -418,7 +418,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       statActive: "活跃来源 / 模型", statActiveHint: "当天有用量的数量", statAvg7: "前 7 天日均", statAvg7Hint: "当天为其 {p}%",
       modelTitle: "模型排名", modelMeta: "{n} 个模型", modelEmpty: "所选范围内没有用量",
       modelsNoneSelected: "已取消全部模型。勾选任意模型即可恢复图表与明细。", rankExpand: "展开全部 {n} 个模型", rankCollapse: "收起",
-      modelCostNote: "勾选即筛选图表与明细。部分来源（如 Codex）不报告分模型费用，模型费用可能低于总费用。",
+      modelCostNote: "勾选即筛选图表与明细。缺失费用按标准模型价格估算；— 表示价格未知。模型估算与来源总费用可能不同。",
       other: "其他", unattributed: "未标注",
       autoRefresh: "自动刷新", autoOff: "关", auto5: "5 分钟", auto15: "15 分钟",
       emptyTitle: "所选范围内没有用量数据", emptyHint: "调整来源、模型或日期范围后再看。",
@@ -460,7 +460,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       statActive: "活躍來源 / 模型", statActiveHint: "當天有用量的數量", statAvg7: "前 7 天日均", statAvg7Hint: "當天為其 {p}%",
       modelTitle: "模型排名", modelMeta: "{n} 個模型", modelEmpty: "所選範圍內沒有用量",
       modelsNoneSelected: "已取消全部模型。勾選任一模型即可恢復圖表與明細。", rankExpand: "展開全部 {n} 個模型", rankCollapse: "收起",
-      modelCostNote: "勾選即篩選圖表與明細。部分來源（如 Codex）不提供模型級費用，模型費用可能低於總費用。",
+      modelCostNote: "勾選即篩選圖表與明細。缺失費用依標準模型價格估算；— 表示價格未知。模型估算與來源總費用可能不同。",
       other: "其他", unattributed: "未標註",
       autoRefresh: "自動更新", autoOff: "關", auto5: "5 分鐘", auto15: "15 分鐘",
       emptyTitle: "所選範圍內沒有用量資料", emptyHint: "調整來源、模型或日期範圍後再查看。",
@@ -502,7 +502,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       statActive: "Active sources / models", statActiveHint: "With usage on this day", statAvg7: "Previous 7-day average", statAvg7Hint: "This day is {p}% of it",
       modelTitle: "Model ranking", modelMeta: "{n} models", modelEmpty: "No usage in the selected range",
       modelsNoneSelected: "All models are deselected. Check any model to restore the chart and details.", rankExpand: "Show all {n} models", rankCollapse: "Show less",
-      modelCostNote: "Checking a model filters the chart and details. Some sources (for example Codex) do not report per-model cost, so model cost can be lower than the total.",
+      modelCostNote: "Checking a model filters the chart and details. Missing costs use standard model rates; — means pricing is unknown. Model estimates may differ from source totals.",
       other: "Other", unattributed: "Unattributed",
       autoRefresh: "Auto refresh", autoOff: "Off", auto5: "5 min", auto15: "15 min",
       emptyTitle: "No usage in the selected range", emptyHint: "Change the sources, models, or date range and try again.",
@@ -544,7 +544,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       statActive: "Активные источники / модели", statActiveHint: "С данными в этот день", statAvg7: "Среднее за 7 дней до", statAvg7Hint: "День составляет {p}%",
       modelTitle: "Рейтинг моделей", modelMeta: "моделей: {n}", modelEmpty: "За выбранный период данных нет",
       modelsNoneSelected: "Все модели сняты. Отметьте любую модель, чтобы вернуть график и детали.", rankExpand: "Показать все модели ({n})", rankCollapse: "Свернуть",
-      modelCostNote: "Отметка модели фильтрует график и детали. Некоторые источники (например, Codex) не сообщают стоимость по моделям, поэтому она может быть ниже общей.",
+      modelCostNote: "Отметка модели фильтрует график и детали. Недостающая стоимость оценивается по стандартным тарифам; — означает неизвестную цену. Оценки моделей могут отличаться от итогов источника.",
       other: "Прочее", unattributed: "Без атрибуции",
       autoRefresh: "Автообновление", autoOff: "Выкл.", auto5: "5 мин", auto15: "15 мин",
       emptyTitle: "За выбранный период данных нет", emptyHint: "Измените источники, модели или период.",
@@ -586,7 +586,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       statActive: "Nguồn / mô hình hoạt động", statActiveHint: "Có dữ liệu trong ngày", statAvg7: "Trung bình 7 ngày trước", statAvg7Hint: "Ngày này bằng {p}%",
       modelTitle: "Xếp hạng mô hình", modelMeta: "{n} mô hình", modelEmpty: "Không có dữ liệu trong khoảng đã chọn",
       modelsNoneSelected: "Đã bỏ chọn tất cả mô hình. Chọn lại một mô hình để hiện biểu đồ và chi tiết.", rankExpand: "Hiện tất cả {n} mô hình", rankCollapse: "Thu gọn",
-      modelCostNote: "Chọn mô hình để lọc biểu đồ và chi tiết. Một số nguồn (ví dụ Codex) không cung cấp chi phí theo mô hình, nên chi phí mô hình có thể thấp hơn tổng.",
+      modelCostNote: "Chọn mô hình để lọc biểu đồ và chi tiết. Chi phí thiếu được ước tính theo giá chuẩn; — nghĩa là chưa rõ giá. Ước tính theo mô hình có thể khác tổng của nguồn.",
       other: "Khác", unattributed: "Không gán nguồn",
       autoRefresh: "Tự động làm mới", autoOff: "Tắt", auto5: "5 phút", auto15: "15 phút",
       emptyTitle: "Không có dữ liệu trong khoảng đã chọn", emptyHint: "Hãy đổi nguồn, mô hình hoặc khoảng ngày.",
@@ -628,7 +628,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       statActive: "활성 소스 / 모델", statActiveHint: "이 날 사용된 수", statAvg7: "이전 7일 평균", statAvg7Hint: "이 날은 그 {p}%",
       modelTitle: "모델 순위", modelMeta: "모델 {n}개", modelEmpty: "선택한 범위에 사용량이 없습니다",
       modelsNoneSelected: "모든 모델을 해제했습니다. 모델을 선택하면 차트와 상세가 다시 표시됩니다.", rankExpand: "모델 {n}개 모두 보기", rankCollapse: "접기",
-      modelCostNote: "모델을 선택하면 차트와 상세가 필터링됩니다. 일부 소스(예: Codex)는 모델별 비용을 제공하지 않아 모델 비용이 총 비용보다 낮을 수 있습니다.",
+      modelCostNote: "모델을 선택하면 차트와 상세가 필터링됩니다. 누락된 비용은 표준 요금으로 추정하며 —는 알 수 없는 가격입니다. 모델 추정치는 소스 합계와 다를 수 있습니다.",
       other: "기타", unattributed: "미분류",
       autoRefresh: "자동 새로고침", autoOff: "끄기", auto5: "5분", auto15: "15분",
       emptyTitle: "선택한 범위에 사용량이 없습니다", emptyHint: "소스, 모델 또는 날짜 범위를 바꿔 보세요.",
@@ -915,14 +915,15 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
           date: row.date, source: source.source,
           input: Number(row.inputTokens) || 0, output: Number(row.outputTokens) || 0,
           cacheRead: Number(row.cacheReadTokens) || 0, cacheWrite: Number(row.cacheCreationTokens) || 0,
-          total: Number(row.totalTokens) || 0, cost: typeof row.costUSD === "number" ? row.costUSD : null
+          total: Number(row.totalTokens) || 0,
+          cost: row.missingPricing === true || typeof row.costUSD !== "number" ? null : row.costUSD
         };
         const models = (Array.isArray(row.models) ? row.models : []).filter((model) => model && typeof model.model === "string");
         if (!models.length) { entries.push(Object.assign({}, base, { model: "" })); return; }
         const known = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0, cost: 0 };
         let costComplete = true;
         models.forEach((model) => {
-          const cost = typeof model.costUSD === "number" ? model.costUSD : null;
+          const cost = model.missingPricing === true || typeof model.costUSD !== "number" ? null : model.costUSD;
           if (cost === null) costComplete = false;
           const entry = {
             date: row.date, source: source.source, model: model.model,
@@ -962,12 +963,17 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
   function costFor(entries, from, to) {
     if (allModelsSelected()) {
       let sum = 0;
+      let unknown = false;
       const wanted = new Set(selectedSources());
       state.report.sources.forEach((source) => {
         if (!wanted.has(source.source)) return;
-        (Array.isArray(source.daily) ? source.daily : []).forEach((row) => { if (row && isDateKey(row.date) && row.date >= from && row.date <= to) sum += Number(row.costUSD) || 0; });
+        (Array.isArray(source.daily) ? source.daily : []).forEach((row) => {
+          if (!row || !isDateKey(row.date) || row.date < from || row.date > to) return;
+          if (row.missingPricing === true || typeof row.costUSD !== "number") unknown = true;
+          else sum += row.costUSD;
+        });
       });
-      return sum;
+      return unknown ? null : sum;
     }
     const totals = totalsOf(entries);
     return totals.costUnknown ? null : totals.cost;
@@ -1175,9 +1181,9 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
     const agg = new Map();
     buildEntries(from, to).forEach((e) => {
       if (!e.model) return;
-      const a = agg.get(e.model) || { total: 0, cost: null, sources: new Set() };
+      const a = agg.get(e.model) || { total: 0, cost: 0, costKnown: true, sources: new Set() };
       a.total += e.total;
-      if (e.cost !== null) a.cost = (a.cost || 0) + e.cost;
+      if (e.cost !== null) a.cost += e.cost; else a.costKnown = false;
       a.sources.add(sourceLabel(e.source));
       agg.set(e.model, a);
     });
@@ -1193,7 +1199,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
     const shown = state.rankAll ? list : list.slice(0, RANK_TOP);
     setHTML(el("rank"), shown.map(([m, v]) => '<li><input type="checkbox" data-m="' + esc(m) + '"' + (modelSelected(m) ? " checked" : "") + ">" +
       '<span class="name" data-mlabel="1">' + esc(m) + '</span><span class="val num">' + esc(formatTokens(v.total)) + "</span>" +
-      '<div class="sub"><span class="track"><b style="width:' + ((v.total / max) * 100).toFixed(1) + '%"></b></span><span class="num">' + ((v.total / tot) * 100).toFixed(1) + '%</span><span class="srcs">' + esc(Array.from(v.sources).join(", ")) + '</span><span class="num">' + (v.cost === null ? "" : esc(formatCost(v.cost))) + "</span></div></li>").join("") ||
+      '<div class="sub"><span class="track"><b style="width:' + ((v.total / max) * 100).toFixed(1) + '%"></b></span><span class="num">' + ((v.total / tot) * 100).toFixed(1) + '%</span><span class="srcs">' + esc(Array.from(v.sources).join(", ")) + '</span><span class="num">' + (!v.costKnown ? "" : esc(formatCost(v.cost))) + "</span></div></li>").join("") ||
       '<li style="color:var(--faint);display:block">' + esc(t("modelEmpty")) + "</li>");
     document.querySelectorAll("#rank input[data-m]").forEach((input) => {
       const want = modelSelected(input.dataset.m);

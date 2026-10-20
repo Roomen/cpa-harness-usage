@@ -5,4 +5,7 @@ ccusage is invoked as a separate native process, pinned at 20.0.36.
 Release libraries embed the official platform binary and its MIT license.
 See LICENSE-ccusage and internal/usage/collectorassets/LICENSE-ccusage in builds.
 Upstream: https://github.com/ccusage/ccusage (MIT).
+The shared offline pricing fallback embeds the models.dev pricing snapshot
+from ccusage v20.0.36 (MIT); provenance and hashes are recorded in
+internal/usage/pricingdata/manifest.json. See LICENSE-ccusage.
 No OpenUsage source is copied into this project.

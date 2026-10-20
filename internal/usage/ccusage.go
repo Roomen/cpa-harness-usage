@@ -125,12 +125,14 @@ type DailyUsage struct {
 	TotalTokens         uint64       `json:"totalTokens"`
 	CostUSD             float64      `json:"costUSD"`
 	Models              []ModelUsage `json:"models"`
+	MissingPricing      bool         `json:"missingPricing,omitempty"`
+	CostEstimated       bool         `json:"costEstimated,omitempty"`
 }
 
 // ModelUsage is one model's contribution to a day. Model totals are reported
 // by ccusage for Codex; the other adapters omit them, so the non-overlapping
-// components are summed there. CostUSD is absent when the source does not
-// report per-model cost (Codex), and is never estimated by this plugin.
+// components are summed there. Missing costs use the shared offline pricing
+// fallback; CostEstimated distinguishes those values from reported amounts.
 type ModelUsage struct {
 	Model               string   `json:"model"`
 	InputTokens         uint64   `json:"inputTokens"`
@@ -140,6 +142,8 @@ type ModelUsage struct {
 	ReasoningTokens     uint64   `json:"reasoningOutputTokens"`
 	TotalTokens         uint64   `json:"totalTokens"`
 	CostUSD             *float64 `json:"costUSD,omitempty"`
+	MissingPricing      bool     `json:"missingPricing,omitempty"`
+	CostEstimated       bool     `json:"costEstimated,omitempty"`
 }
 
 // New creates a collector. An empty binary uses the bundled collector.
@@ -344,6 +348,7 @@ func parseSourceDaily(data []byte, source string) ([]DailyUsage, error) {
 	if source == "omp" {
 		normalizeOMPModels(rows)
 	}
+	applyPricing(rows, source)
 	return rows, nil
 }
 
@@ -432,6 +437,7 @@ type rawDaily struct {
 	TotalCost           json.RawMessage     `json:"totalCost"`
 	ModelBreakdowns     []rawModel          `json:"modelBreakdowns"`
 	Models              map[string]rawModel `json:"models"`
+	MissingPricing      bool                `json:"missingPricing"`
 }
 
 type rawModel struct {
@@ -444,6 +450,8 @@ type rawModel struct {
 	TotalTokens         json.RawMessage `json:"totalTokens"`
 	Cost                json.RawMessage `json:"cost"`
 	StoredCost          json.RawMessage `json:"storedCost"`
+	CostUSD             json.RawMessage `json:"costUSD"`
+	MissingPricing      bool            `json:"missingPricing"`
 }
 
 // parseDaily validates the exact shapes emitted by ccusage 20.0.36 focused
@@ -472,7 +480,7 @@ func parseDaily(data []byte) ([]DailyUsage, error) {
 		if _, err := time.Parse("2006-01-02", raw.Date); err != nil {
 			return nil, errors.New("invalid date")
 		}
-		row := DailyUsage{Date: raw.Date}
+		row := DailyUsage{Date: raw.Date, MissingPricing: raw.MissingPricing}
 		var err error
 		if row.InputTokens, err = requiredNumber(raw.InputTokens); err != nil {
 			return nil, err
@@ -558,7 +566,7 @@ func parseModel(raw rawModel, name string) (ModelUsage, bool, error) {
 		// the day's total stays authoritative and the model is unattributed.
 		return ModelUsage{}, false, nil
 	}
-	model := ModelUsage{Model: name}
+	model := ModelUsage{Model: name, MissingPricing: raw.MissingPricing}
 	var err error
 	if model.InputTokens, err = requiredNumber(raw.InputTokens); err != nil {
 		return ModelUsage{}, false, err
@@ -592,6 +600,9 @@ func parseModel(raw rawModel, name string) (ModelUsage, bool, error) {
 	cost := raw.Cost
 	if len(cost) == 0 || string(cost) == "null" {
 		cost = raw.StoredCost
+	}
+	if len(cost) == 0 || string(cost) == "null" {
+		cost = raw.CostUSD
 	}
 	if len(cost) > 0 && string(cost) != "null" {
 		value, err := requiredDecimal(cost)
