@@ -1,5 +1,9 @@
 name: CI
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main]
@@ -12,7 +16,7 @@ permissions:
 jobs:
   test:
     name: vet and race tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
 
@@ -41,9 +45,9 @@ jobs:
       matrix:
         include:
           - { goos: darwin, goarch: arm64, runner: macos-14, ext: dylib }
-          - { goos: linux, goarch: amd64, runner: ubuntu-latest, ext: so }
+          - { goos: linux, goarch: amd64, runner: ubuntu-24.04, ext: so }
           - { goos: linux, goarch: arm64, runner: ubuntu-24.04-arm, ext: so }
-          - { goos: windows, goarch: amd64, runner: windows-latest, ext: dll }
+          - { goos: windows, goarch: amd64, runner: windows-2025, ext: dll }
           - { goos: windows, goarch: arm64, runner: windows-11-arm, ext: dll }
     defaults:
       run:

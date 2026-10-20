@@ -43,6 +43,7 @@ runs:
         CACHE_BASE: go-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.go.outputs.go-version }}-${{ inputs.profile }}-${{ inputs.compiler-key }}
         DEPENDENCIES: ${{ hashFiles('go.mod', 'go.sum') }}
       run: |
+        CACHE_BASE="$CACHE_BASE-${ImageOS:-$RUNNER_OS}"
         echo "prefix=$CACHE_BASE-" >> "$GITHUB_OUTPUT"
         echo "dependencies=$CACHE_BASE-$DEPENDENCIES-" >> "$GITHUB_OUTPUT"
         echo "build=$CACHE_BASE-$DEPENDENCIES-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"

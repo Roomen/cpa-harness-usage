@@ -336,6 +336,8 @@ Pushing to `main` or opening a pull request automatically builds all five target
 on GitHub Actions. The CI workflow can also be started manually. Its successful
 builds upload the plugin library and standalone CLI as per-platform artifacts;
 creating a release is only triggered by a version tag.
+Runner images use explicit versions. A newer CI run cancels an older run on the
+same branch; release workflows are not automatically canceled.
 
 GitHub Actions caches npm downloads, Go modules, Go compilation results, and C
 toolchains. Module caches follow the dependency lock; compilation caches are
