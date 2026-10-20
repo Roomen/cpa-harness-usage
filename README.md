@@ -232,9 +232,10 @@ or failed disk write leaves the previous cache intact. Concurrent update request
 return `409` instead of starting a second download.
 
 Validated prices and timestamps are saved atomically to
-`<OS user cache>/cpa-harness-usage/pricing/cloudprice.json` with a private
-directory and file permissions. The plugin and standalone CLI load this file on
-startup and use it offline on later calculations, including after a restart.
+`<OS user cache>/cpa-harness-usage/pricing/cloudprice.json` with private Unix
+directory and file modes (0700 and 0600). On Windows, access follows the OS
+cache directory's ACL semantics. The plugin and standalone CLI load this file
+on startup and use it offline on later calculations, including after a restart.
 The dashboard shows the last successful download time, usable model count, and
 CloudPrice's dataset date when provided. These dates describe the saved data;
 prices are not refreshed automatically. The cache belongs to the OS account

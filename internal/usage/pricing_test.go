@@ -6,6 +6,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -41,13 +42,15 @@ func TestPricingPersistenceAndStatus(t *testing.T) {
 	if restarted.Status() != status {
 		t.Fatalf("restart status=%+v want %+v", restarted.Status(), status)
 	}
-	for _, check := range []struct {
-		path string
-		mode os.FileMode
-	}{{path, 0600}, {filepath.Dir(path), 0700}} {
-		info, err := os.Stat(check.path)
-		if err != nil || info.Mode().Perm() != check.mode {
-			t.Fatalf("cache permissions: %v %v", info, err)
+	if runtime.GOOS != "windows" {
+		for _, check := range []struct {
+			path string
+			mode os.FileMode
+		}{{path, 0600}, {filepath.Dir(path), 0700}} {
+			info, err := os.Stat(check.path)
+			if err != nil || info.Mode().Perm() != check.mode {
+				t.Fatalf("cache permissions: %v %v", info, err)
+			}
 		}
 	}
 	rows := pricingRows()
