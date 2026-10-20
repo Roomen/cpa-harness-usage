@@ -20,9 +20,10 @@ const (
 	// SchemaVersion is the CPA RPC schema this plugin implements.
 	SchemaVersion = 6
 
-	DataPath  = "/v0/management/harness-usage/daily"
-	QuotaPath = "/v0/management/harness-usage/quota"
-	PagePath = "/v0/resource/plugins/harness-usage/usage"
+	DataPath    = "/v0/management/harness-usage/daily"
+	QuotaPath   = "/v0/management/harness-usage/quota"
+	PricingPath = "/v0/management/harness-usage/pricing"
+	PagePath    = "/v0/resource/plugins/harness-usage/usage"
 
 	cacheTTL = time.Minute
 )
@@ -61,34 +62,49 @@ type scanCall struct {
 }
 
 type Plugin struct {
-	mu         sync.Mutex
-	collector  snapshotter
-	quota      quotaService
-	generation uint64
-	cached     []byte
-	expires    time.Time
-	inflight   *scanCall
-	paused     bool
-	closed     bool
-	baseCtx    context.Context
-	cancelBase context.CancelFunc
-	now        func() time.Time
+	mu                            sync.Mutex
+	collector                     snapshotter
+	quota                         quotaService
+	pricing                       *usage.PricingStore
+	pricingHost                   func(string, []byte) ([]byte, error)
+	pricingRefreshMu              sync.Mutex
+	pricingCancel                 context.CancelFunc
+	pricingPersistenceUnavailable bool
+	generation                    uint64
+	cached                        []byte
+	expires                       time.Time
+	inflight                      *scanCall
+	paused                        bool
+	closed                        bool
+	baseCtx                       context.Context
+	cancelBase                    context.CancelFunc
+	now                           func() time.Time
 }
 
 func New() *Plugin {
 	ctx, cancel := context.WithCancel(context.Background())
+	pricePath := usage.DefaultPricingCachePath()
+	prices := usage.NewPricingStore(pricePath)
 	return &Plugin{
-		collector:  usage.New(usage.Config{Sources: append([]string(nil), defaultSources...)}),
-		quota:      quota.New(quota.Config{UserAgent: "cpa-harness-usage/" + Version}),
-		baseCtx:    ctx,
-		cancelBase: cancel,
-		now:        time.Now,
+		collector:                     usage.New(usage.Config{Sources: append([]string(nil), defaultSources...), Pricing: prices}),
+		pricing:                       prices,
+		pricingPersistenceUnavailable: pricePath == "",
+		quota:                         quota.New(quota.Config{UserAgent: "cpa-harness-usage/" + Version}),
+		baseCtx:                       ctx,
+		cancelBase:                    cancel,
+		now:                           time.Now,
 	}
 }
 
 // SetHost installs the CPA host callback used for quota requests and the
 // credential pool. Quota requests never use a direct HTTP client.
 func (p *Plugin) SetHost(host func(method string, request []byte) ([]byte, error)) {
+	p.mu.Lock()
+	p.pricingHost = host
+	if p.pricingCancel != nil {
+		p.pricingCancel()
+	}
+	p.mu.Unlock()
 	if host == nil {
 		p.quota.SetHost(nil)
 		return
@@ -110,6 +126,9 @@ func (p *Plugin) Close() {
 	p.cached = nil
 	p.expires = time.Time{}
 	p.cancelBase()
+	if p.pricingCancel != nil {
+		p.pricingCancel()
+	}
 	if p.inflight != nil {
 		p.inflight.cancel()
 		p.inflight = nil
@@ -125,6 +144,9 @@ func (p *Plugin) quiesce() {
 	p.paused = true
 	p.cached = nil
 	p.expires = time.Time{}
+	if p.pricingCancel != nil {
+		p.pricingCancel()
+	}
 	if p.inflight != nil {
 		p.inflight.cancel()
 		p.inflight = nil
@@ -161,6 +183,8 @@ func (p *Plugin) Handle(method string, raw []byte) (out []byte) {
 			"Routes": []map[string]string{
 				{"Method": "GET", "Path": "/harness-usage/daily"},
 				{"Method": "GET", "Path": "/harness-usage/quota"},
+				{"Method": "GET", "Path": "/harness-usage/pricing"},
+				{"Method": "POST", "Path": "/harness-usage/pricing"},
 			},
 			"Resources": []map[string]string{
 				{"Path": "/usage", "Menu": "Harness Usage", "Description": "Local harness daily usage"},
@@ -175,6 +199,10 @@ func (p *Plugin) Handle(method string, raw []byte) (out []byte) {
 		}
 		if json.Unmarshal(raw, &req) != nil {
 			return failure("invalid_request")
+		}
+		if req.Path == PricingPath {
+			status, body := p.pricingRequest(req.Method)
+			return response(status, "application/json; charset=utf-8", body)
 		}
 		if !strings.EqualFold(req.Method, "GET") {
 			return response(405, "application/json; charset=utf-8", []byte(`{"error":"method_not_allowed"}`))
@@ -217,6 +245,7 @@ func (p *Plugin) applyConfig(cfg usage.Config) bool {
 	if p.closed {
 		return false
 	}
+	cfg.Pricing = p.pricing
 	p.collector = usage.New(cfg)
 	p.quota.Resume()
 	p.generation++

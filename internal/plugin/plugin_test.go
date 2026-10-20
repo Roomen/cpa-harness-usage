@@ -140,8 +140,10 @@ func TestManagementRoutesAndStaticPageBoundary(t *testing.T) {
 	if err := json.Unmarshal(result(t, p.Handle("management.register", nil)), &routes); err != nil {
 		t.Fatal(err)
 	}
-	if len(routes.Routes) != 2 || routes.Routes[0].Method != "GET" || routes.Routes[0].Path != "/harness-usage/daily" ||
-		routes.Routes[1].Method != "GET" || routes.Routes[1].Path != "/harness-usage/quota" {
+	if len(routes.Routes) != 4 || routes.Routes[0].Method != "GET" || routes.Routes[0].Path != "/harness-usage/daily" ||
+		routes.Routes[1].Method != "GET" || routes.Routes[1].Path != "/harness-usage/quota" ||
+		routes.Routes[2].Method != "GET" || routes.Routes[2].Path != "/harness-usage/pricing" ||
+		routes.Routes[3].Method != "POST" || routes.Routes[3].Path != "/harness-usage/pricing" {
 		t.Fatalf("routes = %+v", routes.Routes)
 	}
 	if len(routes.Resources) != 1 || routes.Resources[0].Path != "/usage" || routes.Resources[0].Menu == "" {

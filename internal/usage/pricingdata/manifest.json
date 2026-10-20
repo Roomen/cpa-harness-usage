@@ -1,9 +1,0 @@
-{
-  "upstream": "https://github.com/ryoppippi/ccusage",
-  "version": "20.0.36",
-  "path": "rust/crates/ccusage-pricing-snapshots/src/models-dev-pricing.json",
-  "upstreamSHA256": "261d8cde8ad55bbb850f4c79da1be7d09d72ef4426b32b03dc92ecbf0200945d",
-  "snapshotSHA256": "2ac41e69b94c331c2ec48e8eec7b363440ca86db3ce6d02f8070ad94b2249908",
-  "models": 3135,
-  "license": "MIT (see LICENSE-ccusage)"
-}

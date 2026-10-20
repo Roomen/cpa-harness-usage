@@ -72,6 +72,7 @@ const (
 type Config struct {
 	Binary  string
 	Sources []string
+	Pricing *PricingStore
 	// OMPPath overrides the oh-my-pi sessions directory. Empty uses
 	// PI_CODING_AGENT_DIR/sessions, then ~/.omp/agent/sessions.
 	OMPPath string
@@ -85,6 +86,7 @@ type Config struct {
 
 // Collector invokes ccusage and converts its output to a privacy-safe report.
 type Collector struct {
+	pricing     *PricingStore
 	binary      string
 	sources     []string
 	ompPath     string
@@ -131,7 +133,7 @@ type DailyUsage struct {
 
 // ModelUsage is one model's contribution to a day. Model totals are reported
 // by ccusage for Codex; the other adapters omit them, so the non-overlapping
-// components are summed there. Missing costs use the shared offline pricing
+// components are summed there. Missing costs use the downloaded CloudPrice pricing
 // fallback; CostEstimated distinguishes those values from reported amounts.
 type ModelUsage struct {
 	Model               string   `json:"model"`
@@ -170,7 +172,12 @@ func New(cfg Config) *Collector {
 	if concurrency <= 0 {
 		concurrency = DefaultConcurrency
 	}
+	pricing := cfg.Pricing
+	if pricing == nil {
+		pricing = NewPricingStore("")
+	}
 	return &Collector{
+		pricing:     pricing,
 		binary:      binary,
 		sources:     append([]string(nil), cfg.Sources...),
 		ompPath:     ompPath,
@@ -335,6 +342,7 @@ func (c *Collector) collectOne(ctx context.Context, source string) ([]DailyUsage
 		}
 		return nil, ErrorUnknownSchema
 	}
+	c.pricing.Apply(rows, source)
 	return rows, ""
 }
 
@@ -348,7 +356,6 @@ func parseSourceDaily(data []byte, source string) ([]DailyUsage, error) {
 	if source == "omp" {
 		normalizeOMPModels(rows)
 	}
-	applyPricing(rows, source)
 	return rows, nil
 }
 
@@ -513,6 +520,26 @@ func parseDaily(data []byte) ([]DailyUsage, error) {
 		if row.Models, err = parseModels(raw); err != nil {
 			return nil, err
 		}
+		// Native totals can mix stored amounts with bundled-rate estimates.
+		// Rebuild days containing calculated model amounts, or totals that
+		// disagree with the available stored-cost provenance.
+		hasStoredCost := false
+		for _, model := range raw.ModelBreakdowns {
+			hasStoredCost = hasStoredCost || (len(model.StoredCost) > 0 && string(model.StoredCost) != "null")
+		}
+		for _, model := range raw.Models {
+			hasStoredCost = hasStoredCost || (len(model.StoredCost) > 0 && string(model.StoredCost) != "null")
+		}
+		var modelCost float64
+		for _, model := range row.Models {
+			row.CostEstimated = row.CostEstimated || model.CostEstimated
+			if model.CostUSD != nil {
+				modelCost += *model.CostUSD
+			}
+		}
+		if hasStoredCost && math.Abs(row.CostUSD-modelCost) > 1e-12*math.Max(1, math.Abs(row.CostUSD)) {
+			row.CostEstimated = true
+		}
 		if err := validateModelTotals(row); err != nil {
 			return nil, err
 		}
@@ -610,6 +637,21 @@ func parseModel(raw rawModel, name string) (ModelUsage, bool, error) {
 			return ModelUsage{}, false, err
 		}
 		model.CostUSD = &value
+	}
+	if len(raw.StoredCost) > 0 && string(raw.StoredCost) != "null" {
+		stored, err := requiredDecimal(raw.StoredCost)
+		if err != nil {
+			return ModelUsage{}, false, err
+		}
+		if model.CostUSD != nil && *model.CostUSD > stored {
+			// The native aggregate mixes stored costs and calculated costs.
+			// Their individual token split is unavailable, so estimate the
+			// entire model with the downloaded cache rather than undercounting.
+			model.CostEstimated = true
+		} else if stored > 0 {
+			model.CostUSD = &stored
+			model.MissingPricing = false
+		}
 	}
 	return model, true, nil
 }

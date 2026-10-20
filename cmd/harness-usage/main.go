@@ -33,7 +33,8 @@ func main() {
 		os.Exit(2)
 	}
 
-	collector := usage.New(usage.Config{Binary: *binary, Sources: list, OMPPath: *ompPath, Timeout: *timeout})
+	prices := usage.NewPricingStore(usage.DefaultPricingCachePath())
+	collector := usage.New(usage.Config{Binary: *binary, Sources: list, OMPPath: *ompPath, Timeout: *timeout, Pricing: prices})
 	report := collector.Snapshot(context.Background())
 
 	encoder := json.NewEncoder(os.Stdout)
