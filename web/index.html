@@ -44,6 +44,10 @@ button { cursor: pointer; }
 .num { font-variant-numeric: tabular-nums; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
+.pricing-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 16px; }
+.pricing-controls .note { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.pricing-controls .pricing-error { color: var(--danger, var(--fg)); }
+
 /* toolbar */
 .bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
 .bar-in, .page { max-width: 1440px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
@@ -309,6 +313,12 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
   </section>
 
   <section id="dashboard" hidden aria-live="polite">
+    <div class="pricing-controls">
+      <button class="ctl" type="button" id="update-prices" aria-describedby="pricing-status pricing-error"></button>
+      <span class="note" id="pricing-status" role="status"></span>
+      <span class="note" data-i18n="pricingLocalHint"></span>
+      <span class="note pricing-error" id="pricing-error" role="alert" hidden></span>
+    </div>
     <div id="status-notice" class="notice" hidden style="margin-bottom:16px"></div>
     <div id="loading" class="skeleton" hidden><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
     <div id="content" hidden style="display:grid;gap:20px">
@@ -365,6 +375,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
 "use strict";
 (function () {
   const DATA_PATH = "/v0/management/harness-usage/daily";
+  const PRICING_PATH = "/v0/management/harness-usage/pricing";
   const QUOTA_PATH = "/v0/management/harness-usage/quota";
   const SOURCES = [
     "claude", "codex", "opencode", "omp", "pi", "amp", "droid", "codebuff",
@@ -418,7 +429,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       statActive: "活跃来源 / 模型", statActiveHint: "当天有用量的数量", statAvg7: "前 7 天日均", statAvg7Hint: "当天为其 {p}%",
       modelTitle: "模型排名", modelMeta: "{n} 个模型", modelEmpty: "所选范围内没有用量",
       modelsNoneSelected: "已取消全部模型。勾选任意模型即可恢复图表与明细。", rankExpand: "展开全部 {n} 个模型", rankCollapse: "收起",
-      modelCostNote: "勾选即筛选图表与明细。部分来源（如 Codex）不报告分模型费用，模型费用可能低于总费用。",
+      modelCostNote: "勾选即筛选图表与明细。缺失费用按已下载的 CloudPrice 价格估算；— 表示价格未知。模型估算与来源总费用可能不同。",
       other: "其他", unattributed: "未标注",
       autoRefresh: "自动刷新", autoOff: "关", auto5: "5 分钟", auto15: "15 分钟",
       emptyTitle: "所选范围内没有用量数据", emptyHint: "调整来源、模型或日期范围后再看。",
@@ -435,6 +446,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       qNotConfigured: "未在本机登录", qExpiredLocal: "令牌已过期，打开 CLI 即可自动刷新", qExpiredPool: "令牌已过期，等待 CPA 刷新后自动恢复",
       qUpstream: "额度接口暂时不可用", qRateLimited: "查询过于频繁，请稍后再试", qKeychain: "未获得钥匙串授权，请在系统弹窗中允许 CPA 读取 Claude Code 凭证",
       qSchema: "额度数据格式不兼容", qCanceled: "查询已取消", qGeneric: "额度查询失败", liveFailed: "联网查询失败：{r}",
+      pricingUpdate: "更新 CloudPrice 价格", pricingUpdating: "正在下载价格…", pricingEmpty: "尚未下载 CloudPrice 价格", pricingReady: "CloudPrice · {n} 个模型 · 更新于 {d}", pricingLoading: "正在读取 CloudPrice 价格状态…", pricingStatusError: "暂时无法读取价格状态。", pricingUpdateError: "价格下载失败，已保留原有价格。", pricingCount: "CloudPrice · {n} 个模型", pricingDatasetDate: "数据日期 {d}", pricingLocalHint: "下载的价格保存在本机，供后续计算使用。",
       quotaLoading: "正在读取账户额度…", quotaLoadError: "暂时无法读取账户额度", quotaEmpty: "未发现本机或 CPA 中的 Claude / Codex 账户"
     },
     "zh-TW": {
@@ -460,7 +472,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       statActive: "活躍來源 / 模型", statActiveHint: "當天有用量的數量", statAvg7: "前 7 天日均", statAvg7Hint: "當天為其 {p}%",
       modelTitle: "模型排名", modelMeta: "{n} 個模型", modelEmpty: "所選範圍內沒有用量",
       modelsNoneSelected: "已取消全部模型。勾選任一模型即可恢復圖表與明細。", rankExpand: "展開全部 {n} 個模型", rankCollapse: "收起",
-      modelCostNote: "勾選即篩選圖表與明細。部分來源（如 Codex）不提供模型級費用，模型費用可能低於總費用。",
+      modelCostNote: "勾選即篩選圖表與明細。缺失費用依已下載的 CloudPrice 價格估算；— 表示價格未知。模型估算與來源總費用可能不同。",
       other: "其他", unattributed: "未標註",
       autoRefresh: "自動更新", autoOff: "關", auto5: "5 分鐘", auto15: "15 分鐘",
       emptyTitle: "所選範圍內沒有用量資料", emptyHint: "調整來源、模型或日期範圍後再查看。",
@@ -477,6 +489,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       qNotConfigured: "未在本機登入", qExpiredLocal: "權杖已過期，開啟 CLI 即可自動更新", qExpiredPool: "權杖已過期，等待 CPA 更新後自動恢復",
       qUpstream: "額度介面暫時無法使用", qRateLimited: "查詢過於頻繁，請稍後再試", qKeychain: "未取得鑰匙圈授權，請在系統視窗中允許 CPA 讀取 Claude Code 憑證",
       qSchema: "額度資料格式不相容", qCanceled: "查詢已取消", qGeneric: "額度查詢失敗", liveFailed: "連網查詢失敗：{r}",
+      pricingUpdate: "更新 CloudPrice 價格", pricingUpdating: "正在下載價格…", pricingEmpty: "尚未下載 CloudPrice 價格", pricingReady: "CloudPrice · {n} 個模型 · 更新於 {d}", pricingLoading: "正在讀取 CloudPrice 價格狀態…", pricingStatusError: "暫時無法讀取價格狀態。", pricingUpdateError: "價格下載失敗，已保留原有價格。", pricingCount: "CloudPrice · {n} 個模型", pricingDatasetDate: "資料日期 {d}", pricingLocalHint: "下載的價格儲存於本機，供後續計算使用。",
       quotaLoading: "正在讀取帳戶額度…", quotaLoadError: "暫時無法讀取帳戶額度", quotaEmpty: "未發現本機或 CPA 中的 Claude / Codex 帳戶"
     },
     en: {
@@ -502,7 +515,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       statActive: "Active sources / models", statActiveHint: "With usage on this day", statAvg7: "Previous 7-day average", statAvg7Hint: "This day is {p}% of it",
       modelTitle: "Model ranking", modelMeta: "{n} models", modelEmpty: "No usage in the selected range",
       modelsNoneSelected: "All models are deselected. Check any model to restore the chart and details.", rankExpand: "Show all {n} models", rankCollapse: "Show less",
-      modelCostNote: "Checking a model filters the chart and details. Some sources (for example Codex) do not report per-model cost, so model cost can be lower than the total.",
+      modelCostNote: "Checking a model filters the chart and details. Missing costs use downloaded CloudPrice rates; — means pricing is unknown. Model estimates may differ from source totals.",
       other: "Other", unattributed: "Unattributed",
       autoRefresh: "Auto refresh", autoOff: "Off", auto5: "5 min", auto15: "15 min",
       emptyTitle: "No usage in the selected range", emptyHint: "Change the sources, models, or date range and try again.",
@@ -519,6 +532,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       qNotConfigured: "Not logged in on this machine", qExpiredLocal: "Token expired; opening the CLI refreshes it", qExpiredPool: "Token expired; recovers after CPA refreshes it",
       qUpstream: "The quota service is temporarily unavailable", qRateLimited: "Queried too often; try again later", qKeychain: "Keychain access was not granted; allow CPA to read the Claude Code credential in the system prompt",
       qSchema: "Incompatible quota data", qCanceled: "Query canceled", qGeneric: "Quota query failed", liveFailed: "Live query failed: {r}",
+      pricingUpdate: "Update CloudPrice prices", pricingUpdating: "Downloading prices…", pricingEmpty: "No CloudPrice prices downloaded", pricingReady: "CloudPrice · {n} models · Updated {d}", pricingLoading: "Reading CloudPrice price status…", pricingStatusError: "Price status is temporarily unavailable.", pricingUpdateError: "Price download failed. Previous prices are preserved.", pricingCount: "CloudPrice · {n} models", pricingDatasetDate: "Dataset {d}", pricingLocalHint: "Downloaded prices are saved locally for future calculations.",
       quotaLoading: "Reading account quota…", quotaLoadError: "Account quota is temporarily unavailable", quotaEmpty: "No Claude or Codex accounts found locally or in CPA"
     },
     ru: {
@@ -544,7 +558,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       statActive: "Активные источники / модели", statActiveHint: "С данными в этот день", statAvg7: "Среднее за 7 дней до", statAvg7Hint: "День составляет {p}%",
       modelTitle: "Рейтинг моделей", modelMeta: "моделей: {n}", modelEmpty: "За выбранный период данных нет",
       modelsNoneSelected: "Все модели сняты. Отметьте любую модель, чтобы вернуть график и детали.", rankExpand: "Показать все модели ({n})", rankCollapse: "Свернуть",
-      modelCostNote: "Отметка модели фильтрует график и детали. Некоторые источники (например, Codex) не сообщают стоимость по моделям, поэтому она может быть ниже общей.",
+      modelCostNote: "Отметка модели фильтрует график и детали. Недостающая стоимость оценивается по загруженным ценам CloudPrice; — означает неизвестную цену. Оценки моделей могут отличаться от итогов источника.",
       other: "Прочее", unattributed: "Без атрибуции",
       autoRefresh: "Автообновление", autoOff: "Выкл.", auto5: "5 мин", auto15: "15 мин",
       emptyTitle: "За выбранный период данных нет", emptyHint: "Измените источники, модели или период.",
@@ -561,6 +575,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       qNotConfigured: "Вход на этом компьютере не выполнен", qExpiredLocal: "Токен истёк; откройте CLI, чтобы он обновился", qExpiredPool: "Токен истёк; восстановится после обновления в CPA",
       qUpstream: "Сервис лимитов временно недоступен", qRateLimited: "Слишком частые запросы; повторите позже", qKeychain: "Нет доступа к связке ключей; разрешите CPA читать данные Claude Code в системном окне",
       qSchema: "Несовместимые данные лимитов", qCanceled: "Запрос отменён", qGeneric: "Ошибка запроса лимитов", liveFailed: "Онлайн-запрос не удался: {r}",
+      pricingUpdate: "Обновить цены CloudPrice", pricingUpdating: "Загрузка цен…", pricingEmpty: "Цены CloudPrice ещё не загружены", pricingReady: "CloudPrice · {n} моделей · Обновлено {d}", pricingLoading: "Проверка цен CloudPrice…", pricingStatusError: "Статус цен временно недоступен.", pricingUpdateError: "Не удалось загрузить цены. Предыдущие цены сохранены.", pricingCount: "CloudPrice · {n} моделей", pricingDatasetDate: "Данные от {d}", pricingLocalHint: "Загруженные цены сохраняются локально для последующих расчётов.",
       quotaLoading: "Загрузка лимитов…", quotaLoadError: "Лимиты временно недоступны", quotaEmpty: "Аккаунты Claude и Codex не найдены ни локально, ни в CPA"
     },
     vi: {
@@ -586,7 +601,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       statActive: "Nguồn / mô hình hoạt động", statActiveHint: "Có dữ liệu trong ngày", statAvg7: "Trung bình 7 ngày trước", statAvg7Hint: "Ngày này bằng {p}%",
       modelTitle: "Xếp hạng mô hình", modelMeta: "{n} mô hình", modelEmpty: "Không có dữ liệu trong khoảng đã chọn",
       modelsNoneSelected: "Đã bỏ chọn tất cả mô hình. Chọn lại một mô hình để hiện biểu đồ và chi tiết.", rankExpand: "Hiện tất cả {n} mô hình", rankCollapse: "Thu gọn",
-      modelCostNote: "Chọn mô hình để lọc biểu đồ và chi tiết. Một số nguồn (ví dụ Codex) không cung cấp chi phí theo mô hình, nên chi phí mô hình có thể thấp hơn tổng.",
+      modelCostNote: "Chọn mô hình để lọc biểu đồ và chi tiết. Chi phí thiếu được ước tính theo giá CloudPrice đã tải; — nghĩa là chưa rõ giá. Ước tính theo mô hình có thể khác tổng của nguồn.",
       other: "Khác", unattributed: "Không gán nguồn",
       autoRefresh: "Tự động làm mới", autoOff: "Tắt", auto5: "5 phút", auto15: "15 phút",
       emptyTitle: "Không có dữ liệu trong khoảng đã chọn", emptyHint: "Hãy đổi nguồn, mô hình hoặc khoảng ngày.",
@@ -603,6 +618,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       qNotConfigured: "Chưa đăng nhập trên máy này", qExpiredLocal: "Token đã hết hạn; mở CLI để tự làm mới", qExpiredPool: "Token đã hết hạn; sẽ phục hồi sau khi CPA làm mới",
       qUpstream: "Dịch vụ hạn mức tạm thời không khả dụng", qRateLimited: "Truy vấn quá thường xuyên; thử lại sau", qKeychain: "Chưa được cấp quyền Keychain; hãy cho phép CPA đọc thông tin Claude Code trong hộp thoại hệ thống",
       qSchema: "Dữ liệu hạn mức không tương thích", qCanceled: "Đã hủy truy vấn", qGeneric: "Truy vấn hạn mức thất bại", liveFailed: "Truy vấn trực tuyến thất bại: {r}",
+      pricingUpdate: "Cập nhật giá CloudPrice", pricingUpdating: "Đang tải giá…", pricingEmpty: "Chưa tải giá CloudPrice", pricingReady: "CloudPrice · {n} mô hình · Cập nhật {d}", pricingLoading: "Đang đọc trạng thái giá CloudPrice…", pricingStatusError: "Tạm thời không thể đọc trạng thái giá.", pricingUpdateError: "Tải giá thất bại. Giá trước đó được giữ nguyên.", pricingCount: "CloudPrice · {n} mô hình", pricingDatasetDate: "Dữ liệu {d}", pricingLocalHint: "Giá đã tải được lưu cục bộ cho các lần tính sau.",
       quotaLoading: "Đang tải hạn mức tài khoản…", quotaLoadError: "Tạm thời không thể tải hạn mức tài khoản", quotaEmpty: "Không tìm thấy tài khoản Claude hoặc Codex trên máy hay trong CPA"
     },
     ko: {
@@ -628,7 +644,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       statActive: "활성 소스 / 모델", statActiveHint: "이 날 사용된 수", statAvg7: "이전 7일 평균", statAvg7Hint: "이 날은 그 {p}%",
       modelTitle: "모델 순위", modelMeta: "모델 {n}개", modelEmpty: "선택한 범위에 사용량이 없습니다",
       modelsNoneSelected: "모든 모델을 해제했습니다. 모델을 선택하면 차트와 상세가 다시 표시됩니다.", rankExpand: "모델 {n}개 모두 보기", rankCollapse: "접기",
-      modelCostNote: "모델을 선택하면 차트와 상세가 필터링됩니다. 일부 소스(예: Codex)는 모델별 비용을 제공하지 않아 모델 비용이 총 비용보다 낮을 수 있습니다.",
+      modelCostNote: "모델을 선택하면 차트와 상세가 필터링됩니다. 누락된 비용은 다운로드한 CloudPrice 요금으로 추정하며 —는 알 수 없는 가격입니다. 모델 추정치는 소스 합계와 다를 수 있습니다.",
       other: "기타", unattributed: "미분류",
       autoRefresh: "자동 새로고침", autoOff: "끄기", auto5: "5분", auto15: "15분",
       emptyTitle: "선택한 범위에 사용량이 없습니다", emptyHint: "소스, 모델 또는 날짜 범위를 바꿔 보세요.",
@@ -645,6 +661,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       qNotConfigured: "이 컴퓨터에 로그인되어 있지 않음", qExpiredLocal: "토큰 만료; CLI를 열면 자동으로 갱신됩니다", qExpiredPool: "토큰 만료; CPA가 갱신하면 자동 복구됩니다",
       qUpstream: "한도 서비스를 일시적으로 사용할 수 없음", qRateLimited: "조회가 너무 잦습니다; 나중에 다시 시도하세요", qKeychain: "키체인 권한이 없습니다; 시스템 창에서 CPA가 Claude Code 자격 증명을 읽도록 허용하세요",
       qSchema: "호환되지 않는 한도 데이터", qCanceled: "조회 취소됨", qGeneric: "한도 조회 실패", liveFailed: "실시간 조회 실패: {r}",
+      pricingUpdate: "CloudPrice 가격 업데이트", pricingUpdating: "가격 다운로드 중…", pricingEmpty: "다운로드한 CloudPrice 가격 없음", pricingReady: "CloudPrice · 모델 {n}개 · 업데이트 {d}", pricingLoading: "CloudPrice 가격 상태 확인 중…", pricingStatusError: "가격 상태를 일시적으로 확인할 수 없습니다.", pricingUpdateError: "가격 다운로드에 실패했습니다. 이전 가격이 유지됩니다.", pricingCount: "CloudPrice · 모델 {n}개", pricingDatasetDate: "데이터 기준 {d}", pricingLocalHint: "다운로드한 가격은 이후 계산을 위해 로컬에 저장됩니다.",
       quotaLoading: "계정 한도를 불러오는 중…", quotaLoadError: "계정 한도를 일시적으로 불러올 수 없습니다", quotaEmpty: "로컬이나 CPA에서 Claude / Codex 계정을 찾지 못했습니다"
     }
   };
@@ -653,6 +670,13 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
     key: "",
     report: null,
     quota: null,
+    pricing: null,
+    pricingBusy: false,
+    pricingUpdating: false,
+    pricingError: "",
+    pricingRequest: 0,
+    authGeneration: 0,
+    pricingReload: false,
     quotaFailed: false,
     loading: false,
     quotaLoading: false,
@@ -735,6 +759,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
     fillQuick(el("quick2"), el("from2"), el("to2"), () => applyCustom(el("from2").value, el("to2").value, el("range-err2")));
     render();
     renderQuota();
+    renderPricing();
   }
 
   // Read the management center's saved key when this page runs on the same
@@ -915,14 +940,15 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
           date: row.date, source: source.source,
           input: Number(row.inputTokens) || 0, output: Number(row.outputTokens) || 0,
           cacheRead: Number(row.cacheReadTokens) || 0, cacheWrite: Number(row.cacheCreationTokens) || 0,
-          total: Number(row.totalTokens) || 0, cost: typeof row.costUSD === "number" ? row.costUSD : null
+          total: Number(row.totalTokens) || 0,
+          cost: row.missingPricing === true || typeof row.costUSD !== "number" ? null : row.costUSD
         };
         const models = (Array.isArray(row.models) ? row.models : []).filter((model) => model && typeof model.model === "string");
         if (!models.length) { entries.push(Object.assign({}, base, { model: "" })); return; }
         const known = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0, cost: 0 };
         let costComplete = true;
         models.forEach((model) => {
-          const cost = typeof model.costUSD === "number" ? model.costUSD : null;
+          const cost = model.missingPricing === true || typeof model.costUSD !== "number" ? null : model.costUSD;
           if (cost === null) costComplete = false;
           const entry = {
             date: row.date, source: source.source, model: model.model,
@@ -962,12 +988,17 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
   function costFor(entries, from, to) {
     if (allModelsSelected()) {
       let sum = 0;
+      let unknown = false;
       const wanted = new Set(selectedSources());
       state.report.sources.forEach((source) => {
         if (!wanted.has(source.source)) return;
-        (Array.isArray(source.daily) ? source.daily : []).forEach((row) => { if (row && isDateKey(row.date) && row.date >= from && row.date <= to) sum += Number(row.costUSD) || 0; });
+        (Array.isArray(source.daily) ? source.daily : []).forEach((row) => {
+          if (!row || !isDateKey(row.date) || row.date < from || row.date > to) return;
+          if (row.missingPricing === true || typeof row.costUSD !== "number") unknown = true;
+          else sum += row.costUSD;
+        });
       });
-      return sum;
+      return unknown ? null : sum;
     }
     const totals = totalsOf(entries);
     return totals.costUnknown ? null : totals.cost;
@@ -1175,9 +1206,9 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
     const agg = new Map();
     buildEntries(from, to).forEach((e) => {
       if (!e.model) return;
-      const a = agg.get(e.model) || { total: 0, cost: null, sources: new Set() };
+      const a = agg.get(e.model) || { total: 0, cost: 0, costKnown: true, sources: new Set() };
       a.total += e.total;
-      if (e.cost !== null) a.cost = (a.cost || 0) + e.cost;
+      if (e.cost !== null) a.cost += e.cost; else a.costKnown = false;
       a.sources.add(sourceLabel(e.source));
       agg.set(e.model, a);
     });
@@ -1193,7 +1224,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
     const shown = state.rankAll ? list : list.slice(0, RANK_TOP);
     setHTML(el("rank"), shown.map(([m, v]) => '<li><input type="checkbox" data-m="' + esc(m) + '"' + (modelSelected(m) ? " checked" : "") + ">" +
       '<span class="name" data-mlabel="1">' + esc(m) + '</span><span class="val num">' + esc(formatTokens(v.total)) + "</span>" +
-      '<div class="sub"><span class="track"><b style="width:' + ((v.total / max) * 100).toFixed(1) + '%"></b></span><span class="num">' + ((v.total / tot) * 100).toFixed(1) + '%</span><span class="srcs">' + esc(Array.from(v.sources).join(", ")) + '</span><span class="num">' + (v.cost === null ? "" : esc(formatCost(v.cost))) + "</span></div></li>").join("") ||
+      '<div class="sub"><span class="track"><b style="width:' + ((v.total / max) * 100).toFixed(1) + '%"></b></span><span class="num">' + ((v.total / tot) * 100).toFixed(1) + '%</span><span class="srcs">' + esc(Array.from(v.sources).join(", ")) + '</span><span class="num">' + (!v.costKnown ? "" : esc(formatCost(v.cost))) + "</span></div></li>").join("") ||
       '<li style="color:var(--faint);display:block">' + esc(t("modelEmpty")) + "</li>");
     document.querySelectorAll("#rank input[data-m]").forEach((input) => {
       const want = modelSelected(input.dataset.m);
@@ -1474,12 +1505,12 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
   }
 
   // ---------- loading ----------
-  async function apiGet(path) {
+  async function apiRequest(path, method) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 90000);
     try {
       return await fetch(path, {
-        method: "GET",
+        method: method,
         headers: { Authorization: "Bearer " + state.key },
         cache: "no-store",
         credentials: "omit",
@@ -1490,7 +1521,18 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
     }
   }
 
+  function apiGet(path) { return apiRequest(path, "GET"); }
+
   function authFailed() {
+    state.authGeneration += 1;
+    state.pricingRequest += 1;
+    state.pricing = null;
+    state.pricingBusy = false;
+    state.pricingUpdating = false;
+    state.pricingError = "";
+    state.pricingReload = false;
+    state.loading = false;
+    state.quotaLoading = false;
     state.key = "";
     state.report = null;
     state.quota = null;
@@ -1529,13 +1571,17 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
 
   async function loadUsage(force, quiet) {
     if (!state.key || state.loading) return;
+    const generation = state.authGeneration;
+    const current = () => generation === state.authGeneration && !!state.key;
     state.loading = true;
     if (!quiet) { updateRefreshButton(); if (!state.report) showLoading(); }
     try {
       const response = await apiGet(DATA_PATH + (force ? "?refresh=1" : ""));
+      if (!current()) return;
       if (response.status === 401 || response.status === 403) { state.loading = false; authFailed(); return; }
       if (!response.ok) throw new Error("request failed");
       const data = await response.json();
+      if (!current()) return;
       if (!data || !Array.isArray(data.sources)) throw new Error("invalid payload");
       const previous = state.report;
       state.report = data;
@@ -1544,13 +1590,16 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       // A quiet refresh with an unchanged snapshot must not rebuild the DOM.
       if (!(quiet && previous && previous.generatedAt === data.generatedAt)) render();
     } catch (error) {
+      if (!current()) return;
       state.loading = false;
       if (!state.key) return;
       if (state.report) render();
       if (!quiet) showLoadError();
     } finally {
+      if (!current()) return;
       state.loading = false;
       if (!quiet) updateRefreshButton();
+      if (state.pricingReload && state.key) { state.pricingReload = false; loadUsage(true, false); }
     }
   }
 
@@ -1561,14 +1610,18 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
     if (!state.key || state.quotaLoading) return;
     if (net && Date.now() - state.lastQuotaNet < QUOTA_MIN_NET_MS && !state.forceNet) net = false;
     state.forceNet = false;
+    const generation = state.authGeneration;
+    const current = () => generation === state.authGeneration && !!state.key;
     state.quotaLoading = true;
     if (net) state.lastQuotaNet = Date.now();
     if (!quiet) updateRefreshButton();
     try {
       const response = await apiGet(QUOTA_PATH + (net ? "?refresh=1" : ""));
+      if (!current()) return;
       if (response.status === 401 || response.status === 403) { state.quotaLoading = false; authFailed(); return; }
       if (!response.ok) throw new Error("request failed");
       const data = await response.json();
+      if (!current()) return;
       if (!data || !Array.isArray(data.accounts)) throw new Error("invalid payload");
       state.quota = data;
       state.quotaFailed = false;
@@ -1579,13 +1632,73 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       // recent; later network queries only come from ⟳ or auto refresh.
       if (!net && !quiet && needsNet(data)) loadQuota(true, false);
     } catch (error) {
+      if (!current()) return;
       state.quotaLoading = false;
       if (!state.key) return;
       if (!state.quota) state.quotaFailed = true;
       renderQuota();
     } finally {
+      if (!current()) return;
       state.quotaLoading = false;
       if (!quiet) updateRefreshButton();
+    }
+  }
+
+  // Price downloads only start from the explicit button. All requests stay
+  // on the authenticated CPA management route; the browser never contacts CloudPrice.
+  function renderPricing() {
+    const button = el("update-prices");
+    button.disabled = !state.key || state.pricingBusy;
+    setText(button, t(state.pricingUpdating ? "pricingUpdating" : "pricingUpdate"));
+    setAttr(button, "aria-busy", String(state.pricingUpdating));
+    let message = state.pricingError ? "" : t("pricingLoading");
+    if (state.pricing) {
+      message = state.pricing.status === "empty" ? t("pricingEmpty") : t(state.pricing.updatedAt ? "pricingReady" : "pricingCount", {
+        n: formatExact(state.pricing.modelCount),
+        d: new Date(state.pricing.updatedAt).toLocaleString(state.language)
+      });
+    }
+    if (state.pricing && state.pricing.upstreamUpdatedAt) message += " · " + t("pricingDatasetDate", {
+      d: new Date(state.pricing.upstreamUpdatedAt).toLocaleDateString(state.language, { timeZone: "UTC" })
+    });
+    setText(el("pricing-status"), message);
+    setText(el("pricing-error"), state.pricingError ? t(state.pricingError) : "");
+    setHidden(el("pricing-error"), !state.pricingError);
+  }
+
+  async function loadPricing(update) {
+    if (!state.key || state.pricingBusy) return;
+    const generation = state.authGeneration;
+    const request = ++state.pricingRequest;
+    const current = () => generation === state.authGeneration && request === state.pricingRequest && !!state.key;
+    state.pricingBusy = true;
+    state.pricingUpdating = update;
+    state.pricingError = "";
+    renderPricing();
+    try {
+      const response = await apiRequest(PRICING_PATH, update ? "POST" : "GET");
+      if (!current()) return;
+      if (response.status === 401 || response.status === 403) { authFailed(); return; }
+      if (!response.ok) throw new Error("request failed");
+      const data = await response.json();
+      if (!current()) return;
+      if (!data || data.source !== "CloudPrice" || !["empty", "ready"].includes(data.status) ||
+          !Number.isSafeInteger(data.modelCount) || data.modelCount < 0 ||
+          (data.updatedAt !== undefined && (typeof data.updatedAt !== "string" || !isFinite(Date.parse(data.updatedAt)))) ||
+          (data.upstreamUpdatedAt !== undefined && (typeof data.upstreamUpdatedAt !== "string" || !isFinite(Date.parse(data.upstreamUpdatedAt))))) throw new Error("invalid payload");
+      state.pricing = data;
+      if (update) {
+        if (state.loading) state.pricingReload = true;
+        else loadUsage(true, false);
+      }
+    } catch (error) {
+      if (current()) state.pricingError = update ? "pricingUpdateError" : "pricingStatusError";
+    } finally {
+      if (current()) {
+        state.pricingBusy = false;
+        state.pricingUpdating = false;
+        renderPricing();
+      }
     }
   }
 
@@ -1727,6 +1840,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
       if (!value) return;
       start(value);
     });
+    el("update-prices").addEventListener("click", () => loadPricing(true));
     el("refresh").addEventListener("click", () => loadAll(true));
     el("auto-refresh").addEventListener("change", (event) => startAuto(event.target.value));
     el("auto2").addEventListener("click", (event) => { const b = event.target.closest("button"); if (b) startAuto(b.dataset.a); });
@@ -1821,6 +1935,15 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
   }
 
   function start(key) {
+    state.authGeneration += 1;
+    state.pricingRequest += 1;
+    state.pricing = null;
+    state.pricingBusy = false;
+    state.pricingUpdating = false;
+    state.pricingError = "";
+    state.pricingReload = false;
+    state.loading = false;
+    state.quotaLoading = false;
     state.key = key;
     setHidden(el("auth-error"), true);
     setHidden(el("auth-form"), true);
@@ -1828,6 +1951,7 @@ td .srcname { display: inline-flex; align-items: center; gap: 6px; color: var(--
     setHidden(el("top-actions"), false);
     renderQuota();
     loadAll(false);
+    loadPricing(false);
   }
 
   applyTheme();

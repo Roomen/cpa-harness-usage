@@ -16,7 +16,8 @@ on the proxy request path, and the plugin registers no proxy hooks.
 - Daily aggregates per source: input, output, cache read, cache write, total
   tokens, and estimated cost.
 - Per-model breakdowns inside each day, so usage can be classified by model.
-  Models without reported cost keep an empty cost instead of a guessed one.
+  Missing costs use locally saved CloudPrice rates when possible and remain
+  explicitly unknown otherwise. Download prices only with the update button.
 - One independent status per source: `ok`, `empty`, or `error` with a safe error
   code. A failed source never hides the others.
 - Claude and Codex account quota (5-hour and weekly windows) for the local login and for the CPA credential pool, on its own route and schema. Quota is never added to or mixed with the local token counters.
@@ -139,6 +140,8 @@ at runtime and never reads histories during registration or proxy requests.
 | `GET /v0/resource/plugins/harness-usage/usage` | Public static shell | Dashboard page |
 | `GET /v0/management/harness-usage/daily` | CPA management key | Usage report |
 | `GET /v0/management/harness-usage/quota` | CPA management key | Account quota |
+| `GET /v0/management/harness-usage/pricing` | CPA management key | Saved CloudPrice status |
+| `POST /v0/management/harness-usage/pricing` | CPA management key | Download and save CloudPrice rates |
 
 The page contains no usage data and no third-party scripts. It requests the
 report from the management route with `Authorization: Bearer <key>`:
@@ -203,13 +206,63 @@ only per-request detail included, because the dashboard classifies usage by
 model; they are treated as opaque labels, stripped of control characters, and
 truncated to 120 characters.
 
-`models` may be empty when an adapter reports no breakdown, and `costUSD` is
-omitted for a model when the source does not report per-model cost. A model's
-`totalTokens` is the source's reported value when present, otherwise the sum of
-its non-overlapping components. Model totals may leave usage unattributed, but
-they can never exceed the day's reported total; that is rejected as
-`unknown_schema`. The dashboard shows the remainder as "unattributed" so a day
-always adds up to its reported total.
+`models` may be empty when an adapter reports no breakdown, and upstream
+adapters may omit per-model `costUSD`; the plugin fills it when downloaded price
+data and token counters support an estimate. A model's `totalTokens` is the
+source's reported value when present, otherwise the sum of its non-overlapping
+components. Model totals may leave usage unattributed, but they can never exceed
+the day's reported total; that is rejected as `unknown_schema`. The dashboard
+shows the remainder as "unattributed" so a day always adds up to its reported
+total.
+
+The plugin ships no fallback price list. Click **Update prices (CloudPrice)**
+to download the public token-price map documented at
+<https://cloudprice.net/models/api> from
+<https://ai.cloudprice.net/api/v1/litellm_model_prices.json>. The map uses
+LiteLLM-compatible field names, but CloudPrice is the download source.
+Only this explicit click makes a price request. Opening the page, collecting
+usage, ordinary refresh, and auto-refresh never download prices.
+
+The backend downloads through CPA's `host.http.do` (including CPA proxy
+settings), with a 45-second timeout and a 32 MiB size limit. No management key,
+account credentials, model selection, or usage data is sent to CloudPrice.
+Token prices are validated as finite, nonnegative USD-per-token values; entries
+without both input and output rates are omitted. A failed download, invalid map,
+or failed disk write leaves the previous cache intact. Concurrent update requests
+return `409` instead of starting a second download.
+
+Validated prices and timestamps are saved atomically to
+`<OS user cache>/cpa-harness-usage/pricing/cloudprice.json` with a private
+directory and file permissions. The plugin and standalone CLI load this file on
+startup and use it offline on later calculations, including after a restart.
+The dashboard shows the last successful download time, usable model count, and
+CloudPrice's dataset date when provided. These dates describe the saved data;
+prices are not refreshed automatically. The cache belongs to the OS account
+running CPA, which can differ from the account running the standalone CLI.
+
+Model lookup is exact, with explicit DeepSeek spelling aliases only when their
+target exists in the downloaded map. Provider prefixes are preserved; the plugin
+does not borrow the cheapest price from another provider. A model without a
+matching rate for its used counters (including cache rates) is marked
+`missingPricing`, and the dashboard shows unknown cost rather than zero.
+Without a saved price map, estimates such as Codex model costs remain unknown.
+Positive recorded source amounts are retained when available; costs derived by
+the native collector are recalculated when their provenance is distinguishable.
+Codex's native prices are always replaced by downloaded standard rates, so its
+daily and model estimates use the same map. Estimates are marked `costEstimated`
+and do not reconstruct request-level speed, context tiers, or historical price
+changes. These figures are API-price equivalents, not subscription charges.
+
+Authenticated management endpoints:
+
+| Route | Purpose |
+| --- | --- |
+| `GET /v0/management/harness-usage/pricing` | Saved price status; never downloads, even with `?refresh=1` |
+| `POST /v0/management/harness-usage/pricing` | Explicit download, validation, atomic save, and usage-cache invalidation |
+
+Status responses contain `source: "CloudPrice"`, `status: "empty"` or `"ready"`,
+`modelCount`, and optional `updatedAt` / `upstreamUpdatedAt`. No cache path or raw
+price document is exposed through the management response.
 
 ### Token accounting
 
@@ -227,6 +280,9 @@ sources differ:
 Codex reports cached input separately from `inputTokens`; the plugin therefore
 shows non-cached input as "input" and never adds cache again. Cache and
 reasoning counters are displayed for diagnosis but the total is authoritative.
+For estimated costs, the adapter's standard price calculation uses its input,
+cached-input, and output counters; it does not price the separate reasoning
+counter a second time.
 The chart stacks the four displayed components plus a gray "other tokens"
 remainder (for example reasoning tokens) so the stack still equals the total.
 Rows whose reported total is smaller than the non-overlapping components are
