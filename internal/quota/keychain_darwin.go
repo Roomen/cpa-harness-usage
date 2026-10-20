@@ -69,16 +69,50 @@ static void hu_wipe_free(void *ptr, size_t len) {
 */
 import "C"
 
-import "unsafe"
+import (
+	"sync"
+	"time"
+	"unsafe"
+)
 
 const (
 	errSecItemNotFound = -25300
 	errSecDecode       = -26275
 )
 
+var (
+	keychainDeniedMu sync.Mutex
+	keychainDeniedAt = make(map[string]time.Time)
+)
+
+const keychainDeniedCooldown = 5 * time.Minute
+
+func isKeychainDeniedCooldown(service string, now time.Time) bool {
+	keychainDeniedMu.Lock()
+	defer keychainDeniedMu.Unlock()
+	last, ok := keychainDeniedAt[service]
+	return ok && now.Sub(last) < keychainDeniedCooldown
+}
+
+func recordKeychainDenied(service string, now time.Time) {
+	keychainDeniedMu.Lock()
+	keychainDeniedAt[service] = now
+	keychainDeniedMu.Unlock()
+}
+
+func clearKeychainDenied(service string) {
+	keychainDeniedMu.Lock()
+	delete(keychainDeniedAt, service)
+	keychainDeniedMu.Unlock()
+}
+
 // systemKeychain reads the login keychain through the Security framework, so
 // macOS shows its own authorization prompt the first time CPA asks.
 var systemKeychain keychainReader = func(service string) ([]byte, error) {
+	if isKeychainDeniedCooldown(service, time.Now()) {
+		return nil, errKeychainDenied
+	}
+
 	cService := C.CString(service)
 	defer C.free(unsafe.Pointer(cService))
 	var ptr unsafe.Pointer
@@ -86,6 +120,7 @@ var systemKeychain keychainReader = func(service string) ([]byte, error) {
 	status := C.hu_read_generic_password(cService, &ptr, &size)
 	switch int(status) {
 	case 0:
+		clearKeychainDenied(service)
 		defer C.hu_wipe_free(ptr, size)
 		return C.GoBytes(ptr, C.int(size)), nil
 	case errSecItemNotFound, errSecDecode:
@@ -93,6 +128,7 @@ var systemKeychain keychainReader = func(service string) ([]byte, error) {
 	default:
 		// User canceled, authorization failed, interaction not allowed (no
 		// GUI session), or a locked keychain.
+		recordKeychainDenied(service, time.Now())
 		return nil, errKeychainDenied
 	}
 }

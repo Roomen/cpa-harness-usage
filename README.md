@@ -488,14 +488,14 @@ Not verified:
 
 The canonical repository is
 [Roomen/cpa-harness-usage](https://github.com/Roomen/cpa-harness-usage).
-The current release is [v0.1.2](https://github.com/Roomen/cpa-harness-usage/releases/tag/v0.1.2).
+The current release is [v0.1.3](https://github.com/Roomen/cpa-harness-usage/releases/tag/v0.1.3).
 `Version` and `Repository` default to the current release values and can be
 overridden at build time:
 
 ```sh
 make collector
 go build -tags bundledcollector -buildmode=c-shared -ldflags \
-  '-X cpa-harness-usage/internal/plugin.Version=0.1.2 \
+  '-X cpa-harness-usage/internal/plugin.Version=0.1.3 \
    -X cpa-harness-usage/internal/plugin.Repository=https://github.com/Roomen/cpa-harness-usage' \
   -o bin/harness-usage.dylib ./cmd/plugin
 ```
