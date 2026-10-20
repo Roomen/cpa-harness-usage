@@ -7,34 +7,37 @@
 <title>Harness Usage</title>
 <style>
 :root {
-  --bg: #f6f7f9;
+  --bg: #f5f7fa;
+  --bg-glow: rgba(44, 107, 237, .09);
   --surface: #ffffff;
-  --surface-alt: #eef1f4;
-  --fg: #17202a;
-  --muted: #5b6774;
-  --border: #dce2e8;
+  --surface-alt: #eef2f6;
+  --fg: #16202b;
+  --muted: #5d6b7a;
+  --border: #dde3ea;
   --accent: #2c6bed;
-  --accent-soft: #e6eefc;
-  --success: #157347;
-  --warning: #9a6700;
+  --accent-soft: #e7eefd;
+  --success: #127a4b;
+  --warning: #96650a;
   --error: #b42318;
   --error-soft: #fdecea;
   --c1: #2c6bed;
   --c2: #0f9d76;
-  --c3: #d97706;
+  --c3: #e08a04;
   --c4: #8b5cf6;
-  --c5: #64748b;
-  --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 8px 24px rgba(16, 24, 40, .04);
-  --radius: 14px;
+  --c5: #e05252;
+  --c6: #0e9bb5;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 10px 28px rgba(16, 24, 40, .05);
+  --radius: 16px;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 [data-theme="dark"] {
-  --bg: #10151b;
-  --surface: #171e26;
+  --bg: #0f141a;
+  --bg-glow: rgba(121, 167, 255, .10);
+  --surface: #161d25;
   --surface-alt: #1e2731;
-  --fg: #e7edf3;
-  --muted: #9aa8b6;
-  --border: #2b3743;
+  --fg: #e8eef5;
+  --muted: #9dabb9;
+  --border: #2a3642;
   --accent: #79a7ff;
   --accent-soft: #1c2b44;
   --success: #4ade80;
@@ -45,17 +48,19 @@
   --c2: #34d399;
   --c3: #fbbf24;
   --c4: #c4b5fd;
-  --c5: #94a3b8;
+  --c5: #f87171;
+  --c6: #22d3ee;
   --shadow: none;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]):not([data-theme="white"]) {
-    --bg: #10151b;
-    --surface: #171e26;
+    --bg: #0f141a;
+    --bg-glow: rgba(121, 167, 255, .10);
+    --surface: #161d25;
     --surface-alt: #1e2731;
-    --fg: #e7edf3;
-    --muted: #9aa8b6;
-    --border: #2b3743;
+    --fg: #e8eef5;
+    --muted: #9dabb9;
+    --border: #2a3642;
     --accent: #79a7ff;
     --accent-soft: #1c2b44;
     --success: #4ade80;
@@ -66,51 +71,72 @@
     --c2: #34d399;
     --c3: #fbbf24;
     --c4: #c4b5fd;
-    --c5: #94a3b8;
+    --c5: #f87171;
+    --c6: #22d3ee;
     --shadow: none;
   }
 }
 * { box-sizing: border-box; }
 html, body { max-width: 100%; overflow-x: hidden; }
+html { background-color: var(--bg); }
 body {
   margin: 0;
-  background: var(--bg);
+  min-height: 100vh;
+  background:
+    radial-gradient(1100px 520px at 8% -12%, var(--bg-glow), transparent 62%),
+    var(--bg);
   color: var(--fg);
-  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans", sans-serif;
+  font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans", sans-serif;
   -webkit-text-size-adjust: 100%;
 }
 button, input, select { font: inherit; color: inherit; }
-.shell { width: 100%; max-width: 1180px; margin: 0 auto; padding: 24px 20px 48px; }
-header.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
-.brand { min-width: 0; }
-h1 { margin: 0; font-size: clamp(20px, 3vw, 26px); letter-spacing: -.01em; }
-.subtitle { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
-.top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.shell { width: 100%; max-width: 1200px; margin: 0 auto; padding: 26px 20px 52px; }
+.top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 18px; flex-wrap: wrap; margin-bottom: 22px;
+}
+.brand { min-width: 0; display: flex; gap: 12px; align-items: flex-start; }
+.mark {
+  width: 38px; height: 38px; border-radius: 11px; flex: none; margin-top: 2px;
+  background: linear-gradient(140deg, var(--accent), var(--c4));
+  display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 15px;
+  box-shadow: 0 6px 16px rgba(44, 107, 237, .25);
+}
+h1 { margin: 0; font-size: clamp(20px, 2.6vw, 25px); letter-spacing: -.015em; }
+.subtitle { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
+.top-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  min-height: 40px; padding: 8px 14px; border-radius: 9px;
+  min-height: 38px; padding: 7px 14px; border-radius: 10px;
   border: 1px solid var(--border); background: var(--surface); color: var(--fg);
-  cursor: pointer; white-space: nowrap;
+  cursor: pointer; white-space: nowrap; transition: border-color .15s, background .15s, transform .06s;
 }
 .btn:hover { border-color: var(--accent); }
+.btn:active { transform: translateY(1px); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn.primary:hover { filter: brightness(1.06); }
 [data-theme="dark"] .btn.primary { color: #0b1220; }
 .btn:disabled { opacity: .55; cursor: progress; }
+.btn.ghost { background: transparent; }
+.select-wrap { display: inline-flex; align-items: center; gap: 7px; padding: 0 4px 0 11px; min-height: 38px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.select-wrap span { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.select-wrap select { border: 0; background: transparent; min-height: 34px; padding: 0 8px 0 0; cursor: pointer; }
+.select-wrap:focus-within { border-color: var(--accent); }
 .card {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); box-shadow: var(--shadow);
 }
-.auth { max-width: 460px; margin: 48px auto; padding: 28px; }
+.auth { max-width: 470px; margin: 56px auto; padding: 30px; }
 .auth h2 { margin: 0 0 8px; font-size: 19px; }
 .auth p { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
 .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .field label { font-size: 12px; font-weight: 600; color: var(--muted); }
 .field input {
   width: 100%; min-width: 0; min-height: 42px; padding: 8px 11px;
-  border: 1px solid var(--border); border-radius: 9px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px; background: var(--surface);
 }
-.field input:focus-visible, .btn:focus-visible, .chip input:focus-visible + span {
+.field input:focus-visible, .btn:focus-visible, .chip input:focus-visible + span,
+.rank-row:focus-visible, .seg button:focus-visible {
   outline: 2px solid var(--accent); outline-offset: 2px;
 }
 .auth-row { display: flex; gap: 10px; margin-top: 14px; }
@@ -118,63 +144,96 @@ h1 { margin: 0; font-size: clamp(20px, 3vw, 26px); letter-spacing: -.01em; }
 .auth-error { margin-top: 12px; color: var(--error); font-size: 13px; }
 .notice {
   display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap;
-  padding: 12px 14px; margin-bottom: 16px; border-radius: 11px;
+  padding: 12px 15px; margin-bottom: 16px; border-radius: 12px;
   border: 1px solid var(--border); background: var(--surface);
 }
 .notice[data-kind="error"] { border-color: var(--error); background: var(--error-soft); }
 .notice[data-kind="warning"] { border-color: var(--warning); }
+.notice[data-kind="info"] { background: var(--surface); }
 .notice .message { flex: 1 1 240px; min-width: 0; }
 .notice .detail { color: var(--muted); font-size: 12px; margin-top: 2px; }
 .summary-grid {
   display: grid; gap: 12px; margin-bottom: 16px;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
-.stat { padding: 14px 16px; }
+.stat { position: relative; padding: 15px 16px 14px; overflow: hidden; }
+.stat::before {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 3px;
+  background: var(--stat-color, var(--accent));
+}
 .stat .label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-.stat .value { margin-top: 6px; font-size: clamp(18px, 2.4vw, 24px); font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -.01em; overflow-wrap: anywhere; }
-.stat .sub { margin-top: 2px; font-size: 12px; color: var(--muted); }
-.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
-.toolbar { display: flex; gap: 14px; flex-wrap: wrap; padding: 14px 16px; margin-bottom: 16px; }
+.stat .value { margin-top: 5px; font-size: clamp(19px, 2.3vw, 25px); font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -.015em; overflow-wrap: anywhere; }
+.stat .sub { margin-top: 2px; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; display: inline-block; }
+.toolbar { display: flex; gap: 18px; flex-wrap: wrap; padding: 15px 16px; margin-bottom: 16px; align-items: flex-start; }
 .toolbar .group { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.toolbar .group.grow { flex: 1 1 260px; }
-.group-label { font-size: 12px; font-weight: 600; color: var(--muted); }
-.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.toolbar .group.grow { flex: 1 1 300px; }
+.group-head { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.group-label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .01em; }
+.linkish { border: 0; background: none; color: var(--accent); font-size: 12px; cursor: pointer; padding: 2px 4px; border-radius: 6px; }
+.linkish:hover { background: var(--accent-soft); }
+.chips { display: flex; gap: 7px; flex-wrap: wrap; }
 .chip { position: relative; }
 .chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .chip span {
-  display: inline-flex; align-items: center; gap: 6px; min-height: 36px;
-  padding: 6px 11px; border-radius: 999px; border: 1px solid var(--border);
-  background: var(--surface); cursor: pointer; font-size: 13px; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px;
+  padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--surface); cursor: pointer; font-size: 12.5px; white-space: nowrap;
+  transition: border-color .15s, background .15s;
 }
+.chip span:hover { border-color: var(--accent); }
 .chip input:checked + span { border-color: var(--accent); background: var(--accent-soft); }
+.chip .count { color: var(--muted); font-variant-numeric: tabular-nums; }
 .range { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .range input[type="date"] {
-  min-height: 36px; padding: 4px 8px; border: 1px solid var(--border);
-  border-radius: 8px; background: var(--surface); min-width: 0; max-width: 100%;
+  min-height: 34px; padding: 4px 8px; border: 1px solid var(--border);
+  border-radius: 9px; background: var(--surface); min-width: 0; max-width: 100%;
 }
 .range .sep { color: var(--muted); font-size: 12px; }
-.panel { padding: 16px; margin-bottom: 16px; }
-.panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-.panel-head h2 { margin: 0; font-size: 16px; }
-.panel-head .meta { color: var(--muted); font-size: 12px; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: transparent; padding: 7px 12px; font-size: 12.5px; cursor: pointer; color: var(--muted); }
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--fg); font-weight: 600; }
+.panel { padding: 17px; margin-bottom: 16px; }
+.panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 13px; }
+.panel-head h2 { margin: 0; font-size: 16px; letter-spacing: -.01em; }
+.panel-head .meta { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 .chart-scroll { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
 #chart { display: block; }
-.notice[data-kind="info"] .message { color: var(--muted); }
-.legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: var(--muted); }
+#chart rect { transition: opacity .12s; }
+#chart rect:hover { opacity: .82; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
-.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; }
-table { width: 100%; border-collapse: collapse; min-width: 640px; font-variant-numeric: tabular-nums; }
+.models { display: grid; gap: 2px; }
+.model-row {
+  display: grid; grid-template-columns: 22px minmax(120px, 1.5fr) minmax(90px, 1fr) 86px 92px;
+  gap: 10px; align-items: center; padding: 8px 6px; border-radius: 9px;
+}
+.model-row + .model-row { border-top: 1px solid var(--border); }
+.model-row.head { color: var(--muted); font-size: 11.5px; font-weight: 600; padding-bottom: 4px; }
+.model-row.head > span:first-child { visibility: hidden; }
+.model-row .rank-check { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+.model-name { min-width: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.model-name .src { display: block; color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; }
+.share { height: 7px; border-radius: 999px; background: var(--surface-alt); box-shadow: inset 0 0 0 1px var(--border); overflow: hidden; }
+.share i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--c1), var(--c6)); }
+.num { text-align: right; font-variant-numeric: tabular-nums; font-size: 12.5px; white-space: nowrap; }
+.num.muted { color: var(--muted); }
+.table-scroll { overflow: auto; max-height: 540px; -webkit-overflow-scrolling: touch; border-radius: 10px; }
+table { width: 100%; border-collapse: collapse; min-width: 760px; font-variant-numeric: tabular-nums; }
 caption { text-align: left; padding-bottom: 8px; color: var(--muted); font-size: 12px; }
-th, td { padding: 9px 10px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
-th { position: sticky; top: 0; background: var(--surface-alt); font-size: 12px; color: var(--muted); font-weight: 600; z-index: 1; }
-th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+th { position: sticky; top: 0; background: var(--surface-alt); font-size: 11.5px; color: var(--muted); font-weight: 600; z-index: 1; }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2), th:nth-child(3), td:nth-child(3) { text-align: left; }
+td:nth-child(3) { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
 tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover td { background: var(--surface-alt); }
-tfoot td { font-weight: 650; border-bottom: 0; }
+td.muted { color: var(--muted); }
+tfoot td { font-weight: 650; border-bottom: 0; background: var(--surface); }
 .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
 .badge .name { color: var(--fg); }
 .mono { font-family: var(--mono); font-size: 12px; }
-.empty { padding: 40px 20px; text-align: center; color: var(--muted); }
+.empty { padding: 44px 20px; text-align: center; color: var(--muted); }
 .empty strong { display: block; color: var(--fg); margin-bottom: 6px; font-size: 15px; }
 .spinner {
   width: 16px; height: 16px; border-radius: 50%;
@@ -182,30 +241,31 @@ tfoot td { font-weight: 650; border-bottom: 0; }
   animation: spin .8s linear infinite; flex: none;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } .btn, #chart rect { transition: none; } }
 .skeleton { display: grid; gap: 12px; }
-.skeleton .bar { height: 74px; border-radius: 12px; background: var(--surface-alt); animation: pulse 1.4s ease-in-out infinite; }
+.skeleton .bar { height: 76px; border-radius: 12px; background: var(--surface-alt); animation: pulse 1.4s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: .55; } }
-.footnote { color: var(--muted); font-size: 12px; margin-top: 16px; text-align: center; }
+.footnote { color: var(--muted); font-size: 11.5px; margin-top: 14px; line-height: 1.6; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 [hidden] { display: none !important; }
-@media (max-width: 560px) {
+@media (max-width: 720px) {
   .shell { padding: 16px 12px 36px; }
   .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .stat { padding: 12px; }
-  .toolbar { padding: 12px; gap: 12px; }
-  .panel { padding: 12px; }
-  .auth { margin: 20px auto; padding: 20px; }
+  .stat { padding: 12px 13px; }
+  .toolbar { padding: 13px; gap: 14px; }
+  .panel { padding: 13px; }
+  .auth { margin: 18px auto; padding: 21px; }
   .range { gap: 6px; }
   .range input[type="date"] { flex: 1 1 130px; }
   .top-actions { width: 100%; }
   .top-actions .btn { flex: 1; }
+  .select-wrap { flex: 1; justify-content: space-between; }
+  .model-row { grid-template-columns: 20px minmax(90px, 1fr) 66px 76px; align-items: start; }
+  .model-row .share,
+  .model-row.head > span:nth-child(3) { display: none; }
+  .model-name { white-space: normal; overflow-wrap: anywhere; line-height: 1.35; }
 }
-@media (max-width: 900px) {
-  th, td { padding: 8px; }
-  table { font-size: 13px; }
-}
-@media (min-width: 900px) {
+@media (min-width: 980px) {
   .summary-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }
 </style>
@@ -214,10 +274,22 @@ tfoot td { font-weight: 650; border-bottom: 0; }
 <div class="shell">
   <header class="top">
     <div class="brand">
-      <h1 data-i18n="appTitle">Harness 用量</h1>
-      <p class="subtitle" data-i18n="subtitle"></p>
+      <div class="mark" aria-hidden="true">H</div>
+      <div>
+        <h1 data-i18n="appTitle">Harness 用量</h1>
+        <p class="subtitle" data-i18n="subtitle"></p>
+      </div>
     </div>
     <div class="top-actions" id="top-actions" hidden>
+      <label class="select-wrap">
+        <span data-i18n="autoRefresh"></span>
+        <select id="auto-refresh">
+          <option value="0" data-i18n="autoOff"></option>
+          <option value="30">30 s</option>
+          <option value="60">1 min</option>
+          <option value="300">5 min</option>
+        </select>
+      </label>
       <button class="btn" id="refresh" type="button" data-i18n="refresh">刷新</button>
     </div>
   </header>
@@ -241,7 +313,7 @@ tfoot td { font-weight: 650; border-bottom: 0; }
     <div id="status-notice" class="notice" hidden></div>
 
     <div id="loading" class="skeleton" hidden aria-label="loading">
-      <div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
     </div>
 
     <div id="content" hidden>
@@ -249,11 +321,19 @@ tfoot td { font-weight: 650; border-bottom: 0; }
 
       <div class="card toolbar">
         <div class="group grow">
-          <span class="group-label" data-i18n="filterSources"></span>
+          <div class="group-head">
+            <span class="group-label" data-i18n="filterSources"></span>
+            <span>
+              <button class="linkish" type="button" id="sources-all" data-i18n="all"></button>
+              <button class="linkish" type="button" id="sources-none" data-i18n="none"></button>
+            </span>
+          </div>
           <div class="chips" id="source-filter"></div>
         </div>
         <div class="group grow">
-          <span class="group-label" data-i18n="filterRange"></span>
+          <div class="group-head">
+            <span class="group-label" data-i18n="filterRange"></span>
+          </div>
           <div class="chips" id="range-presets"></div>
           <div class="range">
             <label class="sr-only" for="date-from" data-i18n="from"></label>
@@ -268,13 +348,26 @@ tfoot td { font-weight: 650; border-bottom: 0; }
       <div class="card panel">
         <div class="panel-head">
           <h2 data-i18n="trendTitle"></h2>
+          <div class="seg" id="group-by" role="group" aria-label="group">
+            <button type="button" data-group="source" aria-pressed="true" data-i18n="groupSource"></button>
+            <button type="button" data-group="model" aria-pressed="false" data-i18n="groupModel"></button>
+          </div>
           <span class="meta" id="generated"></span>
         </div>
         <div class="chart-scroll" id="chart-scroll">
-          <svg id="chart" role="img" aria-labelledby="chart-title" width="100%" height="260"></svg>
+          <svg id="chart" role="img" aria-labelledby="chart-title" width="100%" height="270"></svg>
           <span class="sr-only" id="chart-title"></span>
         </div>
         <div class="legend" id="legend"></div>
+      </div>
+
+      <div class="card panel" id="model-panel">
+        <div class="panel-head">
+          <h2 data-i18n="modelTitle"></h2>
+          <span class="meta" id="model-meta"></span>
+        </div>
+        <div class="models" id="model-list"></div>
+        <div class="footnote" data-i18n="modelCostNote"></div>
       </div>
 
       <div class="card panel">
@@ -288,6 +381,7 @@ tfoot td { font-weight: 650; border-bottom: 0; }
               <tr>
                 <th scope="col" data-i18n="date"></th>
                 <th scope="col" data-i18n="source"></th>
+                <th scope="col" data-i18n="model"></th>
                 <th scope="col" data-i18n="summaryInput"></th>
                 <th scope="col" data-i18n="summaryOutput"></th>
                 <th scope="col" data-i18n="summaryCacheRead"></th>
@@ -316,18 +410,31 @@ tfoot td { font-weight: 650; border-bottom: 0; }
 (function () {
   const DATA_PATH = "/v0/management/harness-usage/daily";
   const PAGE_PATH = "/v0/resource/plugins/harness-usage/usage";
-  const SOURCES = ["claude", "codex", "opencode"];
-  const SOURCE_LABELS = { claude: "Claude Code", codex: "Codex", opencode: "OpenCode" };
-  const SOURCE_COLORS = { claude: "var(--c1)", codex: "var(--c2)", opencode: "var(--c3)" };
+  const SOURCES = [
+    "claude", "codex", "opencode", "omp", "pi", "amp", "droid", "codebuff",
+    "hermes", "goose", "kilo", "copilot", "gemini", "antigravity", "kimi",
+    "qwen", "openclaw", "grok", "zcode"
+  ];
+  const SOURCE_LABELS = {
+    claude: "Claude Code", codex: "Codex", opencode: "OpenCode", omp: "oh-my-pi",
+    pi: "pi agent", amp: "Amp", droid: "Droid", codebuff: "Codebuff",
+    hermes: "Hermes", goose: "Goose", kilo: "Kilo", copilot: "GitHub Copilot CLI",
+    gemini: "Gemini CLI", antigravity: "Antigravity", kimi: "Kimi", qwen: "Qwen",
+    openclaw: "OpenClaw", grok: "Grok CLI", zcode: "ZCode"
+  };
+  const SOURCE_COLORS = {};
+  const PALETTE = ["var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)", "var(--c5)", "var(--c6)"];
+  SOURCES.forEach((source, index) => { SOURCE_COLORS[source] = PALETTE[index % PALETTE.length]; });
   const STORAGE_LANGUAGE = "cli-proxy-language";
   const STORAGE_THEME = "cli-proxy-theme";
   const STORAGE_AUTH = "cli-proxy-auth";
   const OBFUSCATION_PREFIX = "enc::v1::";
   const OBFUSCATION_SALT = "cli-proxy-api-webui::secure-storage";
+  const TABLE_LIMIT = 600;
 
   const STRINGS = {
     "zh-CN": {
-      appTitle: "Harness 用量", subtitle: "本机 Claude Code、Codex 与 OpenCode 的历史用量",
+      appTitle: "Harness 用量", subtitle: "本机 AI 编程代理的历史用量，按来源与模型汇总",
       authTitle: "需要管理密钥", authHint: "输入 CPA 管理密钥以读取统计。密钥只保存在当前页面内存中，不会写入地址栏或浏览器存储。",
       authPlaceholder: "CPA 管理密钥", connect: "读取用量",
       authFailed: "管理密钥无效或已过期，请重试。",
@@ -338,18 +445,26 @@ tfoot td { font-weight: 650; border-bottom: 0; }
       summaryCacheRead: "缓存读取", summaryCacheWrite: "缓存写入", summaryCost: "估算费用", summaryOther: "其他 token",
       costNote: "费用按公开价格估算，不代表订阅账单；缓存与 reasoning token 已按来源口径计入总量，不再重复相加。",
       trendTitle: "按日趋势", tableTitle: "明细",
-      filterSources: "来源筛选", filterRange: "日期范围",
+      filterSources: "来源筛选", filterRange: "日期范围", filterModels: "模型筛选",
       range7: "近 7 天", range30: "近 30 天", range90: "近 90 天", rangeAll: "全部",
-      from: "开始日期", to: "结束日期", date: "日期", source: "来源",
-      emptyTitle: "所选范围内没有用量数据", emptyHint: "调整来源或日期范围后再看。",
-      generated: "更新于",
+      from: "开始日期", to: "结束日期", date: "日期", source: "来源", model: "模型",
+      groupBy: "图表分组", groupSource: "按来源", groupModel: "按模型",
+      modelTitle: "模型排行", modelMeta: "共 {n} 个模型",
+      modelEmpty: "所选范围内没有模型明细",
+      modelsNoneSelected: "已取消全部模型。勾选上方任意模型即可恢复图表与明细。",
+      other: "其他", unattributed: "未标注",
+      all: "全选", none: "清空", share: "占比",
+      autoRefresh: "自动刷新", autoOff: "关闭",
+      modelCostNote: "模型费用仅汇总来源提供的模型级费用；部分来源（如 Codex）不提供该数据，因此模型费用可能低于总费用。切换来源或勾选模型会立即更新图表与明细。",
+      emptyTitle: "所选范围内没有用量数据", emptyHint: "调整来源、模型或日期范围后再看。",
+      generated: "更新于", rowsCapped: "仅显示前 {n} 行，请缩窄日期范围。",
       errorTimeout: "采集超时", errorCommandFailed: "采集器执行失败", errorUnknownSchema: "数据格式不兼容",
       errorOutputTooLarge: "数据量超出上限", errorCanceled: "采集已取消",
       errorUnsupported: "来源不受支持", errorGeneric: "未知错误",
       total: "合计"
     },
     "zh-TW": {
-      appTitle: "Harness 用量", subtitle: "本機 Claude Code、Codex 與 OpenCode 的歷史用量",
+      appTitle: "Harness 用量", subtitle: "本機 AI 編程代理的歷史用量，依來源與模型彙總",
       authTitle: "需要管理金鑰", authHint: "輸入 CPA 管理金鑰以讀取統計。金鑰只保存在目前頁面記憶體中，不會寫入網址或瀏覽器儲存。",
       authPlaceholder: "CPA 管理金鑰", connect: "讀取用量",
       authFailed: "管理金鑰無效或已過期，請重試。",
@@ -360,18 +475,26 @@ tfoot td { font-weight: 650; border-bottom: 0; }
       summaryCacheRead: "快取讀取", summaryCacheWrite: "快取寫入", summaryCost: "預估費用", summaryOther: "其他 token",
       costNote: "費用依公開價格估算，不代表訂閱帳單；快取與 reasoning token 已依來源定義計入總量，不會重複相加。",
       trendTitle: "每日趨勢", tableTitle: "明細",
-      filterSources: "來源篩選", filterRange: "日期範圍",
+      filterSources: "來源篩選", filterRange: "日期範圍", filterModels: "模型篩選",
       range7: "近 7 天", range30: "近 30 天", range90: "近 90 天", rangeAll: "全部",
-      from: "開始日期", to: "結束日期", date: "日期", source: "來源",
-      emptyTitle: "所選範圍內沒有用量資料", emptyHint: "調整來源或日期範圍後再查看。",
-      generated: "更新於",
+      from: "開始日期", to: "結束日期", date: "日期", source: "來源", model: "模型",
+      groupBy: "圖表分組", groupSource: "依來源", groupModel: "依模型",
+      modelTitle: "模型排行", modelMeta: "共 {n} 個模型",
+      modelEmpty: "所選範圍內沒有模型明細",
+      modelsNoneSelected: "已取消全部模型。勾選上方任一模型即可恢復圖表與明細。",
+      other: "其他", unattributed: "未標註",
+      all: "全選", none: "清除", share: "佔比",
+      autoRefresh: "自動更新", autoOff: "關閉",
+      modelCostNote: "模型費用僅彙總來源提供的模型級費用；部分來源（如 Codex）不提供該資料，因此模型費用可能低於總費用。切換來源或勾選模型會立即更新圖表與明細。",
+      emptyTitle: "所選範圍內沒有用量資料", emptyHint: "調整來源、模型或日期範圍後再查看。",
+      generated: "更新於", rowsCapped: "僅顯示前 {n} 列，請縮小日期範圍。",
       errorTimeout: "擷取逾時", errorCommandFailed: "擷取器執行失敗", errorUnknownSchema: "資料格式不相容",
       errorOutputTooLarge: "資料量超出上限", errorCanceled: "擷取已取消",
       errorUnsupported: "來源不受支援", errorGeneric: "未知錯誤",
       total: "合計"
     },
     en: {
-      appTitle: "Harness Usage", subtitle: "Local history from Claude Code, Codex, and OpenCode",
+      appTitle: "Harness Usage", subtitle: "Local AI coding-agent history, grouped by source and model",
       authTitle: "Management key required", authHint: "Enter your CPA management key to load statistics. The key stays in this page's memory and is never written to the address bar or browser storage.",
       authPlaceholder: "CPA management key", connect: "Load usage",
       authFailed: "The management key is invalid or has expired. Try again.",
@@ -382,18 +505,26 @@ tfoot td { font-weight: 650; border-bottom: 0; }
       summaryCacheRead: "Cache read", summaryCacheWrite: "Cache write", summaryCost: "Estimated cost", summaryOther: "Other tokens",
       costNote: "Cost is estimated from public prices and is not a subscription invoice. Cache and reasoning tokens follow each source's own total and are not added twice.",
       trendTitle: "Daily trend", tableTitle: "Details",
-      filterSources: "Sources", filterRange: "Date range",
+      filterSources: "Sources", filterRange: "Date range", filterModels: "Models",
       range7: "Last 7 days", range30: "Last 30 days", range90: "Last 90 days", rangeAll: "All",
-      from: "Start date", to: "End date", date: "Date", source: "Source",
-      emptyTitle: "No usage in the selected range", emptyHint: "Change the sources or date range and try again.",
-      generated: "Updated",
+      from: "Start date", to: "End date", date: "Date", source: "Source", model: "Model",
+      groupBy: "Chart groups", groupSource: "By source", groupModel: "By model",
+      modelTitle: "Model ranking", modelMeta: "{n} models",
+      modelEmpty: "No model detail in the selected range",
+      modelsNoneSelected: "All models are deselected. Check any model above to restore the chart and table.",
+      other: "Other", unattributed: "Unattributed",
+      all: "All", none: "None", share: "Share",
+      autoRefresh: "Auto refresh", autoOff: "Off",
+      modelCostNote: "Model cost only sums per-model cost reported by the source. Some sources (for example Codex) do not report it, so model cost can be lower than total cost. Changing sources or models updates the chart and table immediately.",
+      emptyTitle: "No usage in the selected range", emptyHint: "Change the sources, models, or date range and try again.",
+      generated: "Updated", rowsCapped: "Showing the first {n} rows; narrow the date range.",
       errorTimeout: "Collection timed out", errorCommandFailed: "Collector failed", errorUnknownSchema: "Incompatible data format",
       errorOutputTooLarge: "Data exceeds the limit", errorCanceled: "Collection canceled",
       errorUnsupported: "Unsupported source", errorGeneric: "Unknown error",
       total: "Total"
     },
     ru: {
-      appTitle: "Использование Harness", subtitle: "История Claude Code, Codex и OpenCode на этом компьютере",
+      appTitle: "Использование Harness", subtitle: "История AI-агентов на этом компьютере по источникам и моделям",
       authTitle: "Требуется ключ управления", authHint: "Введите ключ управления CPA, чтобы загрузить статистику. Ключ хранится только в памяти этой страницы и не записывается в адресную строку или хранилище браузера.",
       authPlaceholder: "Ключ управления CPA", connect: "Загрузить",
       authFailed: "Ключ управления недействителен или истёк. Повторите попытку.",
@@ -404,18 +535,26 @@ tfoot td { font-weight: 650; border-bottom: 0; }
       summaryCacheRead: "Чтение кэша", summaryCacheWrite: "Запись кэша", summaryCost: "Оценка стоимости", summaryOther: "Прочие токены",
       costNote: "Стоимость рассчитана по публичным ценам и не является счётом подписки. Токены кэша и reasoning учитываются по правилам источника и не суммируются повторно.",
       trendTitle: "Динамика по дням", tableTitle: "Детали",
-      filterSources: "Источники", filterRange: "Период",
+      filterSources: "Источники", filterRange: "Период", filterModels: "Модели",
       range7: "7 дней", range30: "30 дней", range90: "90 дней", rangeAll: "Всё",
-      from: "Начало", to: "Конец", date: "Дата", source: "Источник",
-      emptyTitle: "За выбранный период данных нет", emptyHint: "Измените источники или период.",
-      generated: "Обновлено",
+      from: "Начало", to: "Конец", date: "Дата", source: "Источник", model: "Модель",
+      groupBy: "Группы графика", groupSource: "По источнику", groupModel: "По модели",
+      modelTitle: "Рейтинг моделей", modelMeta: "моделей: {n}",
+      modelEmpty: "Нет данных по моделям за выбранный период",
+      modelsNoneSelected: "Все модели сняты. Отметьте любую модель выше, чтобы вернуть график и таблицу.",
+      other: "Прочее", unattributed: "Без атрибуции",
+      all: "Все", none: "Снять", share: "Доля",
+      autoRefresh: "Автообновление", autoOff: "Выкл.",
+      modelCostNote: "Стоимость моделей суммирует только данные источника. Некоторые источники (например, Codex) их не сообщают, поэтому стоимость модели может быть ниже общей. Смена источников или моделей сразу обновляет график и таблицу.",
+      emptyTitle: "За выбранный период данных нет", emptyHint: "Измените источники, модели или период.",
+      generated: "Обновлено", rowsCapped: "Показаны первые {n} строк; сузьте период.",
       errorTimeout: "Истекло время сбора", errorCommandFailed: "Ошибка сборщика", errorUnknownSchema: "Несовместимый формат данных",
       errorOutputTooLarge: "Превышен объём данных", errorCanceled: "Сбор отменён",
       errorUnsupported: "Источник не поддерживается", errorGeneric: "Неизвестная ошибка",
       total: "Итого"
     },
     vi: {
-      appTitle: "Mức sử dụng Harness", subtitle: "Lịch sử Claude Code, Codex và OpenCode trên máy này",
+      appTitle: "Mức sử dụng Harness", subtitle: "Lịch sử AI coding agent trên máy này, theo nguồn và mô hình",
       authTitle: "Cần khóa quản trị", authHint: "Nhập khóa quản trị CPA để tải số liệu. Khóa chỉ được giữ trong bộ nhớ của trang này và không ghi vào thanh địa chỉ hay bộ nhớ trình duyệt.",
       authPlaceholder: "Khóa quản trị CPA", connect: "Tải dữ liệu",
       authFailed: "Khóa quản trị không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.",
@@ -426,18 +565,26 @@ tfoot td { font-weight: 650; border-bottom: 0; }
       summaryCacheRead: "Đọc bộ nhớ đệm", summaryCacheWrite: "Ghi bộ nhớ đệm", summaryCost: "Chi phí ước tính", summaryOther: "Token khác",
       costNote: "Chi phí ước tính theo giá công khai, không phải hóa đơn đăng ký. Token bộ nhớ đệm và reasoning được tính theo quy ước của từng nguồn, không cộng trùng.",
       trendTitle: "Xu hướng theo ngày", tableTitle: "Chi tiết",
-      filterSources: "Nguồn", filterRange: "Khoảng ngày",
+      filterSources: "Nguồn", filterRange: "Khoảng ngày", filterModels: "Mô hình",
       range7: "7 ngày", range30: "30 ngày", range90: "90 ngày", rangeAll: "Tất cả",
-      from: "Từ ngày", to: "Đến ngày", date: "Ngày", source: "Nguồn",
-      emptyTitle: "Không có dữ liệu trong khoảng đã chọn", emptyHint: "Hãy đổi nguồn hoặc khoảng ngày.",
-      generated: "Cập nhật",
+      from: "Từ ngày", to: "Đến ngày", date: "Ngày", source: "Nguồn", model: "Mô hình",
+      groupBy: "Nhóm biểu đồ", groupSource: "Theo nguồn", groupModel: "Theo mô hình",
+      modelTitle: "Xếp hạng mô hình", modelMeta: "{n} mô hình",
+      modelEmpty: "Không có chi tiết mô hình trong khoảng đã chọn",
+      modelsNoneSelected: "Đã bỏ chọn tất cả mô hình. Chọn lại một mô hình ở trên để hiện biểu đồ và bảng.",
+      other: "Khác", unattributed: "Không gán nguồn",
+      all: "Tất cả", none: "Bỏ chọn", share: "Tỷ lệ",
+      autoRefresh: "Tự động làm mới", autoOff: "Tắt",
+      modelCostNote: "Chi phí mô hình chỉ cộng dữ liệu do nguồn cung cấp. Một số nguồn (ví dụ Codex) không cung cấp, nên chi phí mô hình có thể thấp hơn tổng. Đổi nguồn hoặc mô hình sẽ cập nhật ngay biểu đồ và bảng.",
+      emptyTitle: "Không có dữ liệu trong khoảng đã chọn", emptyHint: "Hãy đổi nguồn, mô hình hoặc khoảng ngày.",
+      generated: "Cập nhật", rowsCapped: "Chỉ hiển thị {n} dòng đầu; hãy thu hẹp khoảng ngày.",
       errorTimeout: "Hết thời gian thu thập", errorCommandFailed: "Bộ thu thập gặp lỗi", errorUnknownSchema: "Định dạng dữ liệu không tương thích",
       errorOutputTooLarge: "Dữ liệu vượt quá giới hạn", errorCanceled: "Đã hủy thu thập",
       errorUnsupported: "Nguồn không được hỗ trợ", errorGeneric: "Lỗi không xác định",
       total: "Tổng"
     },
     ko: {
-      appTitle: "Harness 사용량", subtitle: "이 컴퓨터의 Claude Code, Codex, OpenCode 사용 기록",
+      appTitle: "Harness 사용량", subtitle: "이 컴퓨터의 AI 코딩 에이전트 기록을 소스와 모델별로 요약",
       authTitle: "관리 키 필요", authHint: "CPA 관리 키를 입력하면 통계를 불러옵니다. 키는 이 페이지 메모리에만 유지되며 주소 표시줄이나 브라우저 저장소에 기록되지 않습니다.",
       authPlaceholder: "CPA 관리 키", connect: "불러오기",
       authFailed: "관리 키가 유효하지 않거나 만료되었습니다. 다시 시도하세요.",
@@ -448,11 +595,19 @@ tfoot td { font-weight: 650; border-bottom: 0; }
       summaryCacheRead: "캐시 읽기", summaryCacheWrite: "캐시 쓰기", summaryCost: "예상 비용", summaryOther: "기타 토큰",
       costNote: "예상 비용은 공개 가격 기준이며 구독 청구서가 아닙니다. 캐시 및 reasoning 토큰은 소스별 기준으로 총량에 포함되며 중복 합산하지 않습니다.",
       trendTitle: "일별 추세", tableTitle: "상세",
-      filterSources: "소스", filterRange: "날짜 범위",
+      filterSources: "소스", filterRange: "날짜 범위", filterModels: "모델",
       range7: "7일", range30: "30일", range90: "90일", rangeAll: "전체",
-      from: "시작일", to: "종료일", date: "날짜", source: "소스",
-      emptyTitle: "선택한 범위에 사용량이 없습니다", emptyHint: "소스나 날짜 범위를 바꿔 보세요.",
-      generated: "업데이트",
+      from: "시작일", to: "종료일", date: "날짜", source: "소스", model: "모델",
+      groupBy: "차트 그룹", groupSource: "소스별", groupModel: "모델별",
+      modelTitle: "모델 순위", modelMeta: "모델 {n}개",
+      modelEmpty: "선택한 범위에 모델 상세가 없습니다",
+      modelsNoneSelected: "모든 모델을 해제했습니다. 위에서 모델을 선택하면 차트와 표가 다시 표시됩니다.",
+      other: "기타", unattributed: "미분류",
+      all: "전체", none: "해제", share: "비중",
+      autoRefresh: "자동 새로고침", autoOff: "끄기",
+      modelCostNote: "모델 비용은 소스가 제공한 모델별 비용만 합산합니다. 일부 소스(예: Codex)는 제공하지 않으므로 모델 비용이 총 비용보다 낮을 수 있습니다. 소스나 모델을 바꾸면 차트와 표가 즉시 갱신됩니다.",
+      emptyTitle: "선택한 범위에 사용량이 없습니다", emptyHint: "소스, 모델 또는 날짜 범위를 바꿔 보세요.",
+      generated: "업데이트", rowsCapped: "처음 {n}개 행만 표시합니다. 날짜 범위를 좁히세요.",
       errorTimeout: "수집 시간 초과", errorCommandFailed: "수집기 실행 실패", errorUnknownSchema: "호환되지 않는 데이터 형식",
       errorOutputTooLarge: "데이터 한도 초과", errorCanceled: "수집 취소됨",
       errorUnsupported: "지원하지 않는 소스", errorGeneric: "알 수 없는 오류",
@@ -464,10 +619,18 @@ tfoot td { font-weight: 650; border-bottom: 0; }
     key: "",
     report: null,
     loading: false,
-    sources: new Set(SOURCES),
+    sources: new Set(),
+    sourcesTouched: false,
+    models: new Set(),
+    knownModels: new Set(),
+    modelsTouched: false,
     from: "",
     to: "",
     range: "30",
+    group: "source",
+    auto: "0",
+    timer: 0,
+    pendingAutoRange: false,
     language: "zh-CN"
   };
 
@@ -501,9 +664,11 @@ tfoot td { font-weight: 650; border-bottom: 0; }
     return "en";
   }
 
-  function t(key) {
+  function t(key, vars) {
     const pack = STRINGS[state.language] || STRINGS.en;
-    return pack[key] || STRINGS.en[key] || key;
+    let value = pack[key] || STRINGS.en[key] || key;
+    if (vars) Object.keys(vars).forEach((name) => { value = value.replace("{" + name + "}", String(vars[name])); });
+    return value;
   }
 
   function applyLanguage() {
@@ -512,9 +677,8 @@ tfoot td { font-weight: 650; border-bottom: 0; }
     i18nNodes().forEach((node) => { node.textContent = t(node.dataset.i18n); });
     el("management-key").placeholder = t("authPlaceholder");
     document.title = t("appTitle");
-    renderSourceFilter();
-    renderRangePresets();
     if (state.report) render();
+    else { renderSourceFilter(); renderRangePresets(); }
   }
 
   // Read the management center's saved key when this page runs on the same
@@ -576,7 +740,12 @@ tfoot td { font-weight: 650; border-bottom: 0; }
     return String(n);
   }
 
+  function formatExact(value) {
+    return (Number(value) || 0).toLocaleString(state.language);
+  }
+
   function formatCost(value) {
+    if (value === null || value === undefined) return "—";
     const n = Number(value) || 0;
     if (n === 0) return "$0.00";
     if (n < 0.01) return "<$0.01";
@@ -613,6 +782,7 @@ tfoot td { font-weight: 650; border-bottom: 0; }
   }
 
   function sourceLabel(source) { return SOURCE_LABELS[source] || source; }
+  function isKnownSource(source) { return SOURCES.indexOf(source) >= 0; }
 
   function errorLabel(code) {
     const map = {
@@ -636,78 +806,225 @@ tfoot td { font-weight: 650; border-bottom: 0; }
     return bySource;
   }
 
-  function filteredRows() {
+  // Sources and models are preselected from the first report, then the user's
+  // choices win. New entries appear selected so no data is hidden silently.
+  function reconcileSelection() {
+    const statuses = sourceStatus();
+    if (!state.sourcesTouched) {
+      state.sources = new Set(Object.keys(statuses).filter((source) => statuses[source].status === "ok"));
+    }
+    const models = collectModels();
+    if (!state.modelsTouched) {
+      state.models = new Set(models);
+      state.knownModels = new Set(models);
+      return;
+    }
+    const known = new Set(models);
+    const knownBefore = state.knownModels || new Set();
+    const next = new Set(Array.from(state.models).filter((model) => known.has(model)));
+    models.forEach((model) => {
+      if (!knownBefore.has(model)) next.add(model);
+    });
+    state.models = next;
+    state.knownModels = known;
+  }
+
+  function collectModels() {
+    const names = new Set();
     if (!state.report || !Array.isArray(state.report.sources)) return [];
-    const rows = [];
     state.report.sources.forEach((source) => {
       if (!source || !state.sources.has(source.source) || source.status === "error") return;
       (Array.isArray(source.daily) ? source.daily : []).forEach((row) => {
         if (!row || typeof row.date !== "string") return;
         if (state.from && row.date < state.from) return;
         if (state.to && row.date > state.to) return;
-        rows.push({
-          date: row.date,
-          source: source.source,
-          inputTokens: Number(row.inputTokens) || 0,
-          outputTokens: Number(row.outputTokens) || 0,
-          cacheCreationTokens: Number(row.cacheCreationTokens) || 0,
-          cacheReadTokens: Number(row.cacheReadTokens) || 0,
-          totalTokens: Number(row.totalTokens) || 0,
-          costUSD: Number(row.costUSD) || 0
+        (Array.isArray(row.models) ? row.models : []).forEach((model) => {
+          if (model && typeof model.model === "string") names.add(model.model);
         });
       });
     });
-    rows.sort((a, b) => b.date.localeCompare(a.date) || a.source.localeCompare(b.source));
+    return Array.from(names);
+  }
+
+  function dateInRange(date) {
+    if (state.from && date < state.from) return false;
+    if (state.to && date > state.to) return false;
+    return true;
+  }
+
+  function selectedSources() {
+    const statuses = sourceStatus();
+    return Object.keys(statuses).filter((source) => state.sources.has(source) && statuses[source].status !== "error");
+  }
+
+  // Build (date, source, model) entries. A day's reported total is
+  // authoritative: unattributed tokens become an "unattributed" entry instead
+  // of being dropped or redistributed.
+  function buildEntries() {
+    const entries = [];
+    if (!state.report || !Array.isArray(state.report.sources)) return entries;
+    const wanted = new Set(selectedSources());
+    state.report.sources.forEach((source) => {
+      if (!wanted.has(source.source)) return;
+      (Array.isArray(source.daily) ? source.daily : []).forEach((row) => {
+        if (!row || typeof row.date !== "string" || !dateInRange(row.date)) return;
+        const base = {
+          date: row.date,
+          source: source.source,
+          input: Number(row.inputTokens) || 0,
+          output: Number(row.outputTokens) || 0,
+          cacheRead: Number(row.cacheReadTokens) || 0,
+          cacheWrite: Number(row.cacheCreationTokens) || 0,
+          total: Number(row.totalTokens) || 0,
+          cost: typeof row.costUSD === "number" ? row.costUSD : null
+        };
+        const models = (Array.isArray(row.models) ? row.models : []).filter((model) => model && typeof model.model === "string");
+        if (!models.length) {
+          entries.push(Object.assign({}, base, { model: "", costKnown: base.cost !== null }));
+          return;
+        }
+        let known = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0, cost: 0 };
+        let costComplete = true;
+        models.forEach((model) => {
+          const cost = typeof model.costUSD === "number" ? model.costUSD : null;
+          if (cost === null) costComplete = false;
+          entries.push({
+            date: row.date,
+            source: source.source,
+            model: model.model,
+            input: Number(model.inputTokens) || 0,
+            output: Number(model.outputTokens) || 0,
+            cacheRead: Number(model.cacheReadTokens) || 0,
+            cacheWrite: Number(model.cacheCreationTokens) || 0,
+            total: Number(model.totalTokens) || 0,
+            cost: cost,
+            costKnown: cost !== null
+          });
+          known.input += Number(model.inputTokens) || 0;
+          known.output += Number(model.outputTokens) || 0;
+          known.cacheRead += Number(model.cacheReadTokens) || 0;
+          known.cacheWrite += Number(model.cacheCreationTokens) || 0;
+          known.total += Number(model.totalTokens) || 0;
+          if (cost !== null) known.cost += cost;
+        });
+        const remainder = {
+          input: Math.max(0, base.input - known.input),
+          output: Math.max(0, base.output - known.output),
+          cacheRead: Math.max(0, base.cacheRead - known.cacheRead),
+          cacheWrite: Math.max(0, base.cacheWrite - known.cacheWrite),
+          total: Math.max(0, base.total - known.total)
+        };
+        const costRemainder = costComplete && base.cost !== null ? Math.max(0, base.cost - known.cost) : null;
+        if (remainder.total > 0 || remainder.input || remainder.output || remainder.cacheRead || remainder.cacheWrite || (costRemainder || 0) > 1e-9) {
+          entries.push({
+            date: row.date, source: source.source, model: "",
+            input: remainder.input, output: remainder.output, cacheRead: remainder.cacheRead,
+            cacheWrite: remainder.cacheWrite, total: remainder.total,
+            cost: costRemainder, costKnown: costRemainder !== null
+          });
+        }
+      });
+    });
+    return entries;
+  }
+
+  function modelSelected(model) {
+    if (!state.modelsTouched) return true;
+    return state.models.has(model);
+  }
+
+  function filteredEntries() {
+    return buildEntries().filter((entry) => entry.model === "" || modelSelected(entry.model));
+  }
+
+  function entriesTotals(entries) {
+    return entries.reduce((acc, entry) => {
+      acc.input += entry.input;
+      acc.output += entry.output;
+      acc.cacheRead += entry.cacheRead;
+      acc.cacheWrite += entry.cacheWrite;
+      acc.total += entry.total;
+      if (entry.cost !== null) { acc.cost += entry.cost; acc.costRows += 1; } else { acc.costUnknown += 1; }
+      return acc;
+    }, { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0, cost: 0, costRows: 0, costUnknown: 0 });
+  }
+
+  // Whether any selected source holds rows at all, ignoring the date filter.
+  function hasAnyData() {
+    const wanted = new Set(selectedSources());
+    return state.report.sources.some((source) =>
+      wanted.has(source.source) && (Array.isArray(source.daily) ? source.daily : [])
+        .some((row) => row && typeof row.date === "string")
+    );
+  }
+
+  function dayRows() {
+    const wanted = new Set(selectedSources());
+    const rows = [];
+    state.report.sources.forEach((source) => {
+      if (!wanted.has(source.source)) return;
+      (Array.isArray(source.daily) ? source.daily : []).forEach((row) => {
+        if (row && typeof row.date === "string" && dateInRange(row.date)) rows.push(row);
+      });
+    });
     return rows;
   }
 
-  function totalsFor(rows) {
-    return rows.reduce((acc, row) => {
-      acc.input += row.inputTokens;
-      acc.output += row.outputTokens;
-      acc.cacheRead += row.cacheReadTokens;
-      acc.cacheWrite += row.cacheCreationTokens;
-      acc.total += row.totalTokens;
-      acc.cost += row.costUSD;
-      return acc;
-    }, { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0, cost: 0 });
+  function renderSummary(entries) {
+    const totals = entriesTotals(entries);
+    const allModelSelected = !state.modelsTouched || Array.from(state.models).length >= collectModels().length;
+    const rowCost = dayRows().reduce((sum, row) => sum + (Number(row.costUSD) || 0), 0);
+    const costValue = allModelSelected ? rowCost : (totals.costUnknown ? null : totals.cost);
+    const other = Math.max(0, totals.total - totals.input - totals.output - totals.cacheRead - totals.cacheWrite);
+    const exactSub = (value) => (value >= 1000 ? formatExact(value) : "");
+    const cards = [
+      ["summaryTokens", formatTokens(totals.total), "var(--accent)", other ? t("summaryOther") + ": " + formatTokens(other) : exactSub(totals.total)],
+      ["summaryInput", formatTokens(totals.input), "var(--c1)", exactSub(totals.input)],
+      ["summaryOutput", formatTokens(totals.output), "var(--c2)", exactSub(totals.output)],
+      ["summaryCacheRead", formatTokens(totals.cacheRead), "var(--c3)", exactSub(totals.cacheRead)],
+      ["summaryCacheWrite", formatTokens(totals.cacheWrite), "var(--c4)", exactSub(totals.cacheWrite)],
+      ["summaryCost", formatCost(costValue), "var(--c6)", allModelSelected ? "" : t("model")]
+    ];
+    el("summary").innerHTML = cards.map(([key, value, color, sub]) =>
+      '<div class="card stat" style="--stat-color:' + color + '"><div class="label"><span class="dot" style="background:' + color + '"></span>' +
+      esc(t(key)) + '</div><div class="value">' + esc(value) + '</div>' +
+      (sub ? '<div class="sub">' + esc(sub) + "</div>" : "") + "</div>"
+    ).join("");
   }
 
-  function renderSummary(rows) {
-    const totals = totalsFor(rows);
-    const cards = [
-      ["summaryTokens", formatTokens(totals.total), "var(--accent)"],
-      ["summaryInput", formatTokens(totals.input), "var(--c1)"],
-      ["summaryOutput", formatTokens(totals.output), "var(--c2)"],
-      ["summaryCacheRead", formatTokens(totals.cacheRead), "var(--c3)"],
-      ["summaryCacheWrite", formatTokens(totals.cacheWrite), "var(--c4)"],
-      ["summaryCost", formatCost(totals.cost), "var(--c5)"]
-    ];
-    el("summary").innerHTML = cards.map(([key, value, color]) =>
-      '<div class="card stat"><div class="label"><span class="dot" style="background:' + color + '"></span>' +
-      esc(t(key)) + '</div><div class="value">' + esc(value) + "</div></div>"
-    ).join("");
+  function sourceCounts() {
+    const counts = {};
+    buildEntries().forEach((entry) => {
+      if (!entry.model) return;
+      counts[entry.source] = (counts[entry.source] || 0) + entry.total;
+    });
+    return counts;
   }
 
   function renderSourceFilter() {
     const host = el("source-filter");
+    const statuses = sourceStatus();
+    const listed = Object.keys(statuses).length ? Object.keys(statuses) : SOURCES;
+    const counts = sourceCounts();
     host.innerHTML = "";
-    SOURCES.forEach((source) => {
-      const status = sourceStatus()[source];
+    listed.forEach((source) => {
+      const status = statuses[source];
       const label = document.createElement("label");
       label.className = "chip";
       const input = document.createElement("input");
       input.type = "checkbox";
       input.checked = state.sources.has(source);
       input.value = source;
+      input.disabled = status && status.status === "error";
       input.addEventListener("change", () => {
+        state.sourcesTouched = true;
         if (input.checked) state.sources.add(source); else state.sources.delete(source);
         render();
       });
       const span = document.createElement("span");
       const dot = document.createElement("i");
       dot.className = "dot";
-      dot.style.background = SOURCE_COLORS[source];
+      dot.style.background = SOURCE_COLORS[source] || "var(--muted)";
       span.appendChild(dot);
       span.appendChild(document.createTextNode(sourceLabel(source)));
       if (status && status.status === "error") {
@@ -724,6 +1041,11 @@ tfoot td { font-weight: 650; border-bottom: 0; }
         flag.style.fontStyle = "normal";
         flag.textContent = " · " + t("sourceEmpty");
         span.appendChild(flag);
+      } else if (counts[source]) {
+        const count = document.createElement("span");
+        count.className = "count";
+        count.textContent = formatTokens(counts[source]);
+        span.appendChild(count);
       }
       label.appendChild(input);
       label.appendChild(span);
@@ -770,38 +1092,71 @@ tfoot td { font-weight: 650; border-bottom: 0; }
     if (retry) retry.addEventListener("click", () => load(true));
   }
 
-  function renderChart(rows) {
+  const UNATTRIBUTED = "\u0000unattributed";
+
+  function aggregateBy(entries, key) {
+    const groups = new Map();
+    entries.forEach((entry) => {
+      const name = key === "model" ? (entry.model || UNATTRIBUTED) : entry.source;
+      const current = groups.get(name) || { name, total: 0, input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
+      current.total += entry.total;
+      current.input += entry.input;
+      current.output += entry.output;
+      current.cacheRead += entry.cacheRead;
+      current.cacheWrite += entry.cacheWrite;
+      groups.set(name, current);
+    });
+    return groups;
+  }
+
+  function renderChart(entries) {
     const svg = el("chart");
     const scroll = el("chart-scroll");
-    const byDate = new Map();
-    rows.forEach((row) => {
-      const entry = byDate.get(row.date) || { date: row.date, input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 };
-      entry.input += row.inputTokens;
-      entry.output += row.outputTokens;
-      entry.cacheRead += row.cacheReadTokens;
-      entry.cacheWrite += row.cacheCreationTokens;
-      entry.total += row.totalTokens;
-      byDate.set(row.date, entry);
-    });
-    const days = Array.from(byDate.values()).sort((a, b) => a.date.localeCompare(b.date));
     const legend = el("legend");
-    const legendKeys = ["summaryInput", "summaryOutput", "summaryCacheRead", "summaryCacheWrite"];
-    const hasOther = days.some((day) => day.total > day.input + day.output + day.cacheRead + day.cacheWrite);
-    legend.innerHTML = legendKeys.map((key, index) =>
-      '<span><i class="dot" style="background:var(--c' + (index + 1) + ')"></i>' + esc(t(key)) + "</span>"
-    ).join("") + (hasOther ? '<span><i class="dot" style="background:var(--c5)"></i>' + esc(t("summaryOther")) + "</span>" : "");
+    const byDate = new Map();
+    const groupTotals = new Map();
+    entries.forEach((entry) => {
+      const name = state.group === "model" ? (entry.model || t("unattributed")) : entry.source;
+      const day = byDate.get(entry.date) || { date: entry.date, groups: new Map(), total: 0 };
+      byDate.set(entry.date, day);
+      const current = day.groups.get(name) || { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 };
+      current.input += entry.input;
+      current.output += entry.output;
+      current.cacheRead += entry.cacheRead;
+      current.cacheWrite += entry.cacheWrite;
+      current.total += entry.total;
+      day.groups.set(name, current);
+      day.total += entry.total;
+      groupTotals.set(name, (groupTotals.get(name) || 0) + entry.total);
+    });
+    const ranked = Array.from(groupTotals.entries()).sort((a, b) => b[1] - a[1]);
+    const visible = ranked.slice(0, 6).map(([name]) => name);
+    const hidden = ranked.length > 6;
+    const colorFor = (name) => {
+      const index = visible.indexOf(name);
+      return index >= 0 ? PALETTE[index % PALETTE.length] : "var(--muted)";
+    };
+    const labelFor = (name) => (state.group === "source" ? sourceLabel(name) : name);
+
+    legend.innerHTML = visible.map((name) =>
+      '<span><i class="dot" style="background:' + colorFor(name) + '"></i>' + esc(labelFor(name)) + "</span>"
+    ).join("") + (hidden ? '<span><i class="dot" style="background:var(--muted)"></i>' + esc(t("other")) + "</span>" : "");
     el("chart-title").textContent = t("trendTitle");
     svg.setAttribute("aria-label", t("trendTitle"));
 
+    const days = Array.from(byDate.values()).sort((a, b) => a.date.localeCompare(b.date));
     if (!days.length) {
       svg.innerHTML = "";
+      svg.setAttribute("viewBox", "0 0 320 120");
       svg.setAttribute("height", "120");
+      svg.setAttribute("width", "320");
+      svg.style.minWidth = "";
       return;
     }
-    const barSlot = 26;
+    const barSlot = 28;
     const width = Math.max(scroll.clientWidth || 320, days.length * barSlot + 48);
-    const height = 260;
-    const padTop = 14, padBottom = 30, padLeft = 48, padRight = 12;
+    const height = 270;
+    const padTop = 14, padBottom = 30, padLeft = 50, padRight = 12;
     const plotW = width - padLeft - padRight;
     const plotH = height - padTop - padBottom;
     const maxTotal = Math.max.apply(null, days.map((day) => Math.max(day.total, 1)));
@@ -816,31 +1171,22 @@ tfoot td { font-weight: 650; border-bottom: 0; }
     const labelStep = Math.max(1, Math.ceil(days.length / Math.max(1, Math.floor(plotW / 64))));
     days.forEach((day, index) => {
       const slot = plotW / days.length;
-      const barW = Math.max(6, Math.min(20, slot * 0.62));
+      const barW = Math.max(6, Math.min(22, slot * 0.62));
       const x = padLeft + slot * index + (slot - barW) / 2;
-      const segments = [
-        ["input", "var(--c1)"],
-        ["output", "var(--c2)"],
-        ["cacheRead", "var(--c3)"],
-        ["cacheWrite", "var(--c4)"]
-      ];
-      const known = day.input + day.output + day.cacheRead + day.cacheWrite;
-      const other = Math.max(0, day.total - known);
+      const ordered = Array.from(day.groups.entries()).sort((a, b) => {
+        const aIndex = visible.indexOf(a[0]);
+        const bIndex = visible.indexOf(b[0]);
+        return (aIndex < 0 ? 99 : aIndex) - (bIndex < 0 ? 99 : bIndex);
+      });
       let y = padTop + plotH;
       const tooltip = day.date + " · " + t("summaryTokens") + " " + formatTokens(day.total);
       out += '<g><title>' + esc(tooltip) + "</title>";
-      segments.forEach(([key, color]) => {
-        const value = day[key];
-        if (!value) return;
-        const h = (value / niceMax) * plotH;
+      ordered.forEach(([name, value]) => {
+        if (!value.total) return;
+        const h = (value.total / niceMax) * plotH;
         y -= h;
-        out += '<rect x="' + x + '" y="' + y + '" width="' + barW + '" height="' + h + '" rx="1" style="fill:' + color + '"/>';
+        out += '<rect x="' + x + '" y="' + y + '" width="' + barW + '" height="' + h + '" rx="2" style="fill:' + colorFor(name) + '"/>';
       });
-      if (other > 0) {
-        const h = (other / niceMax) * plotH;
-        y -= h;
-        out += '<rect x="' + x + '" y="' + y + '" width="' + barW + '" height="' + h + '" rx="1" style="fill:var(--c5)"/>';
-      }
       out += "</g>";
       if (index % labelStep === 0) {
         out += '<text x="' + (x + barW / 2) + '" y="' + (height - 10) + '" text-anchor="middle" style="fill:var(--muted);font-size:11px">' + esc(day.date.slice(5)) + "</text>";
@@ -860,65 +1206,157 @@ tfoot td { font-weight: 650; border-bottom: 0; }
     return (steps.find((step) => fraction <= step) || 10) * exponent;
   }
 
-  function renderTable(rows) {
+  // Model ranking doubles as the model filter. Aggregates ignore the model
+  // selection so deselected models stay visible and can be re-enabled.
+  function renderModels() {
+    const host = el("model-list");
+    const entries = buildEntries();
+    const groups = aggregateBy(entries, "model");
+    const sourcesFor = {};
+    entries.forEach((entry) => {
+      if (!entry.model) return;
+      (sourcesFor[entry.model] = sourcesFor[entry.model] || new Set()).add(entry.source);
+    });
+    const costFor = {};
+    const knownFor = {};
+    entries.forEach((entry) => {
+      if (!entry.model) return;
+      if (entry.cost !== null) {
+        costFor[entry.model] = (costFor[entry.model] || 0) + entry.cost;
+        knownFor[entry.model] = (knownFor[entry.model] || 0) + entry.total;
+      }
+    });
+    const rows = Array.from(groups.values()).filter((row) => row.name !== UNATTRIBUTED)
+      .sort((a, b) => b.total - a.total);
+    const total = rows.reduce((sum, row) => sum + row.total, 0);
+    const all = collectModels();
+    el("model-meta").textContent = rows.length ? t("modelMeta", { n: rows.length }) : "";
+    if (!rows.length) {
+      host.innerHTML = '<div class="empty" style="padding:24px 8px">' + esc(t("modelEmpty")) + "</div>";
+      return;
+    }
+    const noneSelected = state.modelsTouched && !rows.some((row) => state.models.has(row.name));
+    let html = (noneSelected
+      ? '<div class="notice" data-kind="info" style="margin:0 0 10px;padding:9px 12px"><div class="message">' + esc(t("modelsNoneSelected")) + "</div></div>"
+      : "") + '<div class="model-row head" aria-hidden="true"><span></span><span>' + esc(t("model")) +
+      "</span><span>" + esc(t("share")) + "</span><span class='num'>" + esc(t("summaryTokens")) +
+      "</span><span class='num'>" + esc(t("summaryCost")) + "</span></div>";
+    rows.forEach((row) => {
+      const share = total > 0 ? (row.total / total) * 100 : 0;
+      const sources = Array.from(sourcesFor[row.name] || []).map(sourceLabel).join(", ");
+      const cost = knownFor[row.name] ? costFor[row.name] : null;
+      const checked = state.models.has(row.name) || !state.modelsTouched;
+      html += '<label class="model-row">' +
+        '<input class="rank-check" type="checkbox" value="' + esc(row.name) + '"' + (checked ? " checked" : "") + ">" +
+        '<span class="model-name" title="' + esc(row.name + (sources ? " · " + sources : "")) + '">' + esc(row.name) +
+        '<span class="src">' + esc(sources) + "</span></span>" +
+        '<span class="share"><i style="width:' + Math.max(2, share).toFixed(1) + '%"></i></span>' +
+        '<span class="num">' + esc(formatTokens(row.total)) + "</span>" +
+        '<span class="num' + (cost === null ? " muted" : "") + '">' + esc(formatCost(cost)) + "</span>" +
+        "</label>";
+    });
+    host.innerHTML = html;
+    host.querySelectorAll(".rank-check").forEach((input) => {
+      input.addEventListener("change", () => {
+        state.modelsTouched = true;
+        if (input.checked) state.models.add(input.value); else state.models.delete(input.value);
+        render();
+      });
+    });
+  }
+
+  function renderTable(entries) {
     const body = el("rows");
     const totalRow = el("rows-total");
+    const rows = entries.slice().sort((a, b) =>
+      b.date.localeCompare(a.date) || String(a.source).localeCompare(b.source) ||
+      String(a.model).localeCompare(b.model) || b.total - a.total
+    );
+    const shown = rows.slice(0, TABLE_LIMIT);
     body.innerHTML = "";
-    rows.forEach((row) => {
+    shown.forEach((row) => {
       const tr = document.createElement("tr");
       const cells = [
         row.date,
-        row.source,
-        formatTokens(row.inputTokens),
-        formatTokens(row.outputTokens),
-        formatTokens(row.cacheReadTokens),
-        formatTokens(row.cacheCreationTokens),
-        formatTokens(row.totalTokens),
-        formatCost(row.costUSD)
+        null,
+        row.model || t("unattributed"),
+        formatTokens(row.input),
+        formatTokens(row.output),
+        formatTokens(row.cacheRead),
+        formatTokens(row.cacheWrite),
+        formatTokens(row.total),
+        formatCost(row.cost)
       ];
       cells.forEach((value, index) => {
         const td = document.createElement("td");
         if (index === 1) {
-          td.innerHTML = '<span class="badge"><i class="dot" style="background:' + SOURCE_COLORS[row.source] + '"></i><span class="name">' + esc(sourceLabel(row.source)) + "</span></span>";
+          td.innerHTML = '<span class="badge"><i class="dot" style="background:' + (SOURCE_COLORS[row.source] || "var(--muted)") + '"></i><span class="name">' + esc(sourceLabel(row.source)) + "</span></span>";
         } else if (index === 0) {
           td.textContent = value;
           td.className = "mono";
         } else {
           td.textContent = value;
+          if (index === 8 && row.cost === null) td.className = "muted";
         }
         tr.appendChild(td);
       });
       body.appendChild(tr);
     });
-    if (!rows.length) {
-      totalRow.innerHTML = "";
-      return;
+    const totals = entriesTotals(entries);
+    const allModelSelected = !state.modelsTouched || Array.from(state.models).length >= collectModels().length;
+    const cost = allModelSelected ? dayRows().reduce((sum, row) => sum + (Number(row.costUSD) || 0), 0) : (totals.costUnknown ? null : totals.cost);
+    let footer = "";
+    if (entries.length) {
+      footer = "<tr><td>" + esc(t("total")) + "</td><td></td><td></td><td>" + esc(formatTokens(totals.input)) +
+        "</td><td>" + esc(formatTokens(totals.output)) + "</td><td>" + esc(formatTokens(totals.cacheRead)) +
+        "</td><td>" + esc(formatTokens(totals.cacheWrite)) + "</td><td>" + esc(formatTokens(totals.total)) +
+        "</td><td>" + esc(formatCost(cost)) + "</td></tr>";
+      if (rows.length > TABLE_LIMIT) {
+        footer += '<tr><td colspan="9" class="footnote">' + esc(t("rowsCapped", { n: TABLE_LIMIT })) + "</td></tr>";
+      }
     }
-    const totals = totalsFor(rows);
-    totalRow.innerHTML = "<tr><td>" + esc(t("total")) + "</td><td></td><td>" + esc(formatTokens(totals.input)) + "</td><td>" +
-      esc(formatTokens(totals.output)) + "</td><td>" + esc(formatTokens(totals.cacheRead)) + "</td><td>" +
-      esc(formatTokens(totals.cacheWrite)) + "</td><td>" + esc(formatTokens(totals.total)) + "</td><td>" +
-      esc(formatCost(totals.cost)) + "</td></tr>";
+    totalRow.innerHTML = footer;
   }
 
   function render() {
     if (!state.report) return;
-    const rows = filteredRows();
-    const totals = totalsFor(rows);
-    const failed = Object.keys(sourceStatus()).filter((key) => sourceStatus()[key].status === "error");
+    reconcileSelection();
+    // A preset window can miss older history entirely (for example after a
+    // long break). Widen to "all" once, on the first snapshot only: a later
+    // custom range chosen by the user is never overridden.
+    if (state.pendingAutoRange) {
+      state.pendingAutoRange = false;
+      if (state.range !== "all" && !filteredEntries().length && hasAnyData()) {
+        state.range = "all";
+        state.from = "";
+        state.to = "";
+        el("date-from").value = "";
+        el("date-to").value = "";
+        renderRangePresets();
+      }
+    }
+    const baseEntries = buildEntries();
+    const entries = filteredEntries();
+    const statuses = sourceStatus();
+    const failed = Object.keys(statuses).filter((key) => statuses[key].status === "error");
     el("loading").hidden = true;
     el("content").hidden = false;
-    // With failures and no usable rows the status notice already explains the
-    // situation; an "empty range" message would mislead.
-    el("empty-state").hidden = rows.length > 0 || failed.length > 0;
+    el("empty-state").hidden = entries.length > 0 || failed.length > 0 || baseEntries.length > 0;
     el("content").querySelectorAll(".summary-grid, .panel").forEach((node) => {
-      node.style.display = rows.length ? "" : "none";
+      // The model panel is also the model filter: hiding it when every model is
+      // deselected would make the selection impossible to restore.
+      const keep = node.id === "model-panel" && baseEntries.length > 0;
+      node.style.display = entries.length || keep ? "" : "none";
     });
     renderStatus();
     renderSourceFilter();
-    renderSummary(rows);
-    renderChart(rows);
-    renderTable(rows);
+    renderSummary(entries);
+    renderChart(entries);
+    renderModels();
+    renderTable(entries);
+    document.querySelectorAll("#group-by button").forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.group === state.group));
+    });
     const generated = state.report.generatedAt ? new Date(state.report.generatedAt) : null;
     el("generated").textContent = generated && !isNaN(generated)
       ? t("generated") + " " + generated.toLocaleString(state.language)
@@ -927,13 +1365,13 @@ tfoot td { font-weight: 650; border-bottom: 0; }
     el("refresh").disabled = state.loading;
   }
 
-  function showLoading() {
+  function showLoading(quiet) {
     state.loading = true;
+    if (quiet) return; // background refreshes must not touch the DOM
+    el("refresh").disabled = true;
     el("loading").hidden = false;
     el("content").hidden = true;
     el("empty-state").hidden = true;
-    el("status-notice").hidden = true;
-    el("refresh").disabled = true;
     const status = el("status-notice");
     status.hidden = false;
     status.dataset.kind = "info";
@@ -952,12 +1390,14 @@ tfoot td { font-weight: 650; border-bottom: 0; }
     el("refresh").disabled = false;
   }
 
-  async function load(force) {
+  async function load(force, quiet) {
     if (!state.key || state.loading) return;
-    el("auth-error").hidden = true;
-    el("auth-form").hidden = true;
-    el("dashboard").hidden = false;
-    showLoading();
+    if (!quiet) {
+      el("auth-error").hidden = true;
+      el("auth-form").hidden = true;
+      el("dashboard").hidden = false;
+    }
+    showLoading(quiet);
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 90000);
     try {
@@ -971,6 +1411,7 @@ tfoot td { font-weight: 650; border-bottom: 0; }
       });
       if (response.status === 401 || response.status === 403) {
         state.key = "";
+        stopAuto();
         el("dashboard").hidden = true;
         el("top-actions").hidden = true;
         el("auth-form").hidden = false;
@@ -981,20 +1422,47 @@ tfoot td { font-weight: 650; border-bottom: 0; }
       if (!response.ok) throw new Error("request failed");
       const data = await response.json();
       if (!data || !Array.isArray(data.sources)) throw new Error("invalid payload");
+      const previous = state.report;
       state.report = data;
+      if (!previous) state.pendingAutoRange = true;
       state.loading = false;
-      render();
+      // A quiet refresh with an unchanged snapshot must not rebuild the DOM:
+      // re-rendering churns layout and CPU for identical pixels.
+      if (!(quiet && previous && previous.generatedAt === data.generatedAt)) render();
     } catch (error) {
       state.loading = false;
-      if (state.report) {
-        render();
-      }
+      if (state.report) render();
       showLoadError();
     } finally {
       clearTimeout(timer);
       state.loading = false;
-      el("refresh").disabled = false;
+      if (!quiet) el("refresh").disabled = false;
     }
+  }
+
+  // Auto refresh never forces a scan and pauses while the tab is hidden, so a
+  // background page cannot keep waking the collector or the CPU.
+  function scheduleAuto() {
+    clearTimeout(state.timer);
+    const seconds = Number(state.auto);
+    if (!seconds) return;
+    state.timer = setTimeout(async () => {
+      if (!document.hidden && state.key) await load(false, true);
+      scheduleAuto();
+    }, seconds * 1000);
+  }
+
+  function startAuto(seconds) {
+    state.auto = String(seconds);
+    el("auto-refresh").value = state.auto;
+    scheduleAuto();
+  }
+
+  function stopAuto() {
+    clearTimeout(state.timer);
+    state.timer = 0;
+    state.auto = "0";
+    el("auto-refresh").value = "0";
   }
 
   function wire() {
@@ -1008,6 +1476,23 @@ tfoot td { font-weight: 650; border-bottom: 0; }
       load(false);
     });
     el("refresh").addEventListener("click", () => load(true));
+    el("auto-refresh").addEventListener("change", (event) => startAuto(event.target.value));
+    el("sources-all").addEventListener("click", () => {
+      state.sourcesTouched = true;
+      Object.keys(sourceStatus()).forEach((source) => state.sources.add(source));
+      render();
+    });
+    el("sources-none").addEventListener("click", () => {
+      state.sourcesTouched = true;
+      state.sources = new Set();
+      render();
+    });
+    document.querySelectorAll("#group-by button").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.group = button.dataset.group;
+        if (state.report) render();
+      });
+    });
     el("date-from").addEventListener("change", (event) => {
       state.from = event.target.value;
       state.range = "custom";
@@ -1027,7 +1512,7 @@ tfoot td { font-weight: 650; border-bottom: 0; }
     let resizeTimer = 0;
     window.addEventListener("resize", () => {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => { if (state.report) renderChart(filteredRows()); }, 120);
+      resizeTimer = setTimeout(() => { if (state.report) renderChart(filteredEntries()); }, 120);
     });
     window.addEventListener("storage", (event) => {
       if (event.key === STORAGE_LANGUAGE || event.key === STORAGE_THEME) {
@@ -1035,6 +1520,9 @@ tfoot td { font-weight: 650; border-bottom: 0; }
         applyLanguage();
         if (state.report) render();
       }
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && state.auto !== "0" && state.key && !state.loading) load(false, true);
     });
   }
 

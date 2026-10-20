@@ -3,6 +3,7 @@ package plugin
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -119,11 +120,12 @@ func TestRegistrationContract(t *testing.T) {
 	if !reg.Capabilities["management_api"] || len(reg.Capabilities) != 1 {
 		t.Fatalf("capabilities = %+v", reg.Capabilities)
 	}
-	if len(reg.Metadata.ConfigFields) != 2 {
-		t.Fatalf("config fields = %+v", reg.Metadata.ConfigFields)
+	fields := reg.Metadata.ConfigFields
+	if len(fields) != 3 {
+		t.Fatalf("config fields = %+v", fields)
 	}
-	if reg.Metadata.ConfigFields[0].Name != "binary" || reg.Metadata.ConfigFields[1].Name != "sources" {
-		t.Fatalf("unexpected config fields: %+v", reg.Metadata.ConfigFields)
+	if fields[0].Name != "binary" || fields[1].Name != "sources" || fields[2].Name != "omp_path" {
+		t.Fatalf("unexpected config fields: %+v", fields)
 	}
 }
 
@@ -429,6 +431,7 @@ func TestInvalidReconfigurePreservesCollectorAndCache(t *testing.T) {
 		"binary: ''",
 		"binary: \"bad\\npath\"",
 		"sources: not-a-list",
+		"omp_path: \"bad\\npath\"",
 	} {
 		req, _ := json.Marshal(map[string][]byte{"config_yaml": []byte(yaml)})
 		if !strings.Contains(string(p.Handle("plugin.reconfigure", req)), `"invalid_config"`) {
@@ -471,7 +474,7 @@ func TestParseConfigDefaultsAndValidation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.Binary != usage.DefaultBinary || len(cfg.Sources) != 3 {
+	if cfg.Binary != usage.DefaultBinary || !reflect.DeepEqual(cfg.Sources, usage.KnownSources) {
 		t.Fatalf("defaults = %+v", cfg)
 	}
 
@@ -483,11 +486,19 @@ func TestParseConfigDefaultsAndValidation(t *testing.T) {
 		t.Fatalf("custom = %+v", cfg)
 	}
 
+	cfg, err = parseConfig([]byte("omp_path: ~/.omp/agent/sessions\nsources: [omp]\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.OMPPath != "~/.omp/agent/sessions" || len(cfg.Sources) != 1 || cfg.Sources[0] != "omp" {
+		t.Fatalf("omp config = %+v", cfg)
+	}
+
 	cfg, err = parseConfig([]byte("unknown_field: keep-me\n"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.Binary != usage.DefaultBinary || len(cfg.Sources) != 3 {
+	if cfg.Binary != usage.DefaultBinary || !reflect.DeepEqual(cfg.Sources, usage.KnownSources) {
 		t.Fatalf("unknown field changed defaults: %+v", cfg)
 	}
 }

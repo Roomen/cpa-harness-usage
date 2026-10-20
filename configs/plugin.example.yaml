@@ -12,5 +12,10 @@ plugins:
       # Embedded native collector; no Node.js/npm required on the CPA host.
       # Override with an absolute native executable path if needed.
       binary: bundled
-      # Any subset of claude, codex, opencode. Omit for all three.
-      sources: [claude, codex, opencode]
+      # Any subset of claude, codex, opencode, omp, pi, amp, droid, codebuff,
+      # hermes, goose, kilo, copilot, gemini, antigravity, kimi, qwen,
+      # openclaw, grok, zcode. Omit to collect every supported harness.
+      sources: [claude, codex, opencode, omp]
+      # oh-my-pi sessions directory. Omit to use PI_CODING_AGENT_DIR/sessions,
+      # then ~/.omp/agent/sessions.
+      omp_path: ""

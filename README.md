@@ -1,9 +1,11 @@
 # CPA Harness Usage
 
 CLIProxyAPI native plugin for local coding-harness usage reports. It collects
-daily token and estimated-cost history for **Claude Code**, **Codex**, and
-**OpenCode** from this machine, using [ccusage](https://github.com/ccusage/ccusage)
-as a separate collector, and shows it in an authenticated management dashboard.
+daily token and estimated-cost history for every harness the pinned
+[ccusage](https://github.com/ccusage/ccusage) collector supports — Claude Code,
+Codex, OpenCode, oh-my-pi (omp), pi, Amp, Droid, Codebuff, Hermes, Goose, Kilo,
+GitHub Copilot CLI, Gemini CLI, Antigravity, Kimi, Qwen, OpenClaw, Grok CLI, and
+ZCode — and shows it in an authenticated management dashboard.
 
 The plugin reads local harness history, not proxy traffic. Usage from harness
 sessions that never went through CLIProxyAPI is included. Nothing is collected
@@ -13,10 +15,14 @@ on the proxy request path, and the plugin registers no proxy hooks.
 
 - Daily aggregates per source: input, output, cache read, cache write, total
   tokens, and estimated cost.
+- Per-model breakdowns inside each day, so usage can be classified by model.
+  Models without reported cost keep an empty cost instead of a guessed one.
 - One independent status per source: `ok`, `empty`, or `error` with a safe error
   code. A failed source never hides the others.
-- A responsive browser page with summary cards, a stacked daily chart, source
-  and date-range filters, a detail table, and light/dark following the system.
+- A responsive browser page with summary cards, a stacked daily chart that can
+  group by source or model, source/model/date filters, a model ranking that
+  doubles as the model filter, a detail table, optional auto-refresh (30 s,
+  1 min, 5 min), and light/dark following the system.
 - UI languages follow CPA: `zh-CN`, `zh-TW`, `en`, `ru`, `vi`, `ko`.
 - A standalone JSON CLI (`bin/harness-usage`) that uses the same collector.
 
@@ -94,13 +100,29 @@ plugins:
       enabled: true
       priority: 0
       binary: bundled
-      sources: [claude, codex, opencode]
+      # Omit to collect every supported harness.
+      sources: [claude, codex, opencode, omp]
+      # oh-my-pi sessions. Omit to use PI_CODING_AGENT_DIR/sessions, then
+      # ~/.omp/agent/sessions.
+      omp_path: ""
 ```
 
-`binary` and `sources` are validated in `plugin.register` and
+`binary`, `sources`, and `omp_path` are validated in `plugin.register` and
 `plugin.reconfigure`. Invalid configuration is rejected and the previous
 collector stays active. Omitted fields use the defaults above. Unknown fields
 are preserved by CPA and ignored by the plugin.
+
+`sources` accepts any subset of `claude`, `codex`, `opencode`, `omp`, `pi`,
+`amp`, `droid`, `codebuff`, `hermes`, `goose`, `kilo`, `copilot`, `gemini`,
+`antigravity`, `kimi`, `qwen`, `openclaw`, `grok`, and `zcode`. The default is
+all of them. The pinned collector starts one process per selected source, and
+the plugin caps that parallelism at four, so a full scan does not fan out to
+nineteen processes at once.
+
+oh-my-pi stores pi-format sessions under `~/.omp/agent/sessions`, which ccusage
+only finds when pointed at it. The plugin passes that path to ccusage's pi
+adapter, honours `PI_CODING_AGENT_DIR` when set, and strips the adapter's
+`[pi]`/`[omp]` prefix from model names in the report.
 
 The plugin ID is `harness-usage`; the management UI reads it from the library
 filename.
@@ -156,7 +178,18 @@ Report shape:
           "cacheReadTokens": 10,
           "reasoningOutputTokens": 5,
           "totalTokens": 155,
-          "costUSD": 0.00061375
+          "costUSD": 0.00061375,
+          "models": [
+            {
+              "model": "gpt-5",
+              "inputTokens": 90,
+              "outputTokens": 50,
+              "cacheCreationTokens": 0,
+              "cacheReadTokens": 10,
+              "reasoningOutputTokens": 5,
+              "totalTokens": 155
+            }
+          ]
         }
       ]
     }
@@ -167,8 +200,19 @@ Report shape:
 `sources[].status` is `ok` (rows present), `empty` (scan succeeded, no local
 history), or `error`. Error codes are privacy-safe: `timeout`,
 `command_failed`, `output_too_large`, `unknown_schema`, `canceled`,
-`unsupported_source`. Raw logs, prompts, paths, project names, model names,
-session IDs, account data, and credentials never leave the collector.
+`unsupported_source`. Raw logs, prompts, paths, project names, session IDs,
+account data, and credentials never leave the collector. Model names are the
+only per-request detail included, because the dashboard classifies usage by
+model; they are treated as opaque labels, stripped of control characters, and
+truncated to 120 characters.
+
+`models` may be empty when an adapter reports no breakdown, and `costUSD` is
+omitted for a model when the source does not report per-model cost. A model's
+`totalTokens` is the source's reported value when present, otherwise the sum of
+its non-overlapping components. Model totals may leave usage unattributed, but
+they can never exceed the day's reported total; that is rejected as
+`unknown_schema`. The dashboard shows the remainder as "unattributed" so a day
+always adds up to its reported total.
 
 ### Token accounting
 
@@ -181,6 +225,7 @@ sources differ:
 | Claude Code | `totalCost` | input + output + cache creation + cache read |
 | Codex | `costUSD` | non-cached input + cached input + output + reasoning |
 | OpenCode | `totalCost` | input + output + cache read + cache write (reasoning is folded into the reported total) |
+| oh-my-pi (pi adapter) | `totalCost` | input + output + cache read + cache write (the session's own total wins) |
 
 Codex reports cached input separately from `inputTokens`; the plugin therefore
 shows non-cached input as "input" and never adds cache again. Cache and
@@ -202,9 +247,13 @@ silently rendered as zero usage.
 
 ```sh
 ./bin/harness-usage \
-  --sources claude,codex,opencode \
+  --sources claude,codex,opencode,omp \
+  --omp-path ~/.omp/agent/sessions \
   --timeout 45s
 ```
+
+Without `--sources`, every supported harness is collected. `--omp-path`
+overrides the oh-my-pi sessions directory.
 
 The CLI prints the same JSON report. Its exit status stays zero when individual
 sources fail; inspect `sources[].status` and `sources[].error`. It never reads
@@ -225,6 +274,7 @@ env HOME="$TMP/home" \
     CLAUDE_CONFIG_DIR="$TMP/claude" \
     CODEX_HOME="$TMP/codex" \
     OPENCODE_DATA_DIR="$TMP/opencode" \
+    PI_CODING_AGENT_DIR="$TMP/omp-agent" \
     XDG_CONFIG_HOME="$TMP/xdg/config" \
     XDG_DATA_HOME="$TMP/xdg/data" \
     XDG_CACHE_HOME="$TMP/xdg/cache" \
@@ -243,6 +293,11 @@ pricing and avoids network fetches.
   generation are not cached.
 - One scan runs at a time; callers that arrive during a scan wait for its
   result instead of starting another one.
+- Sources run in parallel, capped at four collector processes. Each source has
+  its own timeout and output cap, so one slow harness cannot block the report.
+- The dashboard's auto-refresh reuses the plugin's 60-second cache and never
+  forces a rescan, pauses while the tab is hidden, and stops when the key is
+  rejected. Only an explicit Refresh requests `?refresh=1`.
 - `plugin.quiesce` pauses collection and cancels the active scan. A subsequent
   reconfigure (including a host rollback) resumes it.
 - `plugin.shutdown` cancels scans, clears the cache, and is idempotent. Shutdown
@@ -257,7 +312,7 @@ Rendered from the built page with synthetic data:
 | --- | --- | --- |
 | 360 | Normal, dark | `docs/screenshots/360-normal.png` |
 | 360 | Empty, dark | `docs/screenshots/360-empty.png` |
-| 360 | Auth failure, dark | `docs/screenshots/360-auth.png` |
+| 360 | Authentication, dark | `docs/screenshots/360-auth.png` |
 | 360 | Loading, dark | `docs/screenshots/360-loading.png` |
 | 768 | Normal, light | `docs/screenshots/768-normal.png` |
 | 768 | Empty, light | `docs/screenshots/768-empty.png` |
@@ -270,7 +325,8 @@ Verified in this repository:
 
 - `make test` (vet + race detector) and `make build` on macOS arm64.
 - `make collector-test` against the embedded native collector with synthetic
-  Claude, Codex, and OpenCode histories, plus empty reports for each source.
+  Claude, Codex, OpenCode, and oh-my-pi histories, plus empty reports for each
+  source. Model breakdowns from each adapter are covered.
 - `make smoke` from a stock Go host on macOS arm64, covering both a synthetic
   collector override and the real embedded collector in a fully isolated process.
 - Linux amd64/arm64 shared libraries cross-built with Go 1.26.0 and Zig 0.15.2;
@@ -281,15 +337,22 @@ Verified in this repository:
 - The built library exports a working C ABI: a local `dlopen` smoke test called
   `cliproxy_plugin_init`, `plugin.register`, `management.register`, and
   `management.handle` successfully.
-- Collector and CLI against synthetic Claude Code, Codex, and OpenCode data in
-  an isolated environment, including a source failure that left the others
-  usable.
-- Dashboard behavior with a local mock of the two routes: normal, empty, partial
-  failure, loading, authentication failure, retry/refresh, source/date filters,
-  saved-key auto-load from the management center, language switching,
-  light/dark, and layout at 360, 768, and 1440 px. Document width never exceeded
-  the viewport at any of the three widths; the table scrolls inside its own
-  container on phones. Screenshots are in `docs/screenshots/`.
+- Collector and CLI against synthetic Claude Code, Codex, OpenCode, and oh-my-pi
+  data in an isolated environment, including a source failure that left the
+  others usable. A full default scan of all 19 sources against empty synthetic
+  homes finished in 0.4 s on macOS arm64.
+- Dashboard behavior with a local mock of the two routes and with a report
+  produced by the real embedded collector: normal, empty, partial failure,
+  loading, authentication failure, retry/refresh, source/model/date filters,
+  chart grouping by source and by model, model ranking, saved-key auto-load from
+  the management center, language switching, light/dark, and layout at 360, 768,
+  and 1440 px. Document width never exceeded the viewport at any of the three
+  widths; the table scrolls inside its own container on phones. Auto-refresh was
+  checked to pause while the tab is hidden and to perform zero DOM mutations
+  when the snapshot is unchanged. Deselecting every model keeps the model panel
+  and its checkboxes visible so the selection can be restored, and the initial
+  date-range widening runs only on the first snapshot, never over a range the
+  user chose. Screenshots are in `docs/screenshots/`.
 
 Not verified:
 
