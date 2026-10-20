@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"cpa-harness-usage/internal/quota"
 	"cpa-harness-usage/internal/usage"
 	"cpa-harness-usage/web"
 )
@@ -139,7 +140,8 @@ func TestManagementRoutesAndStaticPageBoundary(t *testing.T) {
 	if err := json.Unmarshal(result(t, p.Handle("management.register", nil)), &routes); err != nil {
 		t.Fatal(err)
 	}
-	if len(routes.Routes) != 1 || routes.Routes[0].Method != "GET" || routes.Routes[0].Path != "/harness-usage/daily" {
+	if len(routes.Routes) != 2 || routes.Routes[0].Method != "GET" || routes.Routes[0].Path != "/harness-usage/daily" ||
+		routes.Routes[1].Method != "GET" || routes.Routes[1].Path != "/harness-usage/quota" {
 		t.Fatalf("routes = %+v", routes.Routes)
 	}
 	if len(routes.Resources) != 1 || routes.Resources[0].Path != "/usage" || routes.Resources[0].Menu == "" {
@@ -512,5 +514,102 @@ func TestPageNeverPersistsOrLogsSecrets(t *testing.T) {
 	}
 	if !strings.Contains(page, "Authorization: \"Bearer \" + state.key") {
 		t.Fatal("page does not send the key via the Authorization header")
+	}
+}
+
+type fakeQuota struct {
+	mu        sync.Mutex
+	refreshes []bool
+	status    int
+	body      []byte
+	paused    bool
+	closed    bool
+	host      quota.HostFunc
+}
+
+func (f *fakeQuota) Snapshot(refresh bool) (int, []byte) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.refreshes = append(f.refreshes, refresh)
+	if f.paused || f.closed {
+		return 503, []byte(`{"error":"unavailable"}`)
+	}
+	return f.status, f.body
+}
+func (f *fakeQuota) SetHost(h quota.HostFunc) { f.mu.Lock(); f.host = h; f.mu.Unlock() }
+func (f *fakeQuota) Pause()                   { f.mu.Lock(); f.paused = true; f.mu.Unlock() }
+func (f *fakeQuota) Resume()                  { f.mu.Lock(); f.paused = f.closed; f.mu.Unlock() }
+func (f *fakeQuota) Close()                   { f.mu.Lock(); f.closed, f.paused = true, true; f.mu.Unlock() }
+
+func useFakeQuota(p *Plugin) *fakeQuota {
+	p.quota.Close()
+	fake := &fakeQuota{status: 200, body: []byte(`{"schemaVersion":1,"poolStatus":"unavailable","accounts":[]}`)}
+	p.quota = fake
+	return fake
+}
+
+func TestQuotaRouteContract(t *testing.T) {
+	p := New()
+	defer p.Close()
+	fq := useFakeQuota(p)
+	useFake(p, &fakeCollector{})
+
+	res := callManagement(t, p, "GET", QuotaPath, nil)
+	if res.StatusCode != 200 || string(res.Body) != string(fq.body) {
+		t.Fatalf("status = %d body=%s", res.StatusCode, res.Body)
+	}
+	for header, want := range map[string]string{"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer"} {
+		if got := strings.Join(res.Headers[header], ""); got != want {
+			t.Fatalf("%s = %q", header, got)
+		}
+	}
+	callManagement(t, p, "GET", QuotaPath, map[string][]string{"refresh": {"1"}})
+	callManagement(t, p, "GET", QuotaPath, map[string][]string{"refresh": {"0"}})
+	if !reflect.DeepEqual(fq.refreshes, []bool{false, true, false}) {
+		t.Fatalf("refresh flags = %v", fq.refreshes)
+	}
+	if got := callManagement(t, p, "POST", QuotaPath, nil); got.StatusCode != 405 {
+		t.Fatalf("method status = %d", got.StatusCode)
+	}
+
+	// A quota failure never affects the usage route, and vice versa.
+	fq.mu.Lock()
+	fq.status, fq.body = 500, []byte(`{"error":"encoding_failed"}`)
+	fq.mu.Unlock()
+	if got := callManagement(t, p, "GET", DataPath, nil); got.StatusCode != 200 {
+		t.Fatalf("daily status with failing quota = %d", got.StatusCode)
+	}
+
+	p.quiesce()
+	if got := callManagement(t, p, "GET", QuotaPath, nil); got.StatusCode != 503 {
+		t.Fatalf("paused status = %d", got.StatusCode)
+	}
+	result(t, p.Handle("plugin.reconfigure", []byte(`{}`)))
+	fq.mu.Lock()
+	fq.status, fq.body = 200, []byte(`{}`)
+	fq.mu.Unlock()
+	if got := callManagement(t, p, "GET", QuotaPath, nil); got.StatusCode != 200 {
+		t.Fatalf("resumed status = %d", got.StatusCode)
+	}
+	p.Close()
+	if got := callManagement(t, p, "GET", QuotaPath, nil); got.StatusCode != 503 {
+		t.Fatalf("closed status = %d", got.StatusCode)
+	}
+	if !fq.closed {
+		t.Fatal("close did not stop the quota service")
+	}
+}
+
+func TestSetHostReachesQuota(t *testing.T) {
+	p := New()
+	defer p.Close()
+	fq := useFakeQuota(p)
+	p.SetHost(func(string, []byte) ([]byte, error) { return []byte(`{"ok":true}`), nil })
+	if fq.host == nil {
+		t.Fatal("host not installed")
+	}
+	p.SetHost(nil)
+	if fq.host != nil {
+		t.Fatal("host not cleared")
 	}
 }
