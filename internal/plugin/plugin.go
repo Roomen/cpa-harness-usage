@@ -31,7 +31,7 @@ const (
 var (
 	// Version is the plugin release version shown by CPA. Release builds
 	// override it with the tag version via -ldflags.
-	Version = "0.1.4"
+	Version = "0.1.5"
 	// Repository is the project source URL shown by CPA. Release builds pin it
 	// via -ldflags so the published artifact names the canonical repository.
 	Repository = "https://github.com/Roomen/cpa-harness-usage"

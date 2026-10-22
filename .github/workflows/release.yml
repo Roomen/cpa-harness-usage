@@ -20,13 +20,14 @@ permissions:
 
 env:
   PLUGIN_ID: harness-usage
-  # Go 1.26's own floor. Left unset, the runner SDK version becomes the minimum macOS.
-  MACOS_MIN: "12.0"
 
 jobs:
   prepare:
     name: prepare
     runs-on: ubuntu-24.04
+    # Backstop for the tag path, which waits up to WAIT_SECONDS for the CI run
+    # of the tagged commit. The script's own timeout reports better first.
+    timeout-minutes: 70
     outputs:
       version: ${{ steps.ver.outputs.version }}
       run_id: ${{ steps.reuse.outputs.run_id }}
@@ -64,14 +65,33 @@ jobs:
         id: reuse
         env:
           GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
           REBUILD: ${{ inputs.rebuild }}
           VERSION: ${{ steps.ver.outputs.version }}
+          WAIT_SECONDS: "3600"
         run: |
           echo "run_id=" >> "$GITHUB_OUTPUT"
+          # Decided before anything else: this workflow only runs on a tag push or
+          # on workflow_dispatch, so a push means a release tag, and no tag may
+          # compile. That includes a tag whose version skips the check above, so
+          # the rebuild inputs are consulted only for a manual dispatch.
+          if [ "$EVENT" = "push" ]; then
+            # A tag promotes the CI artifacts of its commit: wait for that run
+            # inside this workflow, and fail the release when it is missing,
+            # failed, cancelled, too slow, or incomplete instead of quietly
+            # compiling the six targets.
+            run_id=$(bash .github/scripts/await-ci-artifacts.sh "$GITHUB_SHA" "$WAIT_SECONDS")
+            echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+            echo "promoting artifacts from CI run $run_id; no compilation." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           if [ "$REBUILD" = "true" ] || [ "$VERSION" = "0.0.0-dev" ]; then
             echo "rebuild requested; compiling every target." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
+          # A manual dispatch may still compile: `rebuild` is the explicit
+          # request, and a dispatch without it falls back to compiling when the
+          # commit has no reusable CI run (a documentation-only commit, say).
           run_id=$(gh api \
             "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?head_sha=${GITHUB_SHA}&status=success&per_page=1" \
             --jq '.workflow_runs[0].id // empty')
@@ -81,7 +101,7 @@ jobs:
           fi
           count=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100" \
             --jq '[.artifacts[] | select(.name | startswith("build-"))] | length')
-          if [ "$count" -ne 5 ]; then
+          if [ "$count" -ne 6 ]; then
             echo "CI run ${run_id} has ${count} build artifacts; compiling every target." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
@@ -110,8 +130,8 @@ jobs:
           path: ${{ steps.go-cache.outputs.build-cache-path }}
           key: ${{ steps.go-cache.outputs.build-cache-key }}
 
-  # Fallback only: a commit without reusable CI artifacts. The normal tag path
-  # skips this job entirely.
+  # Manual dispatch only: `rebuild`, or a commit without reusable CI artifacts.
+  # A tag never reaches this job, because prepare fails instead of compiling.
   build:
     name: build
     needs: [prepare, verify]
@@ -120,6 +140,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - { goos: darwin, goarch: amd64, runner: macos-15-intel, ext: dylib }
           - { goos: darwin, goarch: arm64, runner: macos-14, ext: dylib }
           - { goos: linux, goarch: amd64, runner: ubuntu-24.04, ext: so }
           - { goos: linux, goarch: arm64, runner: ubuntu-24.04-arm, ext: so }
@@ -178,8 +199,8 @@ jobs:
             (cd "$dir" && zip -q -X "$GITHUB_WORKSPACE/dist/${PLUGIN_ID}_${VERSION}_${goos}_${goarch}.zip" "$library")
           done
           count=$(find dist -name '*.zip' | wc -l | tr -d ' ')
-          if [ "$count" -ne 5 ]; then
-            echo "packaged ${count} libraries, expected 5" >&2
+          if [ "$count" -ne 6 ]; then
+            echo "packaged ${count} libraries, expected 6" >&2
             exit 1
           fi
           (cd dist && sha256sum *.zip > checksums.txt && cat checksums.txt)
