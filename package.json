@@ -1,6 +1,6 @@
 {
   "name": "cpa-harness-usage-tools",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "description": "Pinned local usage collector for the CLIProxyAPI Harness Usage plugin",
   "dependencies": {
