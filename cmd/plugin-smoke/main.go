@@ -25,6 +25,22 @@ typedef struct {
 } smoke_plugin;
 typedef int (*smoke_init_fn)(smoke_host*, smoke_plugin*);
 
+static smoke_init_fn last_init;
+
+static int smoke_host_call(void* ctx, const char* method, const uint8_t* req, size_t len, smoke_buffer* resp) {
+    if (resp != NULL) {
+        resp->ptr = NULL;
+        resp->len = 0;
+    }
+    return 1;
+}
+
+static void smoke_host_free(void* ptr, size_t len) {
+    if (ptr != NULL) {
+        free(ptr);
+    }
+}
+
 static int smoke_open(char* path, smoke_plugin* plugin) {
 #ifdef _WIN32
     HMODULE library = LoadLibraryA(path);
@@ -36,8 +52,17 @@ static int smoke_open(char* path, smoke_plugin* plugin) {
     smoke_init_fn init = (smoke_init_fn)dlsym(library, "cliproxy_plugin_init");
 #endif
     if (!init) return 2;
-    smoke_host host = {1, NULL, NULL, NULL};
+    last_init = init;
+    smoke_host host = {1, (void*)0x1, (void*)smoke_host_call, (void*)smoke_host_free};
     if (init(&host, plugin) != 0) return 3;
+    if (plugin->abi_version != 1 || !plugin->call || !plugin->free_buffer || !plugin->shutdown) return 4;
+    return 0;
+}
+
+static int smoke_reinit(smoke_plugin* plugin) {
+    if (!last_init) return 2;
+    smoke_host host = {1, (void*)0x1, (void*)smoke_host_call, (void*)smoke_host_free};
+    if (last_init(&host, plugin) != 0) return 3;
     if (plugin->abi_version != 1 || !plugin->call || !plugin->free_buffer || !plugin->shutdown) return 4;
     return 0;
 }
@@ -196,8 +221,29 @@ func run(library, binary string) error {
 	if _, err := call(&api, "plugin.quiesce", []byte(`{}`)); err != nil {
 		return err
 	}
-	_, err = call(&api, "plugin.shutdown", []byte(`{}`))
-	return err
+	if _, err := call(&api, "plugin.shutdown", []byte(`{}`)); err != nil {
+		return err
+	}
+	C.smoke_shutdown(&api)
+
+	// Re-initialize the plugin to verify that re-enabling after shutdown works.
+	if status := C.smoke_reinit(&api); status != 0 {
+		return fmt.Errorf("native re-initialization failed (stage %d)", int(status))
+	}
+	if _, err := call(&api, "plugin.register", request); err != nil {
+		return fmt.Errorf("plugin re-registration after shutdown failed: %w", err)
+	}
+	if _, err := call(&api, "management.register", []byte(`{}`)); err != nil {
+		return fmt.Errorf("management re-registration after shutdown failed: %w", err)
+	}
+	body, err = call(&api, "management.handle", []byte(`{"Method":"GET","Path":"/v0/management/harness-usage/daily"}`))
+	if err != nil {
+		return fmt.Errorf("management handle after re-registration failed: %w", err)
+	}
+	if json.Unmarshal(body, &response) != nil || response.StatusCode != 200 {
+		return errors.New("management response after re-registration failed")
+	}
+	return nil
 }
 
 func isolateEnvironment() (func(), error) {

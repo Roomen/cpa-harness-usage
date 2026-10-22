@@ -415,6 +415,7 @@ pricing and avoids network fetches.
   reconfigure (including a host rollback) resumes it.
 - `plugin.shutdown` cancels scans, clears the cache, and is idempotent. Shutdown
   never blocks on a running ccusage process.
+- Repeated `cliproxy_plugin_init` calls in the same host process safely re-initialize the plugin and reset internal state, supporting dynamic disable and re-enable cycles without restarting the host.
 - While paused or closed, the data and quota routes return HTTP 503 with a safe JSON body. Shutdown cancels in-flight quota requests through `host.http.cancel` and drops the host callbacks.
 
 ## Screenshots
