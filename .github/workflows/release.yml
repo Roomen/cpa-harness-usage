@@ -25,6 +25,9 @@ jobs:
   prepare:
     name: prepare
     runs-on: ubuntu-24.04
+    # Backstop for the tag path, which waits up to WAIT_SECONDS for the CI run
+    # of the tagged commit. The script's own timeout reports better first.
+    timeout-minutes: 70
     outputs:
       version: ${{ steps.ver.outputs.version }}
       run_id: ${{ steps.reuse.outputs.run_id }}
@@ -62,14 +65,33 @@ jobs:
         id: reuse
         env:
           GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
           REBUILD: ${{ inputs.rebuild }}
           VERSION: ${{ steps.ver.outputs.version }}
+          WAIT_SECONDS: "3600"
         run: |
           echo "run_id=" >> "$GITHUB_OUTPUT"
+          # Decided before anything else: this workflow only runs on a tag push or
+          # on workflow_dispatch, so a push means a release tag, and no tag may
+          # compile. That includes a tag whose version skips the check above, so
+          # the rebuild inputs are consulted only for a manual dispatch.
+          if [ "$EVENT" = "push" ]; then
+            # A tag promotes the CI artifacts of its commit: wait for that run
+            # inside this workflow, and fail the release when it is missing,
+            # failed, cancelled, too slow, or incomplete instead of quietly
+            # compiling the six targets.
+            run_id=$(bash .github/scripts/await-ci-artifacts.sh "$GITHUB_SHA" "$WAIT_SECONDS")
+            echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+            echo "promoting artifacts from CI run $run_id; no compilation." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           if [ "$REBUILD" = "true" ] || [ "$VERSION" = "0.0.0-dev" ]; then
             echo "rebuild requested; compiling every target." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
+          # A manual dispatch may still compile: `rebuild` is the explicit
+          # request, and a dispatch without it falls back to compiling when the
+          # commit has no reusable CI run (a documentation-only commit, say).
           run_id=$(gh api \
             "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?head_sha=${GITHUB_SHA}&status=success&per_page=1" \
             --jq '.workflow_runs[0].id // empty')
@@ -108,8 +130,8 @@ jobs:
           path: ${{ steps.go-cache.outputs.build-cache-path }}
           key: ${{ steps.go-cache.outputs.build-cache-key }}
 
-  # Fallback only: a commit without reusable CI artifacts. The normal tag path
-  # skips this job entirely.
+  # Manual dispatch only: `rebuild`, or a commit without reusable CI artifacts.
+  # A tag never reaches this job, because prepare fails instead of compiling.
   build:
     name: build
     needs: [prepare, verify]

@@ -1,6 +1,6 @@
 name: Build target
 
-# One native target build, shared by CI and the release fallback so both
+# One native target build, shared by CI and the manual release fallback so both
 # produce identical artifacts with a single definition.
 on:
   workflow_call:

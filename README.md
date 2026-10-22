@@ -529,17 +529,24 @@ Pushing a `vX.Y.Z` tag runs `.github/workflows/release.yml`. A library is
 compiled once per change: pull requests run the vet and race tests only, the
 push that lands the change on `main` compiles all six targets
 (`.github/workflows/build-target.yml`), and a release on that same commit
-**reuses those CI artifacts** instead of rebuilding them. The release packages
+**promotes those CI artifacts** instead of rebuilding them. The release packages
 `<pluginID>_<version>_<goos>_<goarch>.zip` plus `checksums.txt` from the
-downloaded libraries and publishes them.
+promoted libraries and publishes them.
 
-Reuse requires a successful CI run for the tagged commit with all six build
-artifacts. Otherwise, including `make`-local runs, manual `workflow_dispatch`
-with `rebuild`, and commits pushed before CI existed, the release falls back to
-building the six targets once and logs that decision in the job summary. The
-release also checks that `internal/plugin/plugin.go` declares the tagged
-version, because the library embeds it from source rather than from
-`-ldflags`; a mismatch fails before anything is published.
+The tag can be pushed as soon as the merge lands. `prepare` waits inside the
+workflow for the `main` push run of the tagged commit (up to an hour), follows
+it through `queued` and `in_progress`, and then requires the six `build-*`
+artifacts to be present and unexpired. A tag never compiles: a run that does not
+appear, a run that failed or was cancelled, a run still going when the wait
+expires, and a run missing or expiring an artifact all fail the release with the
+run link, so a broken or absent CI run cannot cause a second compile.
+
+Only a manual `workflow_dispatch` can compile. `rebuild` compiles all six
+targets, and a dispatch without it falls back to compiling when the commit has
+no reusable CI run (a commit that only touched documentation, for example, since
+those skip CI). The release also checks that `internal/plugin/plugin.go`
+declares the tagged version, because the library embeds it from source rather
+than from `-ldflags`; a mismatch fails before anything is published.
 
 | Platform | Architectures | Build requirements |
 | --- | --- | --- |
@@ -554,20 +561,23 @@ Preinstalled runtime libraries on CI runners do not remove this host requirement
 
 Pushing to `main` builds all six targets on GitHub Actions, once per landed
 change; pull requests only run the vet and race tests, so a pull request adds no
-second compile. Tagging that commit promotes the `main` artifacts, and the CI
-workflow can also be started manually to produce them ahead of time. Its
-successful builds upload the plugin library and standalone CLI as per-platform
-artifacts; creating a release is only triggered by a version tag. Commits that
-only touch documentation, screenshots, or license files skip CI, since they
-cannot change a binary; a release on such a commit rebuilds on demand.
+second compile. Tagging that commit promotes the `main` artifacts. The CI
+workflow can also be started manually: it uploads the plugin library and
+standalone CLI as per-platform artifacts without publishing anything, because a
+release is only created by a version tag. Commits that only touch documentation,
+screenshots, or license files skip CI, since they cannot change a binary: a tag
+on such a commit has no `main` push run to promote and fails instead of
+compiling. A manual dispatch with `rebuild` still produces artifacts for
+inspection, but it cannot feed a release, so a release tag must point to a commit
+with a successful `main` push build.
 Runner images use explicit versions. A newer CI run cancels an older run on the
 same branch; release workflows are not automatically canceled.
 
 GitHub Actions caches npm downloads, Go modules, Go compilation results, and C
 toolchains. Module caches follow the dependency lock; compilation caches are
 saved per run and restore the latest matching platform, Go version, and build
-profile. Test and plugin-build profiles are separate, and CI and the release
-fallback share the same build cache keys. Zig compilation results have a separate rolling cache
+profile. Test and plugin-build profiles are separate, and CI and the manual
+release fallback share the same build cache keys. Zig compilation results have a separate rolling cache
 from the fixed-version compiler installation. Build matrices run on native
 target runners. Toolchains for macOS Intel are cached across runs.
 Adding matrix entries alone does not establish a successful build: remote CI
