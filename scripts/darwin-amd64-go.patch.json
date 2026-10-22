@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "replacements": [
+    {
+      "file": "src/cmd/link/internal/ld/sym.go",
+      "from": "ctxt.Tlsoffset = 0x30",
+      "to": "ctxt.Tlsoffset = 0x58"
+    },
+    {
+      "file": "src/runtime/sys_darwin_amd64.s",
+      "from": "MOVQ\tDX, 0x30(GS)",
+      "to": "MOVQ\tDX, 0x58(GS)"
+    }
+  ]
+}

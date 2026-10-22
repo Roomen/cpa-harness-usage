@@ -43,19 +43,53 @@ jobs:
         id: go-cache
         with:
           profile: build
-          compiler-key: ${{ hashFiles('.github/scripts/setup-*-toolchain.*', '.github/workflows/ci.yml', '.github/workflows/release.yml', '.github/workflows/build-target.yml', 'scripts/darwin-amd64-go.sh') }}
+          compiler-key: ${{ hashFiles('.github/scripts/setup-*-toolchain.*', '.github/workflows/ci.yml', '.github/workflows/release.yml', '.github/workflows/build-target.yml', 'scripts/darwin-amd64-go.patch.json') }}
 
-      - uses: actions/cache@v5
+      - uses: actions/cache/restore@v5
+        id: tlsgo-cache
         if: inputs.goos == 'darwin' && inputs.goarch == 'amd64'
         with:
+          # The cache version is derived from this path list, so it stays exactly
+          # `.cache/tlsgo`: any other path would stop the prefix below from
+          # matching the v0.1.5 cache, which is the one this change migrates.
           path: .cache/tlsgo
-          key: tlsgo-${{ runner.os }}-${{ runner.arch }}-${{ steps.go-cache.outputs.go-version }}-${{ hashFiles('scripts/darwin-amd64-go.sh') }}
+          # The toolchain identity is the Go version, the runner architecture and
+          # the patch data, so maintaining the build script no longer discards a
+          # cached toolchain. The prefix also reaches the v0.1.5 key
+          # (tlsgo-macOS-X64-1.26.10-11a45c63b596765a4efc7ee244e89883e97f0b02c03db189ebb4d115720faef6);
+          # the script copies that one toolchain to the new identity and ignores
+          # anything else it finds there.
+          key: tlsgo-${{ runner.os }}-${{ runner.arch }}-${{ steps.go-cache.outputs.go-version }}-${{ hashFiles('scripts/darwin-amd64-go.patch.json') }}
+          restore-keys: |
+            tlsgo-${{ runner.os }}-${{ runner.arch }}-${{ steps.go-cache.outputs.go-version }}-
+
+      # The cache identity and the lock protocol have synthetic tests that mock
+      # curl/tar/go, so they compile nothing; they run before the real toolchain
+      # work so a cache regression fails the build instead of silently rebuilding.
+      - name: Check the toolchain cache and lock protocol
+        if: inputs.goos == 'darwin' && inputs.goarch == 'amd64'
+        run: python3 scripts/test-darwin-amd64-go-lock.py
 
       - name: Prepare patched Go toolchain (darwin/amd64)
         if: inputs.goos == 'darwin' && inputs.goarch == 'amd64'
         run: |
           goroot=$(bash scripts/darwin-amd64-go.sh)
           echo "PLUGIN_GO=$goroot/bin/go" >> "$GITHUB_ENV"
+
+      # Saved explicitly, right after the toolchain is verified: the script only
+      # publishes a complete entry, so the cache survives a later plugin build
+      # failure, while a failed prepare never reaches these steps and caches
+      # nothing. Run state is dropped first, because a cancelled build leaves
+      # .build.*/.migrate.* behind and this workspace belongs to this job alone.
+      - name: Drop toolchain run state
+        if: inputs.goos == 'darwin' && inputs.goarch == 'amd64' && steps.tlsgo-cache.outputs.cache-hit != 'true'
+        run: rm -rf .cache/tlsgo/.build.* .cache/tlsgo/.migrate.*
+
+      - uses: actions/cache/save@v5
+        if: inputs.goos == 'darwin' && inputs.goarch == 'amd64' && steps.tlsgo-cache.outputs.cache-hit != 'true'
+        with:
+          path: .cache/tlsgo
+          key: tlsgo-${{ runner.os }}-${{ runner.arch }}-${{ steps.go-cache.outputs.go-version }}-${{ hashFiles('scripts/darwin-amd64-go.patch.json') }}
 
       - uses: actions/cache@v5
         if: inputs.goos == 'windows'

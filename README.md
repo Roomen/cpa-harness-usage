@@ -75,8 +75,17 @@ Local builds retain `.cache/go-build`, `.cache/go-mod`, `.cache/npm`, and
 overrides for the Go/npm caches remain respected. `make deps` reuses the
 installed dependencies while the package files are unchanged. Collector asset
 preparation does not rewrite unchanged files, preserving Go's incremental build
-cache. Patched toolchains are keyed by exact Go version, host architecture, and
-patch script hash. No build target cleans these caches automatically. The toolchain lock
+cache. A patched toolchain is keyed by the exact Go version, the host architecture, the
+cache schema and the bytes of `scripts/darwin-amd64-go.patch.json`, so maintaining the build
+script (lock, heartbeat, pruning, logging) never discards a verified toolchain, while a
+change to the TLS patch always does. An entry is reused only when its `complete` marker
+matches that identity and its own `bin/go` runs and reports the exact Go version, which
+needs no download and no bootstrap compiler; anything else under the identity is discarded
+and rebuilt. A freshly built entry is published only after the same checks, plus a check that
+its source carries the patch, so a toolchain that reports the wrong version or ABI is never
+cached. The toolchain released as v0.1.5 is copied once to the new identity from its
+old entry, which stays in place for builds that started before the change. No build target
+cleans these caches automatically. The toolchain lock
 is an `flock` the kernel holds for the life of the build, taken through `lockf` on a file
 outside the cache directory (under `TMPDIR`, or `DARWIN_AMD64_GO_LOCK_DIR`). The lock file
 is kept rather than unlinked, so every run locks the same inode, and the lock is released
@@ -85,8 +94,10 @@ it, the staging heartbeat does not. A killed build therefore cannot block a late
 no run can take the lock from a live build, so there is nothing to reclaim. `.build.*`
 staging directories left behind by a cancelled run are pruned before the next toolchain
 build (a live build refreshes its own directory from a heartbeat, so in-flight work is
-never removed), so a cancelled run cannot poison or bloat a saved cache. The lock protocol
-has synthetic tests: `python3 scripts/test-darwin-amd64-go-lock.py`.
+never removed), so a cancelled run cannot poison or bloat a saved cache. The cache identity
+and the lock protocol have synthetic tests that mock curl, tar and go and compile nothing:
+`python3 scripts/test-darwin-amd64-go-lock.py`, which the darwin/amd64 build runs before it
+prepares a real toolchain.
 
 The collector has no shell invocation: it executes `ccusage <source> daily
 --json --offline` directly, with a per-source timeout (45 s by default), a
@@ -496,11 +507,19 @@ Verified in this repository:
   user chose. Screenshots are in `docs/screenshots/`.
 - Quota: table-driven tests with a fake host for credential sources, response parsing, status mapping, dedup and pool merge, privacy of the report, cache and error TTLs, shared concurrent refresh, cancellation, and session-log parsing; `make smoke` checks the offline quota route through the C ABI. The page's quota cards, pool expansion, auto-refresh requests (none while hidden), and zero usage-DOM mutations on an unchanged auto-refresh tick were checked against the local mock.
 
+- Release v0.1.5: main CI
+  [39722690383](https://github.com/Roomen/cpa-harness-usage/actions/runs/39722690383)
+  built all six targets including `darwin/amd64`, and release
+  [39722747815](https://github.com/Roomen/cpa-harness-usage/actions/runs/39722747815)
+  promoted those artifacts with `build` and `verify` skipped. The six published zips
+  were checked independently for SHA-256, CRC and their Mach-O, ELF and PE
+  architectures.
+
 Not verified:
 
-- Remote CI on the landing push: the six-target compile (`darwin/amd64` included)
-  and the promotion of those artifacts by a release tag have not run yet; the CI
-  evidence above predates the six-target workflow.
+- The stable toolchain cache identity and the v0.1.5 entry migration have only been
+  exercised by synthetic tests: no remote run has reused or migrated a toolchain cache
+  yet.
 - Loading into a running CLIProxyAPI instance. No real CPA configuration was
   modified and the plugin was not installed into a live service. CPA-side menu
   rendering, hot reload against a real process, and the actual management-key
@@ -512,7 +531,7 @@ Not verified:
 
 The canonical repository is
 [Roomen/cpa-harness-usage](https://github.com/Roomen/cpa-harness-usage).
-The latest release is [v0.1.4](https://github.com/Roomen/cpa-harness-usage/releases/tag/v0.1.4).
+The latest release is [v0.1.5](https://github.com/Roomen/cpa-harness-usage/releases/tag/v0.1.5).
 `Version` and `Repository` default to the values compiled in from
 `internal/plugin/plugin.go`, which is bumped ahead of the tag; push the tag before
 referring to a version as released. Both can be overridden at build time:
