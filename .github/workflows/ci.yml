@@ -49,10 +49,13 @@ jobs:
           path: ${{ steps.go-cache.outputs.build-cache-path }}
           key: ${{ steps.go-cache.outputs.build-cache-key }}
 
-  # This matrix is the only place a library is compiled. A release on the same
+  # This matrix is the only place a library is compiled, and it runs once per
+  # change: pull requests only run the tests above, the push that lands the
+  # change on main compiles all five targets, and a release tag on that same
   # commit promotes these artifacts instead of rebuilding them.
   build:
     name: build ${{ matrix.goos }}/${{ matrix.goarch }}
+    if: github.event_name != 'pull_request'
     strategy:
       fail-fast: false
       matrix:

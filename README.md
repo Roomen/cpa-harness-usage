@@ -504,8 +504,9 @@ go build -tags bundledcollector -buildmode=c-shared -ldflags \
 ```
 
 Pushing a `vX.Y.Z` tag runs `.github/workflows/release.yml`. A library is
-compiled once per commit: the CI matrix is the only place a target build runs
-(`.github/workflows/build-target.yml`), and a release on the same commit
+compiled once per change: pull requests run the vet and race tests only, the
+push that lands the change on `main` compiles all five targets
+(`.github/workflows/build-target.yml`), and a release on that same commit
 **reuses those CI artifacts** instead of rebuilding them. The release packages
 `<pluginID>_<version>_<goos>_<goarch>.zip` plus `checksums.txt` from the
 downloaded libraries and publishes them.
@@ -529,12 +530,14 @@ Windows hosts need the Microsoft Visual C++ Redistributable matching their
 architecture: the official native collector imports the VC runtime and UCRT.
 Preinstalled runtime libraries on CI runners do not remove this host requirement.
 
-Pushing to `main` or opening a pull request automatically builds all five targets
-on GitHub Actions. The CI workflow can also be started manually. Its successful
-builds upload the plugin library and standalone CLI as per-platform artifacts;
-creating a release is only triggered by a version tag. Commits that only touch
-documentation, screenshots, or license files skip CI, since they cannot change
-a binary; a release on such a commit rebuilds on demand.
+Pushing to `main` builds all five targets on GitHub Actions, once per landed
+change; pull requests only run the vet and race tests, so a pull request adds no
+second compile. Tagging that commit promotes the `main` artifacts, and the CI
+workflow can also be started manually to produce them ahead of time. Its
+successful builds upload the plugin library and standalone CLI as per-platform
+artifacts; creating a release is only triggered by a version tag. Commits that
+only touch documentation, screenshots, or license files skip CI, since they
+cannot change a binary; a release on such a commit rebuilds on demand.
 Runner images use explicit versions. A newer CI run cancels an older run on the
 same branch; release workflows are not automatically canceled.
 
