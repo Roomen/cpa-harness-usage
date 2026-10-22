@@ -1,5 +1,12 @@
 OS := $(shell go env GOOS)
 ARCH := $(shell go env GOARCH)
+# Minimum macOS the darwin libraries run on. It only stamps LC_BUILD_VERSION:
+# the Go linker picks its own floor (12.0 on Go 1.26, 13.0 on Go 1.27+), so
+# darwin builds are pinned to the go.mod toolchain to keep the real floor here.
+MACOS_MIN ?= 12.0
+# Empty when go.mod declares no toolchain; then the host toolchain is used.
+GO_TOOLCHAIN ?= $(shell awk '/^toolchain /{print $$2}' go.mod)
+DARWIN_ENV := $(if $(filter darwin,$(OS)),$(if $(GO_TOOLCHAIN),GOTOOLCHAIN=$(GO_TOOLCHAIN) ,),)
 export GOCACHE ?= $(CURDIR)/.cache/go-build
 export GOMODCACHE ?= $(CURDIR)/.cache/go-mod
 export npm_config_cache ?= $(CURDIR)/.cache/npm
@@ -28,14 +35,19 @@ test:
 
 build: collector
 	@mkdir -p bin
-	@if [ "$(OS)/$(ARCH)" = "darwin/amd64" ]; then \
-		if [ "$(EXPERIMENTAL_DARWIN_AMD64)" != "1" ]; then echo "darwin/amd64 is single-plugin experimental only; see README.md"; exit 1; fi; \
-		toolchain=$$(bash scripts/darwin-amd64-go.sh); \
-		GOROOT="$$toolchain" GOTOOLCHAIN=local CGO_ENABLED=1 "$$toolchain/bin/go" build -tags bundledcollector -trimpath -buildmode=c-shared -o bin/harness-usage.$(EXT_$(OS)) ./cmd/plugin; \
+	@rm -f bin/harness-usage.$(EXT_$(OS))
+	@set -e; \
+	if [ "$(OS)/$(ARCH)" = "darwin/amd64" ]; then \
+		toolchain=$$(bash scripts/darwin-amd64-go.sh "" "$(GO_TOOLCHAIN)") && \
+		GOROOT="$$toolchain" GOTOOLCHAIN=local CGO_ENABLED=1 MACOSX_DEPLOYMENT_TARGET=$(MACOS_MIN) CGO_CFLAGS="-O2 -g -mmacosx-version-min=$(MACOS_MIN)" CGO_LDFLAGS="-mmacosx-version-min=$(MACOS_MIN)" CC="clang -arch x86_64" "$$toolchain/bin/go" build -tags bundledcollector -trimpath -buildmode=c-shared -o bin/harness-usage.$(EXT_$(OS)) ./cmd/plugin && \
+		bash scripts/check-darwin.sh bin/harness-usage.$(EXT_$(OS)) amd64 $(MACOS_MIN); \
+	elif [ "$(OS)" = "darwin" ]; then \
+		$(DARWIN_ENV)CGO_ENABLED=1 MACOSX_DEPLOYMENT_TARGET=$(MACOS_MIN) CGO_CFLAGS="-O2 -g -mmacosx-version-min=$(MACOS_MIN)" CGO_LDFLAGS="-mmacosx-version-min=$(MACOS_MIN)" go build -tags bundledcollector -trimpath -buildmode=c-shared -o bin/harness-usage.$(EXT_$(OS)) ./cmd/plugin && \
+		bash scripts/check-darwin.sh bin/harness-usage.$(EXT_$(OS)) $(ARCH) $(MACOS_MIN); \
 	else \
 		CGO_ENABLED=1 go build -tags bundledcollector -trimpath -buildmode=c-shared -o bin/harness-usage.$(EXT_$(OS)) ./cmd/plugin; \
 	fi
-	go build -tags bundledcollector -trimpath -o bin/harness-usage$(EXE_$(OS)) ./cmd/harness-usage
+	$(DARWIN_ENV)go build -tags bundledcollector -trimpath -o bin/harness-usage$(EXE_$(OS)) ./cmd/harness-usage
 
 smoke: build
 	go build -o bin/fakeccusage$(EXE_$(OS)) ./internal/usage/testdata/fakeccusage

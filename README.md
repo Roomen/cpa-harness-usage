@@ -51,15 +51,24 @@ make smoke   # stock Go host: synthetic collector and isolated embedded collecto
 `make build` prepares and embeds the native collector for the selected target.
 Local builds use the host's native npm package; arbitrary `GOOS`/`GOARCH`
 cross-builds also require installing the corresponding pinned native package.
-`darwin/amd64` remains excluded from normal releases. A single-plugin experiment
-is available with `make smoke EXPERIMENTAL_DARWIN_AMD64=1` on an Intel Mac. It
-uses `scripts/darwin-amd64-go.sh` to build an isolated Go toolchain using TLS slot
-11. Other plugins using the same patch conflict with that slot; CPA's loader
-does not isolate their runtimes. A successful single-plugin smoke test does not
-establish multi-plugin safety. The host and standalone CLI use stock Go. The
-script verifies the official Go source archive, refuses source layouts it cannot
-patch exactly, and never modifies the system toolchain. Python 3 is needed for
-this experimental toolchain preparation.
+On an Intel Mac (`darwin/amd64`), `make build` uses `scripts/darwin-amd64-go.sh` to
+prepare an isolated Go toolchain using TLS slot 11 (`0x58(GS)`), avoiding the Go
+host TLS conflict on slot 6 (`0x30(GS)`). The host and standalone CLI always use
+the stock Go toolchain, never the patched one. The script verifies the official Go source archive, refuses source layouts
+it cannot patch exactly, and never modifies the system toolchain. Python 3 is
+needed for this toolchain preparation. `scripts/check-darwin.sh` verifies minimum
+macOS deployment targets and confirms TLS slot isolation. Both darwin branches pin
+`GOTOOLCHAIN` to the `toolchain` version in `go.mod`, and the Intel branch builds its
+patched toolchain from that same version: the Go linker picks the darwin floor itself
+(12.0 on Go 1.26, 13.0 on Go 1.27 and newer), so `MACOSX_DEPLOYMENT_TARGET=12.0` alone
+would only stamp the `LC_BUILD_VERSION` header while the Go objects still needed a newer
+macOS. An unpinned Go 1.27+ darwin build therefore links without error but with
+`ld: warning: ... built for newer 'macOS' version (13.0)`, and the resulting library
+reports `minos 12.0` while really requiring macOS 13.0. Note on multi-plugin
+coexistence on `darwin/amd64`: because CPA's host process does not isolate runtime
+address spaces between plugins, two Go plugins concurrently loaded in the same host
+that both patch to TLS slot 11 will collide on that slot; concurrent slot-11 plugins
+are not isolated by the host loader.
 
 Local builds retain `.cache/go-build`, `.cache/go-mod`, `.cache/npm`, and
 `.cache/tlsgo`; these directories are ignored by Git. Existing environment
@@ -67,7 +76,17 @@ overrides for the Go/npm caches remain respected. `make deps` reuses the
 installed dependencies while the package files are unchanged. Collector asset
 preparation does not rewrite unchanged files, preserving Go's incremental build
 cache. Patched toolchains are keyed by exact Go version, host architecture, and
-patch script hash. No build target cleans these caches automatically.
+patch script hash. No build target cleans these caches automatically. The toolchain lock
+is an `flock` the kernel holds for the life of the build, taken through `lockf` on a file
+outside the cache directory (under `TMPDIR`, or `DARWIN_AMD64_GO_LOCK_DIR`). The lock file
+is kept rather than unlinked, so every run locks the same inode, and the lock is released
+only when the last process holding the inherited descriptor exits: build children inherit
+it, the staging heartbeat does not. A killed build therefore cannot block a later one and
+no run can take the lock from a live build, so there is nothing to reclaim. `.build.*`
+staging directories left behind by a cancelled run are pruned before the next toolchain
+build (a live build refreshes its own directory from a heartbeat, so in-flight work is
+never removed), so a cancelled run cannot poison or bloat a saved cache. The lock protocol
+has synthetic tests: `python3 scripts/test-darwin-amd64-go-lock.py`.
 
 The collector has no shell invocation: it executes `ccusage <source> daily
 --json --offline` directly, with a per-source timeout (45 s by default), a
@@ -454,8 +473,8 @@ Verified in this repository:
 - Linux amd64/arm64 shared libraries cross-built with Go 1.26.0 and Zig 0.15.2;
   ELF checks passed the GLIBC 2.17 ceiling.
 - [GitHub CI](https://github.com/Roomen/cpa-harness-usage/actions/runs/39352631238)
-  passed on all five native target runners, including both Windows architectures,
-  real collector fixtures, stock Go host loading, artifact upload, and cache saving.
+  passed on previous release runs covering native target runners (including both Windows architectures
+  and macOS arm64), real collector fixtures, stock Go host loading, artifact upload, and cache saving.
 - The built library exports a working C ABI: a local `dlopen` smoke test called
   `cliproxy_plugin_init`, `plugin.register`, `management.register`, and
   `management.handle` successfully.
@@ -479,49 +498,52 @@ Verified in this repository:
 
 Not verified:
 
+- Remote CI on the landing push: the six-target compile (`darwin/amd64` included)
+  and the promotion of those artifacts by a release tag have not run yet; the CI
+  evidence above predates the six-target workflow.
 - Loading into a running CLIProxyAPI instance. No real CPA configuration was
   modified and the plugin was not installed into a live service. CPA-side menu
   rendering, hot reload against a real process, and the actual management-key
   middleware remain integration checks for a disposable instance.
 - Real browser rendering inside the official management center shell.
-- The manual macOS Intel experiment.
 - Quota against the real Anthropic/OpenAI endpoints and a real CPA pool; the Claude OAuth profile shape is unverified offline.
 
 ## Releases and plugin store
 
 The canonical repository is
 [Roomen/cpa-harness-usage](https://github.com/Roomen/cpa-harness-usage).
-The current release is [v0.1.4](https://github.com/Roomen/cpa-harness-usage/releases/tag/v0.1.4).
-`Version` and `Repository` default to the current release values and can be
-overridden at build time:
+The latest release is [v0.1.4](https://github.com/Roomen/cpa-harness-usage/releases/tag/v0.1.4).
+`Version` and `Repository` default to the values compiled in from
+`internal/plugin/plugin.go`, which is bumped ahead of the tag; push the tag before
+referring to a version as released. Both can be overridden at build time:
 
 ```sh
 make collector
 go build -tags bundledcollector -buildmode=c-shared -ldflags \
-  '-X cpa-harness-usage/internal/plugin.Version=0.1.4 \
+  '-X cpa-harness-usage/internal/plugin.Version=0.1.5 \
    -X cpa-harness-usage/internal/plugin.Repository=https://github.com/Roomen/cpa-harness-usage' \
   -o bin/harness-usage.dylib ./cmd/plugin
 ```
 
 Pushing a `vX.Y.Z` tag runs `.github/workflows/release.yml`. A library is
 compiled once per change: pull requests run the vet and race tests only, the
-push that lands the change on `main` compiles all five targets
+push that lands the change on `main` compiles all six targets
 (`.github/workflows/build-target.yml`), and a release on that same commit
 **reuses those CI artifacts** instead of rebuilding them. The release packages
 `<pluginID>_<version>_<goos>_<goarch>.zip` plus `checksums.txt` from the
 downloaded libraries and publishes them.
 
-Reuse requires a successful CI run for the tagged commit with all five build
+Reuse requires a successful CI run for the tagged commit with all six build
 artifacts. Otherwise, including `make`-local runs, manual `workflow_dispatch`
 with `rebuild`, and commits pushed before CI existed, the release falls back to
-building the five targets once and logs that decision in the job summary. The
+building the six targets once and logs that decision in the job summary. The
 release also checks that `internal/plugin/plugin.go` declares the tagged
 version, because the library embeds it from source rather than from
 `-ldflags`; a mismatch fails before anything is published.
 
 | Platform | Architectures | Build requirements |
 | --- | --- | --- |
-| macOS | arm64 | Intel is a manual single-plugin experiment, excluded from releases |
+| macOS | amd64, arm64 | Both target macOS 12.0+ and pin the `go.mod` Go toolchain (Go 1.27+ would otherwise link for 13.0); arm64 uses stock Go; amd64 uses isolated slot-11 patched Go (`scripts/darwin-amd64-go.sh`) |
 | Linux | amd64, arm64 | CI uses pinned Zig and checks the plugin's maximum GLIBC requirement is at most 2.17 |
 | Windows | amd64, arm64 | Native LLVM-MinGW C compiler; collector runs directly as `.exe` |
 | FreeBSD | Not yet supported | No official ccusage native package; source build and runtime verification remain required |
@@ -530,7 +552,7 @@ Windows hosts need the Microsoft Visual C++ Redistributable matching their
 architecture: the official native collector imports the VC runtime and UCRT.
 Preinstalled runtime libraries on CI runners do not remove this host requirement.
 
-Pushing to `main` builds all five targets on GitHub Actions, once per landed
+Pushing to `main` builds all six targets on GitHub Actions, once per landed
 change; pull requests only run the vet and race tests, so a pull request adds no
 second compile. Tagging that commit promotes the `main` artifacts, and the CI
 workflow can also be started manually to produce them ahead of time. Its
@@ -547,9 +569,7 @@ saved per run and restore the latest matching platform, Go version, and build
 profile. Test and plugin-build profiles are separate, and CI and the release
 fallback share the same build cache keys. Zig compilation results have a separate rolling cache
 from the fixed-version compiler installation. Build matrices run on native
-target runners. The separate
-manual `Darwin Intel experiment` workflow also caches its patched Go toolchain
-and only uploads an experimental artifact; it never publishes to the store.
+target runners. Toolchains for macOS Intel are cached across runs.
 Adding matrix entries alone does not establish a successful build: remote CI
 must complete before claiming target verification.
 

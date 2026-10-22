@@ -14,17 +14,98 @@ mkdir -p "$cache_root"
 cache_root=$(cd "$cache_root" && pwd)
 cache_entry="$cache_root/$go_version-$host_arch-$script_hash"
 cache_marker="$go_version:$host_arch:$script_hash"
+
+# A run killed after mktemp leaves a large staging directory behind, and CI
+# saves the whole cache directory even on cancelled runs. Prune the ones that
+# cannot belong to a live build: a live build refreshes its own directory from a
+# heartbeat, so an old mtime means nobody has been working in it. Raise the age
+# on runners where a toolchain build can take longer than an hour.
+staging_max_age=${DARWIN_AMD64_GO_STAGING_MAX_AGE:-3600}
+prune_staging() {
+  local now dir mtime
+  now=$(date +%s)
+  for dir in "$cache_root"/.build.*; do
+    [[ -d "$dir" ]] || continue
+    mtime=$(stat -f %m "$dir" 2>/dev/null) || mtime=0
+    if (( now - mtime >= staging_max_age )); then
+      echo "darwin-amd64-go: removing stale staging directory $(basename "$dir")" >&2
+      rm -rf "$dir"
+    fi
+  done
+}
+
+# Only nested directories change while a toolchain builds, so the staging
+# directory itself would look idle for hours without an explicit heartbeat.
+# The loop watches the process that started it: a SIGKILLed parent never runs
+# its EXIT trap, and a heartbeat left behind would keep a dead staging directory
+# looking alive forever, defeating the prune above.
+# It also drops the lock fd (9): it outlives the script by up to one interval,
+# and a heartbeat holding the fd would keep the kernel lock after the build is
+# gone. The build itself may keep fd 9, because it is still writing into the
+# cache entry while it runs.
+staging_heartbeat=${DARWIN_AMD64_GO_STAGING_HEARTBEAT:-60}
+heartbeat=""
+start_heartbeat() {
+  local parent=$$
+  ( while kill -0 "$parent" 2>/dev/null && [[ -d "$staging" ]]; do
+      touch "$staging" 2>/dev/null
+      sleep "$staging_heartbeat"
+    done ) >/dev/null 2>&1 9>&- &
+  heartbeat=$!
+  # Otherwise bash reports the killed job on stderr later in the run.
+  disown "$heartbeat" 2>/dev/null || true
+}
+stop_heartbeat() {
+  [[ -n $heartbeat ]] || return 0
+  kill "$heartbeat" 2>/dev/null || true
+  heartbeat=""
+}
+
 if [[ -x "$cache_entry/go/bin/go" ]] && [[ $(cat "$cache_entry/complete" 2>/dev/null) == "$cache_marker" ]]; then
   echo "$cache_entry/go"
   exit 0
 fi
 [[ ! -e "$cache_entry" ]] || fail "incomplete cache entry; remove it before rebuilding"
 
-lock_dir="$cache_entry.lock"
-mkdir "$lock_dir" 2>/dev/null || fail "another build owns this toolchain cache entry"
+# The lock must never live inside the cache directory: CI restores and saves
+# that directory even when a run is cancelled, so a lock left behind by a killed
+# run would be restored forever and fail every later run.
+lock_root=${DARWIN_AMD64_GO_LOCK_DIR:-${TMPDIR:-/tmp}}
+mkdir -p "$lock_root"
+lock_file="$lock_root/darwin-amd64-go-$(printf '%s' "$cache_marker:$cache_root" | shasum -a 256 | awk '{print $1}' | cut -c1-16).lock"
+# Exclusion is an flock(2) the kernel holds for as long as this build lives, not
+# a directory that a later run reads and then deletes. Reclaiming a lock by
+# inspecting it first is unavoidably racy: the liveness check and the removal are
+# separate steps, so two runs that both see a dead owner can each remove the
+# other's freshly taken lock and then build the same entry in parallel. The
+# kernel drops this lock when the build dies, however it dies, so there is
+# nothing to reclaim, nothing to steal, and no PID whose reuse could matter.
+# lockf(1) is the only way to take an flock from sh: it locks fd 9 and exits, and
+# the lock lives in the shared open file description, so it lasts until this
+# script and every child that inherited fd 9 are gone.
+command -v lockf >/dev/null || fail "lockf(1) is required to serialise toolchain builds"
+: >>"$lock_file" 2>/dev/null || fail "cannot create toolchain lock file ($lock_file)"
+exec 9>>"$lock_file"
+lockf_rc=0
+lockf -s -t 0 9 || lockf_rc=$?
+if (( lockf_rc == 75 )); then
+  fail "another build owns this toolchain cache entry ($lock_file)"
+elif (( lockf_rc != 0 )); then
+  fail "cannot acquire toolchain lock ($lock_file, lockf exit $lockf_rc)"
+fi
+# Prune only while holding the lock: no other build of this entry can be in
+# flight, and any other live build keeps its own directory fresh via heartbeat.
+# Another build can also finish between the cache check above and the lock, so
+# look again before pruning or rebuilding a toolchain that already exists.
+if [[ -x "$cache_entry/go/bin/go" ]] && [[ $(cat "$cache_entry/complete" 2>/dev/null) == "$cache_marker" ]]; then
+  echo "$cache_entry/go"
+  exit 0
+fi
+prune_staging
 staging=""
-trap 'if [[ -n "$staging" ]]; then rm -rf "$staging"; fi; rmdir "$lock_dir"' EXIT
+trap 'stop_heartbeat; if [[ -n "$staging" ]]; then rm -rf "$staging"; fi' EXIT
 staging=$(mktemp -d "$cache_root/.build.XXXXXXXX")
+start_heartbeat
 curl --fail --silent --show-error --location 'https://go.dev/dl/?mode=json&include=all' -o "$staging/releases.json"
 source_sha=$(python3 -I - "$staging/releases.json" "$go_version" <<'PY'
 import json
@@ -71,9 +152,17 @@ if ! (cd "$staging/go/src" && env -u GOTOOLCHAIN -u GOFLAGS -u GOOS -u GOARCH -u
   tail -40 "$staging/build.log" >&2
   fail "toolchain build failed; build log retained in cache"
 fi
+stop_heartbeat
 echo "$cache_marker" > "$staging/complete"
+# mv onto an existing directory nests instead of replacing it, which would hide
+# a hundred megabytes of build garbage inside a valid-looking cache entry.
+if [[ -x "$cache_entry/go/bin/go" ]] && [[ $(cat "$cache_entry/complete" 2>/dev/null) == "$cache_marker" ]]; then
+  echo "darwin-amd64-go: another build completed this entry first" >&2
+  echo "$cache_entry/go"
+  exit 0
+fi
+[[ ! -e "$cache_entry" ]] || fail "cache entry $cache_entry already exists; remove it before rebuilding"
 mv "$staging" "$cache_entry"
 staging=""
-rmdir "$lock_dir"
 trap - EXIT
 echo "$cache_entry/go"

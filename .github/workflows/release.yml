@@ -20,8 +20,6 @@ permissions:
 
 env:
   PLUGIN_ID: harness-usage
-  # Go 1.26's own floor. Left unset, the runner SDK version becomes the minimum macOS.
-  MACOS_MIN: "12.0"
 
 jobs:
   prepare:
@@ -81,7 +79,7 @@ jobs:
           fi
           count=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100" \
             --jq '[.artifacts[] | select(.name | startswith("build-"))] | length')
-          if [ "$count" -ne 5 ]; then
+          if [ "$count" -ne 6 ]; then
             echo "CI run ${run_id} has ${count} build artifacts; compiling every target." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
@@ -120,6 +118,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - { goos: darwin, goarch: amd64, runner: macos-15-intel, ext: dylib }
           - { goos: darwin, goarch: arm64, runner: macos-14, ext: dylib }
           - { goos: linux, goarch: amd64, runner: ubuntu-24.04, ext: so }
           - { goos: linux, goarch: arm64, runner: ubuntu-24.04-arm, ext: so }
@@ -178,8 +177,8 @@ jobs:
             (cd "$dir" && zip -q -X "$GITHUB_WORKSPACE/dist/${PLUGIN_ID}_${VERSION}_${goos}_${goarch}.zip" "$library")
           done
           count=$(find dist -name '*.zip' | wc -l | tr -d ' ')
-          if [ "$count" -ne 5 ]; then
-            echo "packaged ${count} libraries, expected 5" >&2
+          if [ "$count" -ne 6 ]; then
+            echo "packaged ${count} libraries, expected 6" >&2
             exit 1
           fi
           (cd dist && sha256sum *.zip > checksums.txt && cat checksums.txt)

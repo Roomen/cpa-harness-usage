@@ -51,7 +51,7 @@ jobs:
 
   # This matrix is the only place a library is compiled, and it runs once per
   # change: pull requests only run the tests above, the push that lands the
-  # change on main compiles all five targets, and a release tag on that same
+  # change on main compiles all six targets, and a release tag on that same
   # commit promotes these artifacts instead of rebuilding them.
   build:
     name: build ${{ matrix.goos }}/${{ matrix.goarch }}
@@ -60,6 +60,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - { goos: darwin, goarch: amd64, runner: macos-15-intel, ext: dylib }
           - { goos: darwin, goarch: arm64, runner: macos-14, ext: dylib }
           - { goos: linux, goarch: amd64, runner: ubuntu-24.04, ext: so }
           - { goos: linux, goarch: arm64, runner: ubuntu-24.04-arm, ext: so }
