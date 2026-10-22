@@ -80,7 +80,10 @@ import (
 
 const maxRequestBytes = 4 << 20
 
-var core = plugin.New()
+var (
+	coreMu sync.RWMutex
+	core   = plugin.New()
+)
 
 // hostMu keeps host calls from racing shutdown: CPA cancels in-flight host
 // operations before calling shutdown, then frees host_ctx afterwards.
@@ -93,6 +96,12 @@ var errHostCall = errors.New("host call failed")
 
 func main() {}
 
+func getCore() *plugin.Plugin {
+	coreMu.RLock()
+	defer coreMu.RUnlock()
+	return core
+}
+
 //export cliproxy_plugin_init
 func cliproxy_plugin_init(host *C.cliproxy_host_api, api *C.cliproxy_plugin_api) C.int {
 	if api == nil || host == nil || host.abi_version != 1 {
@@ -102,13 +111,33 @@ func cliproxy_plugin_init(host *C.cliproxy_host_api, api *C.cliproxy_plugin_api)
 	api.call = C.cliproxy_plugin_call_fn(C.cliproxyPluginCall)
 	api.free_buffer = C.cliproxy_plugin_free_fn(C.cliproxyPluginFree)
 	api.shutdown = C.cliproxy_plugin_shutdown_fn(C.cliproxyPluginShutdown)
-	if host.call != nil && host.free_buffer != nil {
-		hostMu.Lock()
+
+	newCore := plugin.New()
+
+	hasHost := host.call != nil && host.free_buffer != nil
+	hostMu.Lock()
+	if hasHost {
 		C.hu_store_host(host)
 		hostReady = true
-		hostMu.Unlock()
-		core.SetHost(hostCall)
+	} else {
+		C.hu_clear_host()
+		hostReady = false
 	}
+	hostMu.Unlock()
+
+	if hasHost {
+		newCore.SetHost(hostCall)
+	}
+
+	coreMu.Lock()
+	oldCore := core
+	core = newCore
+	coreMu.Unlock()
+
+	if oldCore != nil {
+		oldCore.Close()
+	}
+
 	return 0
 }
 
@@ -156,7 +185,12 @@ func cliproxyPluginCall(method *C.char, req *C.uint8_t, size C.size_t, resp *C.c
 	if size > 0 {
 		raw = C.GoBytes(unsafe.Pointer(req), C.int(size))
 	}
-	writeEnvelope(resp, core.Handle(C.GoString(method), raw))
+	p := getCore()
+	if p == nil {
+		writeEnvelope(resp, cpaError("unavailable", "plugin is not initialized"))
+		return 0
+	}
+	writeEnvelope(resp, p.Handle(C.GoString(method), raw))
 	return 0
 }
 
@@ -169,7 +203,15 @@ func cliproxyPluginFree(ptr unsafe.Pointer, size C.size_t) {
 
 //export cliproxyPluginShutdown
 func cliproxyPluginShutdown() {
-	core.Close()
+	coreMu.Lock()
+	p := core
+	core = nil
+	coreMu.Unlock()
+
+	if p != nil {
+		p.Close()
+	}
+
 	hostMu.Lock()
 	hostReady = false
 	C.hu_clear_host()

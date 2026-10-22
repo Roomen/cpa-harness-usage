@@ -415,6 +415,9 @@ pricing and avoids network fetches.
   reconfigure (including a host rollback) resumes it.
 - `plugin.shutdown` cancels scans, clears the cache, and is idempotent. Shutdown
   never blocks on a running ccusage process.
+- A repeated `cliproxy_plugin_init` in the same host process rebuilds the plugin
+  core instead of reusing the shutdown one, so a host-side disable and re-enable
+  cycle registers cleanly without restarting the host.
 - While paused or closed, the data and quota routes return HTTP 503 with a safe JSON body. Shutdown cancels in-flight quota requests through `host.http.cancel` and drops the host callbacks.
 
 ## Screenshots
@@ -488,14 +491,14 @@ Not verified:
 
 The canonical repository is
 [Roomen/cpa-harness-usage](https://github.com/Roomen/cpa-harness-usage).
-The current release is [v0.1.3](https://github.com/Roomen/cpa-harness-usage/releases/tag/v0.1.3).
+The current release is [v0.1.4](https://github.com/Roomen/cpa-harness-usage/releases/tag/v0.1.4).
 `Version` and `Repository` default to the current release values and can be
 overridden at build time:
 
 ```sh
 make collector
 go build -tags bundledcollector -buildmode=c-shared -ldflags \
-  '-X cpa-harness-usage/internal/plugin.Version=0.1.3 \
+  '-X cpa-harness-usage/internal/plugin.Version=0.1.4 \
    -X cpa-harness-usage/internal/plugin.Repository=https://github.com/Roomen/cpa-harness-usage' \
   -o bin/harness-usage.dylib ./cmd/plugin
 ```
