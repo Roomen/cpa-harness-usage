@@ -4,6 +4,6 @@
   "private": true,
   "description": "Pinned local usage collector for the CLIProxyAPI Harness Usage plugin",
   "dependencies": {
-    "ccusage": "20.0.36"
+    "ccusage": "20.0.42"
   }
 }
